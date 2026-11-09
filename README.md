@@ -1,0 +1,48 @@
+# 시장놀이 — store-price
+
+초등학교 1~3학년 아이들이 상품을 고르고 놀이돈으로 계산하며 거스름돈을 배우는 Android·iOS 앱입니다.
+
+실제 가격의 목표 출처는 **SSG.COM 이마트 온라인 상품 가격**입니다. 오프라인 이마트 점포의 현재 가격을 의미하지 않습니다. 데이터 이용 범위가 확인되기 전에는 직접 만든 **연습용 예시 가격**만 사용합니다. 이마트·SSG 공식 앱 또는 제휴 앱이 아닙니다.
+
+## 개발 방식
+
+- 앱: Expo + React Native + TypeScript
+- DB 계획: Supabase의 PostgreSQL
+- 출시 빌드 계획: Expo EAS Build / Submit
+- 기록: 기능 단계별 Git 커밋 + 책 원고
+- 저장소: https://github.com/ungjo/store-price
+
+## 먼저 읽기
+
+1. [필요한 프로그램과 환경 준비](docs/01-setup.md)
+2. [앱 범위와 개발 순서](docs/02-roadmap.md)
+3. [실제 가격 데이터 확보 계획](docs/03-price-data.md)
+4. [책 원고와 커밋 읽는 법](docs/book/README.md)
+
+## 현재 진행
+
+- [x] 사용자 연령과 가격 기준 확정
+- [x] 개발 환경 확인, 저장소 연결, 기획 기록
+- [x] Expo 앱 생성, 코드 검사, 플랫폼별 번들·브라우저 확인
+- [x] 갤럭시 Expo Go 첫 실행 확인 (2026-11-09 사용자 확인)
+- [x] 갤럭시에서 예시 상품 6개 표시 확인 (2026-11-10 사용자 확인)
+- [ ] 상품·장바구니·계산 놀이
+- [ ] DB 구성과 허용된 실제 가격 연동
+- [ ] Android·iPhone 실기기 검증
+- [ ] 스토어 제출
+
+완료되지 않은 항목은 구현·검증 완료를 의미하지 않습니다.
+
+## 첫 화면 실행
+
+[모바일 앱 실행 안내](apps/mobile/README.md)를 따라 갤럭시에서 확인할 수 있습니다. 지금은 예시 상품 화면이며 장바구니·DB·실제 가격은 아직 구현 전입니다.
+
+```powershell
+cd apps/mobile
+npm.cmd ci
+npm.cmd start
+```
+
+[1장: 첫 앱과 검증 결과](docs/book/chapters/01-first-app.md)
+
+현재 프로젝트는 Expo SDK 58입니다. [Expo Go 호환 오류 해결 기록](docs/book/chapters/01a-expo-go-sdk58.md)에 업데이트와 검증 내용을 남겼습니다.
