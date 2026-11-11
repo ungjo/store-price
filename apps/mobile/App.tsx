@@ -1,16 +1,24 @@
 import { StatusBar } from 'expo-status-bar';
-import { FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useReducer } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
+import { QuantityControl } from './src/components/quantity-control';
+import { createCartReducer, getCartSummary } from './src/features/cart/cart';
 import { sampleProducts } from './src/data/sample-products';
 
 // 원 단위 정수 가격에 천 단위 구분 기호를 붙입니다. 원래 가격 값은 바꾸지 않습니다.
 const won = new Intl.NumberFormat('ko-KR');
 
+const cartReducer = createCartReducer(sampleProducts);
+
 export default function App() {
+  const [cart, dispatch] = useReducer(cartReducer, {});
+  const summary = getCartSummary(cart, sampleProducts);
+  const selectedProducts = sampleProducts.filter((product) => (cart[product.id] ?? 0) > 0);
   const { width, fontScale } = useWindowDimensions();
   // 좁은 화면이나 큰 글자 설정에서는 상품을 한 줄에 하나씩 보여 읽기 쉽게 합니다.
-  const columns = width >= 360 && fontScale <= 1.4 ? 2 : 1;
+  const columns = width >= 380 && fontScale <= 1.2 ? 2 : 1;
 
   return (
     <SafeAreaProvider>
@@ -20,6 +28,7 @@ export default function App() {
         <FlatList
           key={columns}
           data={sampleProducts}
+          extraData={cart}
           numColumns={columns}
           keyExtractor={(item) => item.id}
           style={styles.list}
@@ -67,28 +76,89 @@ export default function App() {
             </View>
           }
           renderItem={({ item }) => (
-            <View
-              style={styles.product}
-              accessible
-              accessibilityLabel={item.name + ', ' + item.unit + ', 연습용 가격 ' + won.format(item.priceKrw) + '원'}
-            >
-              <View style={[styles.productPicture, { backgroundColor: item.color }]}>
-                <Text style={styles.emoji}>{item.emoji}</Text>
+            <View style={styles.product}>
+              {/* 상품 설명만 묶어서 읽고, 담기 버튼은 독립적으로 선택할 수 있게 합니다. */}
+              <View
+                accessible
+                accessibilityLabel={item.name + ', ' + item.unit + ', 연습용 가격 ' + won.format(item.priceKrw) + '원'}
+              >
+                <View style={[styles.productPicture, { backgroundColor: item.color }]}>
+                  <Text style={styles.emoji}>{item.emoji}</Text>
+                </View>
+                <Text style={styles.productName}>{item.name}</Text>
+                <Text style={styles.unit}>{item.unit}</Text>
+                <Text style={styles.price}>{won.format(item.priceKrw)}원</Text>
               </View>
-              <Text style={styles.productName}>{item.name}</Text>
-              <Text style={styles.unit}>{item.unit}</Text>
-              <Text style={styles.price}>{won.format(item.priceKrw)}원</Text>
+              <QuantityControl
+                productName={item.name}
+                quantity={cart[item.id] ?? 0}
+                onAdd={() => dispatch({ type: 'add', productId: item.id })}
+                onDecrease={() => dispatch({ type: 'decrease', productId: item.id })}
+              />
             </View>
           )}
           ListFooterComponent={
-            <View style={styles.footer}>
-              <Text style={styles.footerTitle}>함께 이야기해요</Text>
-              <Text style={styles.footerText}>
-                어떤 물건이 가장 저렴할까요?{'\n'}가족이나 친구와 가격을 읽어 보세요.
-              </Text>
+            <View style={styles.cart}>
+              <View style={styles.cartHeading}>
+                <Text style={styles.sectionTitle} accessibilityRole="header">내 장바구니</Text>
+                <Text style={styles.count}>{summary.distinctProducts}가지 · {summary.totalQuantity}개</Text>
+              </View>
+              <Text style={styles.cartHint}>물건은 한 종류에 9개까지 담을 수 있어요.</Text>
+              {selectedProducts.length === 0 ? (
+                <View style={styles.emptyCart}>
+                  <Text style={styles.emptyIcon} accessible={false}>🧺</Text>
+                  <Text style={styles.emptyTitle}>아직 장바구니가 비어 있어요</Text>
+                  <Text style={styles.footerText}>마음에 드는 물건의 담기를 눌러 보세요.</Text>
+                </View>
+              ) : (
+                <View>
+                  {selectedProducts.map((product) => (
+                    <View key={product.id} style={styles.cartItem}>
+                      <View style={styles.cartItemInfo}>
+                        <Text style={styles.cartItemName}>{product.emoji} {product.name}</Text>
+                        <Text style={styles.cartItemDetail}>
+                          {won.format(product.priceKrw)}원 × {cart[product.id]}개
+                        </Text>
+                        <Text style={styles.cartItemPrice}>
+                          {won.format(product.priceKrw * cart[product.id])}원
+                        </Text>
+                      </View>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={product.name + ' 모두 빼기'}
+                        onPress={() => dispatch({ type: 'remove', productId: product.id })}
+                        style={({ pressed }) => [styles.removeButton, pressed && styles.pressed]}
+                      >
+                        <Text style={styles.removeLabel}>빼기</Text>
+                      </Pressable>
+                    </View>
+                  ))}
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="장바구니 비우기"
+                    onPress={() => dispatch({ type: 'clear' })}
+                    style={({ pressed }) => [styles.clearButton, pressed && styles.pressed]}
+                  >
+                    <Text style={styles.removeLabel}>장바구니 비우기</Text>
+                  </Pressable>
+                </View>
+              )}
             </View>
           }
         />
+        {/* 합계는 별도 상태로 저장하지 않아 수량과 금액이 서로 어긋나는 일을 막습니다. */}
+        <View
+          style={styles.summary}
+          accessible
+          accessibilityLiveRegion="polite"
+          accessibilityLabel={'장바구니 총 ' + summary.totalQuantity + '개, 합계 ' + won.format(summary.totalPriceKrw) + '원'}
+        >
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>🧺 담은 물건 {summary.totalQuantity}개</Text>
+            <Text style={styles.summaryPrice}>{won.format(summary.totalPriceKrw)}원</Text>
+          </View>
+          <Text style={styles.summaryHint}>연습용 가격으로 더해요</Text>
+        </View>
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -117,13 +187,31 @@ const styles = StyleSheet.create({
   sectionHeading: { marginTop: 28, marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' },
   sectionTitle: { fontSize: 21, fontWeight: '800', color: '#293D31' },
   count: { fontSize: 15, color: '#596B5B' },
-  product: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#ECEDE3', borderRadius: 20, padding: 14, marginBottom: 14 },
+  product: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#ECEDE3', borderRadius: 20, padding: 12, marginBottom: 14 },
   productPicture: { borderRadius: 14, minHeight: 110, alignItems: 'center', justifyContent: 'center' },
   emoji: { fontSize: 54 },
   productName: { fontSize: 19, fontWeight: '700', color: '#293D31', marginTop: 14 },
   unit: { fontSize: 14, color: '#627064', marginTop: 5 },
   price: { fontSize: 22, fontWeight: '800', color: '#255B42', marginTop: 10 },
-  footer: { borderRadius: 18, padding: 20, backgroundColor: '#EAF0E5', marginTop: 10 },
-  footerTitle: { fontSize: 17, fontWeight: '700', color: '#315239' },
-  footerText: { fontSize: 15, lineHeight: 25, color: '#4E6653', marginTop: 8 },
+  cart: { borderRadius: 20, padding: 18, backgroundColor: '#EAF0E5', marginTop: 14 },
+  cartHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 },
+  cartHint: { fontSize: 13, lineHeight: 21, color: '#4E6653', marginTop: 8 },
+  emptyCart: { alignItems: 'center', paddingVertical: 24 },
+  emptyIcon: { fontSize: 38, marginBottom: 12 },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: '#315239', textAlign: 'center' },
+  footerText: { fontSize: 15, lineHeight: 25, color: '#4E6653', marginTop: 8, textAlign: 'center' },
+  cartItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#CDD9C6' },
+  cartItemInfo: { flex: 1 },
+  cartItemName: { fontSize: 18, fontWeight: '700', color: '#293D31' },
+  cartItemDetail: { fontSize: 14, lineHeight: 22, color: '#4E6653', marginTop: 6 },
+  cartItemPrice: { fontSize: 19, fontWeight: '700', color: '#255B42', marginTop: 5 },
+  removeButton: { minWidth: 56, minHeight: 48, backgroundColor: '#FFFFFF', borderRadius: 12, alignItems: 'center', justifyContent: 'center', padding: 10 },
+  removeLabel: { color: '#315239', fontSize: 15, fontWeight: '700' },
+  clearButton: { minHeight: 48, marginTop: 18, borderWidth: 1, borderColor: '#91A688', borderRadius: 12, alignItems: 'center', justifyContent: 'center', padding: 12 },
+  pressed: { opacity: 0.7 },
+  summary: { width: '100%', maxWidth: 720, alignSelf: 'center', backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingVertical: 14, borderTopWidth: 1, borderTopColor: '#DDE4D5' },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
+  summaryLabel: { fontSize: 16, fontWeight: '700', color: '#315239' },
+  summaryPrice: { fontSize: 25, fontWeight: '800', color: '#255B42' },
+  summaryHint: { fontSize: 12, color: '#627064', marginTop: 5 },
 });

@@ -26,7 +26,9 @@
 - [x] Expo 앱 생성, 코드 검사, 플랫폼별 번들·브라우저 확인
 - [x] 갤럭시 Expo Go 첫 실행 확인 (2026-11-09 사용자 확인)
 - [x] 갤럭시에서 예시 상품 6개 표시 확인 (2026-11-10 사용자 확인)
-- [ ] 상품·장바구니·계산 놀이
+- [x] 장바구니 코드·자동 검사·브라우저 검증 (2026-11-10)
+- [x] 갤럭시 장바구니 기본 동작 검증 (2026-11-11 사용자 확인)
+- [ ] 예산·거스름돈 계산 놀이
 - [ ] DB 구성과 허용된 실제 가격 연동
 - [ ] Android·iPhone 실기기 검증
 - [ ] 스토어 제출
@@ -35,14 +37,14 @@
 
 ## 첫 화면 실행
 
-[모바일 앱 실행 안내](apps/mobile/README.md)를 따라 갤럭시에서 확인할 수 있습니다. 지금은 예시 상품 화면이며 장바구니·DB·실제 가격은 아직 구현 전입니다.
+[모바일 앱 실행 안내](apps/mobile/README.md)를 따라 갤럭시에서 확인할 수 있습니다. 예시 상품 6개와 담기·수량 조절·장바구니 합계를 구현했습니다. 현재 장바구니는 메모리에만 보관하므로 새로고침하면 초기화됩니다. DB와 실제 가격은 이후 단계입니다.
 
-```powershell
+```bash
 cd apps/mobile
-npm.cmd ci
-npm.cmd start
+npm ci
+npm start
 ```
 
-[1장: 첫 앱과 검증 결과](docs/book/chapters/01-first-app.md)
+[1장: 첫 앱과 검증 결과](docs/book/chapters/01-first-app.md) · [2장: 장바구니](docs/book/chapters/02-shopping-cart.md)
 
 현재 프로젝트는 Expo SDK 58입니다. [Expo Go 호환 오류 해결 기록](docs/book/chapters/01a-expo-go-sdk58.md)에 업데이트와 검증 내용을 남겼습니다.

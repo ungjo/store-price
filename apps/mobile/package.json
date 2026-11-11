@@ -12,6 +12,7 @@
     "react-native-web": "^0.21.2"
   },
   "devDependencies": {
+    "@types/node": "26.6.6",
     "@types/react": "~19.3.0",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~58.0.4",
@@ -24,7 +25,8 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
-    "export:check": "expo export --platform all"
+    "export:check": "expo export --platform all",
+    "test": "node --experimental-strip-types --test src/features/cart/cart.test.ts"
   },
   "private": true
 }
