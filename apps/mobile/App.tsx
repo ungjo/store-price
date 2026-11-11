@@ -3,18 +3,24 @@ import { useReducer } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
+import { PaymentSelector } from './src/components/payment-selector';
 import { QuantityControl } from './src/components/quantity-control';
-import { createCartReducer, getCartSummary } from './src/features/cart/cart';
+import { getCartSummary } from './src/features/cart/cart';
 import { getBudgetSummary, STARTING_BUDGET_KRW } from './src/features/budget/budget';
+import { createShoppingReducer } from './src/features/payment/payment';
 import { sampleProducts } from './src/data/sample-products';
 
 // 원 단위 정수 가격에 천 단위 구분 기호를 붙입니다. 원래 가격 값은 바꾸지 않습니다.
 const won = new Intl.NumberFormat('ko-KR');
 
-const cartReducer = createCartReducer(sampleProducts);
+const shoppingReducer = createShoppingReducer(sampleProducts);
+// 검사 실행 번호를 번들에 넣어 이전 서버나 캐시된 화면을 성공으로 오인하지 않게 합니다.
+const deviceRunId = process.env.EXPO_PUBLIC_DEVICE_RUN_ID;
 
 export default function App() {
-  const [cart, dispatch] = useReducer(cartReducer, {});
+  // 물건이 바뀐 뒤 예전 돈 선택이 남지 않도록 장바구니와 선택 금액을 함께 관리합니다.
+  const [shopping, dispatch] = useReducer(shoppingReducer, { cart: {}, selectedPaymentKrw: null });
+  const { cart, selectedPaymentKrw } = shopping;
   const summary = getCartSummary(cart, sampleProducts);
   // 잔액도 장바구니 합계에서 매번 계산해 담기·빼기·비우기 뒤 금액이 항상 함께 바뀝니다.
   const budget = getBudgetSummary(summary.totalPriceKrw);
@@ -39,8 +45,9 @@ export default function App() {
         {/* 열 수가 바뀌면 key도 바꿔 FlatList를 새로 만들어 열 변경 오류를 피합니다. */}
         <FlatList
           key={columns}
+          testID="market-list"
           data={sampleProducts}
-          extraData={cart}
+          extraData={shopping}
           numColumns={columns}
           keyExtractor={(item) => item.id}
           style={styles.list}
@@ -48,6 +55,16 @@ export default function App() {
           columnWrapperStyle={columns === 2 ? styles.row : undefined}
           ListHeaderComponent={
             <View>
+              {deviceRunId && (
+                <Text
+                  testID="device-run-marker"
+                  accessible
+                  accessibilityLabel={'자동 검사 ' + deviceRunId}
+                  style={styles.deviceRunMarker}
+                >
+                  자동 검사 중
+                </Text>
+              )}
               <View style={styles.brand}>
                 <Text style={styles.brandIcon} accessible={false}>🌱</Text>
                 <Text style={styles.brandName}>꼬마 시장</Text>
@@ -114,6 +131,7 @@ export default function App() {
                 <Text style={styles.price}>{won.format(item.priceKrw)}원</Text>
               </View>
               <QuantityControl
+                productId={item.id}
                 productName={item.name}
                 quantity={cart[item.id] ?? 0}
                 onAdd={() => dispatch({ type: 'add', productId: item.id })}
@@ -122,56 +140,67 @@ export default function App() {
             </View>
           )}
           ListFooterComponent={
-            <View style={styles.cart}>
-              <View style={styles.cartHeading}>
-                <Text style={styles.sectionTitle} accessibilityRole="header">내 장바구니</Text>
-                <Text style={styles.count}>{summary.distinctProducts}가지 · {summary.totalQuantity}개</Text>
-              </View>
-              <Text style={styles.cartHint}>물건은 한 종류에 9개까지 담을 수 있어요.</Text>
-              {selectedProducts.length === 0 ? (
-                <View style={styles.emptyCart}>
-                  <Text style={styles.emptyIcon} accessible={false}>🧺</Text>
-                  <Text style={styles.emptyTitle}>아직 장바구니가 비어 있어요</Text>
-                  <Text style={styles.footerText}>마음에 드는 물건의 담기를 눌러 보세요.</Text>
+            <View>
+              <View style={styles.cart}>
+                <View style={styles.cartHeading}>
+                  <Text style={styles.sectionTitle} accessibilityRole="header">내 장바구니</Text>
+                  <Text style={styles.count}>{summary.distinctProducts}가지 · {summary.totalQuantity}개</Text>
                 </View>
-              ) : (
-                <View>
-                  {selectedProducts.map((product) => (
-                    <View key={product.id} style={styles.cartItem}>
-                      <View style={styles.cartItemInfo}>
-                        <Text style={styles.cartItemName}>{product.emoji} {product.name}</Text>
-                        <Text style={styles.cartItemDetail}>
-                          {won.format(product.priceKrw)}원 × {cart[product.id]}개
-                        </Text>
-                        <Text style={styles.cartItemPrice}>
-                          {won.format(product.priceKrw * cart[product.id])}원
-                        </Text>
+                <Text style={styles.cartHint}>물건은 한 종류에 9개까지 담을 수 있어요.</Text>
+                {selectedProducts.length === 0 ? (
+                  <View style={styles.emptyCart}>
+                    <Text style={styles.emptyIcon} accessible={false}>🧺</Text>
+                    <Text testID="cart-empty" style={styles.emptyTitle}>아직 장바구니가 비어 있어요</Text>
+                    <Text style={styles.footerText}>마음에 드는 물건의 담기를 눌러 보세요.</Text>
+                  </View>
+                ) : (
+                  <View>
+                    {selectedProducts.map((product) => (
+                      <View key={product.id} style={styles.cartItem}>
+                        <View style={styles.cartItemInfo}>
+                          <Text style={styles.cartItemName}>{product.emoji} {product.name}</Text>
+                          <Text style={styles.cartItemDetail}>
+                            {won.format(product.priceKrw)}원 × {cart[product.id]}개
+                          </Text>
+                          <Text style={styles.cartItemPrice}>
+                            {won.format(product.priceKrw * cart[product.id])}원
+                          </Text>
+                        </View>
+                        <Pressable
+                          testID={'cart-' + product.id + '-remove'}
+                          accessibilityRole="button"
+                          accessibilityLabel={product.name + ' 모두 빼기'}
+                          onPress={() => dispatch({ type: 'remove', productId: product.id })}
+                          style={({ pressed }) => [styles.removeButton, pressed && styles.pressed]}
+                        >
+                          <Text style={styles.removeLabel}>빼기</Text>
+                        </Pressable>
                       </View>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={product.name + ' 모두 빼기'}
-                        onPress={() => dispatch({ type: 'remove', productId: product.id })}
-                        style={({ pressed }) => [styles.removeButton, pressed && styles.pressed]}
-                      >
-                        <Text style={styles.removeLabel}>빼기</Text>
-                      </Pressable>
-                    </View>
-                  ))}
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="장바구니 비우기"
-                    onPress={() => dispatch({ type: 'clear' })}
-                    style={({ pressed }) => [styles.clearButton, pressed && styles.pressed]}
-                  >
-                    <Text style={styles.removeLabel}>장바구니 비우기</Text>
-                  </Pressable>
-                </View>
-              )}
+                    ))}
+                    <Pressable
+                      testID="cart-clear"
+                      accessibilityRole="button"
+                      accessibilityLabel="장바구니 비우기"
+                      onPress={() => dispatch({ type: 'clear' })}
+                      style={({ pressed }) => [styles.clearButton, pressed && styles.pressed]}
+                    >
+                      <Text style={styles.removeLabel}>장바구니 비우기</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+              <PaymentSelector
+                totalPriceKrw={summary.totalPriceKrw}
+                selectedPaymentKrw={selectedPaymentKrw}
+                onSelect={(amountKrw) => dispatch({ type: 'select-payment', amountKrw })}
+                onClear={() => dispatch({ type: 'clear-payment' })}
+              />
             </View>
           }
         />
         {/* 합계는 별도 상태로 저장하지 않아 수량과 금액이 서로 어긋나는 일을 막습니다. */}
         <View
+          testID="cart-summary"
           style={styles.summary}
           accessible
           accessibilityLiveRegion="polite"
@@ -199,6 +228,7 @@ export default function App() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#FAF8F0' },
+  deviceRunMarker: { color: '#4E6653', fontSize: 12, marginBottom: 8 },
   list: { flex: 1, width: '100%', maxWidth: 720, alignSelf: 'center' },
   content: { padding: 20, paddingBottom: 36 },
   row: { gap: 14 },

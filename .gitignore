@@ -38,3 +38,6 @@ data/private/
 # Generated native projects (Expo managed workflow)
 /apps/mobile/android/
 /apps/mobile/ios/
+
+# Local device-test logs, screenshots, locks and temporary output
+/.artifacts/

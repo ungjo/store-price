@@ -3,16 +3,20 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { MAX_QUANTITY } from '../features/cart/cart';
 
 type QuantityControlProps = {
+  productId: string;
   productName: string;
   quantity: number;
   onAdd: () => void;
   onDecrease: () => void;
 };
 
-export function QuantityControl({ productName, quantity, onAdd, onDecrease }: QuantityControlProps) {
+export function QuantityControl({ productId, productName, quantity, onAdd, onDecrease }: QuantityControlProps) {
+  // 상품 ID로 버튼을 구분하면 번역이나 화면 배치가 바뀌어도 같은 상품을 검사할 수 있습니다.
+  const testId = 'product-' + productId;
   if (quantity === 0) {
     return (
       <Pressable
+        testID={testId + '-add'}
         accessibilityRole="button"
         accessibilityLabel={productName + ' 담기'}
         onPress={onAdd}
@@ -30,6 +34,7 @@ export function QuantityControl({ productName, quantity, onAdd, onDecrease }: Qu
       {/* 각 버튼을 따로 읽도록 묶지 않고, 기호 대신 동작과 상품 이름을 알려줍니다. */}
       <View style={styles.stepper}>
         <Pressable
+          testID={testId + '-decrease'}
           accessibilityRole="button"
           accessibilityLabel={productName + ' 한 개 빼기'}
           onPress={onDecrease}
@@ -37,10 +42,11 @@ export function QuantityControl({ productName, quantity, onAdd, onDecrease }: Qu
         >
           <Text style={styles.stepLabel}>−</Text>
         </Pressable>
-        <Text style={styles.quantity} accessibilityLabel={productName + ' ' + quantity + '개 담김'}>
+        <Text testID={testId + '-quantity'} style={styles.quantity} accessibilityLabel={productName + ' ' + quantity + '개 담김'}>
           {quantity}개
         </Text>
         <Pressable
+          testID={testId + '-add'}
           accessibilityRole="button"
           accessibilityLabel={productName + ' 한 개 더 담기'}
           accessibilityState={{ disabled: atLimit }}
