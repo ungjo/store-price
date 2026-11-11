@@ -5,6 +5,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { QuantityControl } from './src/components/quantity-control';
 import { createCartReducer, getCartSummary } from './src/features/cart/cart';
+import { getBudgetSummary, STARTING_BUDGET_KRW } from './src/features/budget/budget';
 import { sampleProducts } from './src/data/sample-products';
 
 // 원 단위 정수 가격에 천 단위 구분 기호를 붙입니다. 원래 가격 값은 바꾸지 않습니다.
@@ -15,6 +16,17 @@ const cartReducer = createCartReducer(sampleProducts);
 export default function App() {
   const [cart, dispatch] = useReducer(cartReducer, {});
   const summary = getCartSummary(cart, sampleProducts);
+  // 잔액도 장바구니 합계에서 매번 계산해 담기·빼기·비우기 뒤 금액이 항상 함께 바뀝니다.
+  const budget = getBudgetSummary(summary.totalPriceKrw);
+  const budgetLabel = budget.status === 'over' ? '부족한 돈' : '남을 돈';
+  const budgetAmountKrw = budget.status === 'over' ? budget.shortfallKrw : budget.remainingKrw;
+  const budgetHint = budget.status === 'over'
+    ? '물건을 조금 빼 볼까요?'
+    : budget.status === 'exact'
+      ? '놀이돈에 딱 맞아요!'
+      : summary.totalQuantity === 0
+        ? '놀이돈 안에서 장을 봐요.'
+        : '이대로 사면 남을 돈이에요.';
   const selectedProducts = sampleProducts.filter((product) => (cart[product.id] ?? 0) > 0);
   const { width, fontScale } = useWindowDimensions();
   // 좁은 화면이나 큰 글자 설정에서는 상품을 한 줄에 하나씩 보여 읽기 쉽게 합니다.
@@ -67,6 +79,18 @@ export default function App() {
                 <Text style={styles.noticeText}>
                   놀이를 위해 만든 가격이에요.{'\n'}실제 이마트 판매 가격이 아니에요.
                 </Text>
+              </View>
+
+              <View
+                style={styles.playMoney}
+                accessible
+                accessibilityLabel={'오늘의 놀이돈 ' + won.format(STARTING_BUDGET_KRW) + '원. 이 돈 안에서 물건을 골라 봐요.'}
+              >
+                <View style={styles.summaryRow}>
+                  <Text style={styles.playMoneyLabel}>오늘의 놀이돈</Text>
+                  <Text style={styles.playMoneyAmount}>{won.format(STARTING_BUDGET_KRW)}원</Text>
+                </View>
+                <Text style={styles.playMoneyHint}>이 돈 안에서 물건을 골라 봐요.</Text>
               </View>
 
               <View style={styles.sectionHeading}>
@@ -151,13 +175,22 @@ export default function App() {
           style={styles.summary}
           accessible
           accessibilityLiveRegion="polite"
-          accessibilityLabel={'장바구니 총 ' + summary.totalQuantity + '개, 합계 ' + won.format(summary.totalPriceKrw) + '원'}
+          accessibilityLabel={'장바구니 총 ' + summary.totalQuantity + '개, 합계 ' + won.format(summary.totalPriceKrw) + '원. 오늘의 놀이돈 ' + won.format(STARTING_BUDGET_KRW) + '원. ' + budgetLabel + ' ' + won.format(budgetAmountKrw) + '원. ' + budgetHint}
         >
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>🧺 담은 물건 {summary.totalQuantity}개</Text>
             <Text style={styles.summaryPrice}>{won.format(summary.totalPriceKrw)}원</Text>
           </View>
-          <Text style={styles.summaryHint}>연습용 가격으로 더해요</Text>
+          {/* 색만으로 구분하지 않고 남을 돈과 부족한 돈을 글자로도 알려줍니다. */}
+          <View style={[styles.balanceRow, budget.status === 'over' && styles.balanceOver]}>
+            <Text style={[styles.balanceLabel, budget.status === 'over' && styles.shortfallText]}>
+              {budgetLabel}
+            </Text>
+            <Text style={[styles.balanceAmount, budget.status === 'over' && styles.shortfallText]}>
+              {won.format(budgetAmountKrw)}원
+            </Text>
+          </View>
+          <Text style={styles.summaryHint}>{budgetHint}</Text>
         </View>
       </SafeAreaView>
     </SafeAreaProvider>
@@ -213,5 +246,14 @@ const styles = StyleSheet.create({
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   summaryLabel: { fontSize: 16, fontWeight: '700', color: '#315239' },
   summaryPrice: { fontSize: 25, fontWeight: '800', color: '#255B42' },
-  summaryHint: { fontSize: 12, color: '#627064', marginTop: 5 },
+  playMoney: { marginTop: 18, padding: 16, backgroundColor: '#EAF0E5', borderRadius: 16 },
+  playMoneyLabel: { fontSize: 17, fontWeight: '700', color: '#315239' },
+  playMoneyAmount: { fontSize: 24, fontWeight: '800', color: '#255B42' },
+  playMoneyHint: { fontSize: 14, lineHeight: 22, color: '#4E6653', marginTop: 6 },
+  balanceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 10, borderRadius: 12, backgroundColor: '#EAF0E5', paddingHorizontal: 12, paddingVertical: 8 },
+  balanceOver: { backgroundColor: '#FFF0D7' },
+  balanceLabel: { fontSize: 16, fontWeight: '700', color: '#315239' },
+  balanceAmount: { fontSize: 22, fontWeight: '800', color: '#255B42' },
+  shortfallText: { color: '#7B4A16' },
+  summaryHint: { fontSize: 13, lineHeight: 20, color: '#627064', marginTop: 6 },
 });

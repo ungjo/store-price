@@ -26,7 +26,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "export:check": "expo export --platform all",
-    "test": "node --experimental-strip-types --test src/features/cart/cart.test.ts"
+    "test": "node --experimental-strip-types --test src/features/cart/cart.test.ts src/features/budget/budget.test.ts"
   },
   "private": true
 }
