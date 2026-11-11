@@ -4,6 +4,7 @@ import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, 
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { PaymentSelector } from './src/components/payment-selector';
+import { ShoppingReceipt } from './src/components/shopping-receipt';
 import { QuantityControl } from './src/components/quantity-control';
 import { getCartSummary } from './src/features/cart/cart';
 import { getBudgetSummary, STARTING_BUDGET_KRW } from './src/features/budget/budget';
@@ -41,6 +42,18 @@ export default function App() {
   const { width, fontScale } = useWindowDimensions();
   // 좁은 화면이나 큰 글자 설정에서는 상품을 한 줄에 하나씩 보여 읽기 쉽게 합니다.
   const columns = width >= 380 && fontScale <= 1.2 ? 2 : 1;
+
+  // 계산을 마친 동안에는 구매 조작을 화면에서 빼고, 확정된 영수증만 같은 화면의 완료 상태로 보여 줍니다.
+  if (shopping.receipt !== null) {
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.screen}>
+          <StatusBar style="dark" />
+          <ShoppingReceipt receipt={shopping.receipt} onNewRound={() => dispatch({ type: 'start-new-round' })} />
+        </SafeAreaView>
+      </SafeAreaProvider>
+    );
+  }
 
   return (
     <SafeAreaProvider>
@@ -205,6 +218,7 @@ export default function App() {
                   onRetry={() => dispatch({ type: 'retry-quiz' })}
                   onSelect={(amountKrw) => dispatch({ type: 'select-payment', amountKrw })}
                   onClear={() => dispatch({ type: 'clear-payment' })}
+                  onComplete={() => dispatch({ type: 'complete-checkout' })}
                 />
               </View>
             }

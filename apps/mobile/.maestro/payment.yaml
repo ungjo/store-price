@@ -692,13 +692,19 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - takeScreenshot: payment-over-budget
 
 # 초과한 당근을 삭제하면 다시 선택할 수 있고 전체 비우기는 선택도 초기화합니다.
-# Expo Go의 오른쪽 위 메뉴와 겹치지 않게 삭제 버튼을 화면 안쪽으로 옮깁니다.
+# 장바구니 제목을 먼저 찾고 아래로 접근해 삭제 버튼의 지나침과 메뉴 겹침을 피합니다.
+- scrollUntilVisible:
+    element:
+      text: "^내 장바구니$"
+    direction: UP
+    timeout: 30000
+    centerElement: false
 - scrollUntilVisible:
     element:
       id: "cart-sample-carrot-remove"
-    direction: UP
+    direction: DOWN
     timeout: 30000
-    centerElement: true
+    centerElement: false
 - tapOn:
     id: "cart-sample-carrot-remove"
     enabled: true
@@ -1269,13 +1275,19 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-change"
     text: "^받을 거스름돈 2,000원\\. 낼 돈 10,000원 빼기 물건값 8,000원은 2,000원\\.$"
-# Expo Go의 오른쪽 위 메뉴와 겹치지 않게 삭제 버튼을 화면 안쪽으로 옮깁니다.
+# 장바구니 제목을 먼저 찾고 아래로 접근해 삭제 버튼의 지나침과 메뉴 겹침을 피합니다.
+- scrollUntilVisible:
+    element:
+      text: "^내 장바구니$"
+    direction: UP
+    timeout: 30000
+    centerElement: false
 - scrollUntilVisible:
     element:
       id: "cart-sample-carrot-remove"
-    direction: UP
+    direction: DOWN
     timeout: 30000
-    centerElement: true
+    centerElement: false
 - tapOn:
     id: "cart-sample-carrot-remove"
     enabled: true
@@ -1437,3 +1449,7 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertNotVisible:
     id: "payment-quiz"
 - takeScreenshot: payment-reset
+
+# 장바구니·퀴즈 회귀 검사 뒤 독립적인 계산 완료와 영수증 검사도 실행합니다.
+- runFlow:
+    file: receipt.yaml

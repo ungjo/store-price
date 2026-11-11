@@ -14,6 +14,7 @@ type PaymentSelectorProps = {
   onAnswer: (answer: string) => void;
   onCheck: () => void;
   onRetry: () => void;
+  onComplete: () => void;
 };
 
 const won = new Intl.NumberFormat('ko-KR');
@@ -27,9 +28,11 @@ export function PaymentSelector({
   onAnswer,
   onCheck,
   onRetry,
+  onComplete,
 }: PaymentSelectorProps) {
   const payment = getPaymentSummary(totalPriceKrw, selectedPaymentKrw);
   const disabled = payment.status === 'empty' || payment.status === 'over-budget';
+  const canComplete = payment.status === 'ready' && quiz.status === 'correct';
   const needsMoreMoney = payment.status === 'insufficient';
   const message = payment.status === 'empty'
     ? '먼저 물건을 담아 주세요.'
@@ -137,6 +140,21 @@ export function PaymentSelector({
         </Pressable>
       )}
       <Text style={styles.resetHint}>물건을 바꾸면 놀이돈을 다시 골라요.</Text>
+      {/* 화면의 비활성 표시와 별개로 reducer도 현재 문제를 다시 확인해 완료를 한 번만 처리합니다. */}
+      <Pressable
+        testID="checkout-complete"
+        accessibilityRole="button"
+        accessibilityLabel="계산 완료하고 영수증 보기"
+        accessibilityState={{ disabled: !canComplete }}
+        disabled={!canComplete}
+        onPress={() => { Keyboard.dismiss(); onComplete(); }}
+        style={({ pressed }) => [styles.checkoutButton, !canComplete && styles.disabled, pressed && styles.pressed]}
+      >
+        <Text style={styles.checkoutLabel}>계산 완료</Text>
+      </Pressable>
+      <Text style={styles.checkoutHint}>
+        {canComplete ? '잘했어요! 계산을 마치고 영수증을 받아요.' : '거스름돈을 맞히면 계산을 완료할 수 있어요.'}
+      </Text>
     </View>
   );
 }
@@ -169,5 +187,8 @@ const styles = StyleSheet.create({
   changeHint: { fontSize: 15, lineHeight: 24, color: '#70532C', marginTop: 8 },
   clearButton: { minHeight: 48, alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#91A688', marginTop: 12 },
   clearLabel: { fontSize: 15, fontWeight: '700', color: '#315239' },
+  checkoutButton: { minHeight: 60, backgroundColor: '#295C43', borderRadius: 14, alignItems: 'center', justifyContent: 'center', padding: 16, marginTop: 18 },
+  checkoutLabel: { color: '#FFFFFF', fontSize: 20, fontWeight: '800' },
+  checkoutHint: { fontSize: 14, lineHeight: 23, color: '#4E6653', marginTop: 10 },
   resetHint: { fontSize: 13, lineHeight: 21, color: '#627064', marginTop: 12 },
 });

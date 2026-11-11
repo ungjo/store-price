@@ -27,5 +27,10 @@
   "apps/mobile/src/features/payment/change-quiz.ts",
   "apps/mobile/src/features/payment/change-quiz.test.ts",
   "apps/mobile/.maestro/solve-quiz.yaml",
-  "docs/book/chapters/03d-change-quiz.md"
+  "docs/book/chapters/03d-change-quiz.md",
+  "apps/mobile/src/components/shopping-receipt.tsx",
+  "apps/mobile/src/features/payment/receipt.ts",
+  "apps/mobile/src/features/payment/receipt.test.ts",
+  "apps/mobile/.maestro/receipt.yaml",
+  "docs/book/chapters/03e-checkout-receipt.md"
 ]

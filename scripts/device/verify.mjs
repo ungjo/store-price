@@ -14,14 +14,16 @@ const port = 8091;
 const timeout = { tool: 30_000, check: 300_000, export: 600_000, server: 180_000, flow: 1_200_000 };
 const args = process.argv.slice(2);
 let noCommit = false;
+let receiptOnly = false;
 let doctor = false;
 let message = 'test: 갤럭시 자동 검증 결과와 확인한 변경 기록';
 
 for (let index = 0; index < args.length; index += 1) {
   if (args[index] === '--no-commit') noCommit = true;
+  else if (args[index] === '--receipt-only') { receiptOnly = true; noCommit = true; }
   else if (args[index] === '--doctor') doctor = true;
   else if (args[index] === '--message' && args[index + 1]) message = args[++index];
-  else throw new Error('지원 옵션: --no-commit, --doctor, --message "커밋 메시지"');
+  else throw new Error('지원 옵션: --no-commit, --receipt-only, --doctor, --message "커밋 메시지"');
 }
 if (!message.trim() || /[\r\n\0]/u.test(message)) throw new Error('커밋 메시지는 한 줄로 입력해 주세요.');
 
@@ -342,6 +344,7 @@ function writeReport(status, reason = '') {
     ] : []),
     'maestro check-syntax apps/mobile/.maestro/payment.yaml',
     'maestro check-syntax apps/mobile/.maestro/solve-quiz.yaml',
+    'maestro check-syntax apps/mobile/.maestro/receipt.yaml',
     'node --test scripts/device/git-guard.test.mjs',
     'cd apps/mobile', 'npm test', 'npm run typecheck', 'npm run lint', 'npm run export:check',
     'EXPO_PUBLIC_DEVICE_RUN_ID=<실행 ID> node node_modules/expo/bin/cli start --localhost --port 8091 --clear',
@@ -369,8 +372,10 @@ function writeReport(status, reason = '') {
     '- 거스름돈 퀴즈: 빈 답과 0원 구분, 오답 수정·정답 확인·다시 풀기·입력 잠금.',
     '- 정답 전 계산 결과와 예산 잔액을 숨기고, 맞힌 뒤 계산식과 잔액을 공개한다.',
     '- 상품·낼 돈 변경은 퀴즈를 초기화하며 같은 선택과 수량 상한의 무변화는 풀이를 유지한다.',
+    '- 정답 전 계산 완료 차단, 영수증 상품별 가격·수량·합계·지불액·거스름돈·잔액을 확인한다.',
+    '- 0원 거스름돈도 완료하며, 다시 장보기와 영수증 상태의 재실행으로 새 놀이를 시작한다.',
     '', '## 결과', '',
-    ...checks.filter((check) => ['maestro-syntax-main', 'maestro-syntax-quiz', 'git-guard-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-flow'].includes(check.label))
+    ...checks.filter((check) => ['maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'git-guard-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-flow'].includes(check.label))
       .map((check) => '- ' + check.label + ': 종료 코드 ' + check.exitCode),
     '- JUnit: ' + (junit ? `${junit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
     '', '원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/' + runId + '/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.',
@@ -425,7 +430,7 @@ try {
   } else {
     verificationStarted = true;
     // 일반 YAML 구문 검사만으로는 명령 형식 오류를 찾을 수 없어, 기기를 조작하기 전에 Maestro로 확인합니다.
-    for (const [label, file] of [['maestro-syntax-main', 'apps/mobile/.maestro/payment.yaml'], ['maestro-syntax-quiz', 'apps/mobile/.maestro/solve-quiz.yaml']]) {
+    for (const [label, file] of [['maestro-syntax-main', 'apps/mobile/.maestro/payment.yaml'], ['maestro-syntax-quiz', 'apps/mobile/.maestro/solve-quiz.yaml'], ['maestro-syntax-receipt', 'apps/mobile/.maestro/receipt.yaml']]) {
       await run(label, tools.maestro, ['check-syntax', file], { timeout: 60_000 });
     }
     await prepareScreenAwake();
@@ -445,25 +450,29 @@ try {
     await waitForServer();
     await prepareReverse();
     await wakeScreenForUi();
-    say('휴대전화에서 장바구니·예산·돈 선택을 검사합니다.');
+    say(receiptOnly ? '휴대전화에서 영수증 구간을 부분 검사합니다.' : '휴대전화에서 장바구니·거스름돈·계산 완료·영수증을 전체 검사합니다.');
     const maestroDir = path.join(runDir, 'maestro');
     await run('maestro-flow', tools.maestro, [
       '--device', selectedSerial, 'test', '-e', 'EXPO_URL=exp://127.0.0.1:' + port, '-e', 'RUN_ID=' + runId,
       '--format', 'junit', '--output', path.join(runDir, 'result.xml'),
-      '--test-output-dir', maestroDir, '--debug-output', maestroDir, 'apps/mobile/.maestro/payment.yaml',
+      '--test-output-dir', maestroDir, '--debug-output', maestroDir,
+      receiptOnly ? 'apps/mobile/.maestro/receipt.yaml' : 'apps/mobile/.maestro/payment.yaml',
     ], { timeout: timeout.flow });
     junit = readJunit(path.join(runDir, 'result.xml'));
     if (interrupted) throw new Error('사용자가 검사를 중단했습니다.');
     assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
-    writeReport('PASS');
-    if (!noCommit) {
-      const result = commitVerifiedChange({ repoRoot, state: gitState, reportPath, message });
-      commit = result.commit;
-    } else {
-      assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
+    // 부분 검사 성공은 전체 회귀 검증을 대신하지 않으므로 공개 보고서와 커밋을 만들지 않습니다.
+    if (!receiptOnly) {
+      writeReport('PASS');
+      if (!noCommit) {
+        const result = commitVerifiedChange({ repoRoot, state: gitState, reportPath, message });
+        commit = result.commit;
+      } else {
+        assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
+      }
     }
     overallStatus = 'passed';
-    say('실기기 자동 검사와 기록을 마쳤습니다.' + (commit ? ' 로컬 커밋: ' + commit.slice(0, 12) : ' 새 커밋은 만들지 않았습니다.'));
+    say(receiptOnly ? '영수증 부분 검사를 마쳤습니다. 전체 검증 기록과 커밋은 생성하지 않았습니다.' : '실기기 자동 검사와 기록을 마쳤습니다.' + (commit ? ' 로컬 커밋: ' + commit.slice(0, 12) : ' 새 커밋은 만들지 않았습니다.'));
   }
 } catch (error) {
   overallStatus = interrupted ? 'interrupted' : verificationStarted ? 'failed' : 'blocked';
@@ -476,7 +485,7 @@ try {
   await cleanup();
   if (fs.existsSync(runDir)) {
     fs.writeFileSync(path.join(runDir, 'summary.json'), JSON.stringify({
-      runId, status: overallStatus, startedAt: startedAt.toISOString(), finishedAt: new Date().toISOString(),
+      runId, scope: receiptOnly ? 'receipt-only' : 'full', status: overallStatus, startedAt: startedAt.toISOString(), finishedAt: new Date().toISOString(),
       device, sourceHash: gitState?.sourceHash, head: gitState?.head, checks, junit, commit, screenAwake,
     }, null, 2) + '\n');
     say('원본 기록: .artifacts/device/' + runId + '/');

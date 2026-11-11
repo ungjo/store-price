@@ -1,0 +1,637 @@
+appId: host.exp.exponent
+name: 계산 완료와 영수증 실기기 회귀 검사
+# 이 흐름만 실행해도 같은 RUN_ID의 새 앱에서 시작하도록 기존 실행 순서를 사용합니다.
+# 계산 전 조건과 계산 후 복사된 금액을 따로 확인하며 실제 결제는 하지 않습니다.
+---
+
+- stopApp
+- launchApp:
+    appId: host.exp.exponent
+    clearState: false
+    stopApp: false
+    permissions: {}
+- waitForAnimationToEnd:
+    timeout: 10000
+- openLink: "${EXPO_URL}"
+- extendedWaitUntil:
+    visible:
+      id: "device-run-marker"
+      text: "^자동 검사 ${RUN_ID}$"
+    timeout: 90000
+- assertVisible:
+    id: "device-run-marker"
+    text: "^자동 검사 ${RUN_ID}$"
+- assertVisible:
+    id: "cart-summary"
+    text: "^장바구니 총 0개, 합계 0원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 10,000원\\. 놀이돈 안에서 장을 봐요\\.$"
+- assertNotVisible:
+    id: "receipt-screen"
+- scrollUntilVisible:
+    element:
+      id: "payment-option-1000"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-option-1000"
+    enabled: false
+    selected: false
+- scrollUntilVisible:
+    element:
+      id: "payment-result"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-result"
+    text: "^선택한 돈 없음\\. 먼저 물건을 담아 주세요\\.$"
+- scrollUntilVisible:
+    element:
+      id: "checkout-complete"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "checkout-complete"
+    enabled: false
+- assertNotVisible:
+    id: "payment-quiz"
+- assertNotVisible:
+    id: "payment-change"
+# 빈 장바구니의 계산 버튼을 눌러도 영수증으로 넘어가지 않습니다.
+- tapOn:
+    id: "checkout-complete"
+    enabled: false
+    retryTapIfNoChange: false
+- assertNotVisible:
+    id: "receipt-screen"
+
+# 사과 2개와 우유 1개를 담고, 부족한 돈과 아직 안 푼 문제에서는 계산을 막습니다.
+- scrollUntilVisible:
+    element:
+      id: "product-sample-apple-add"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "product-sample-apple-add"
+    enabled: true
+- tapOn:
+    id: "product-sample-apple-add"
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: "product-sample-milk-add"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "product-sample-milk-add"
+    enabled: true
+- assertVisible:
+    id: "cart-summary"
+    text: "^장바구니 총 3개, 합계 5,500원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 4,500원\\. 이대로 사면 남을 돈이에요\\.$"
+- scrollUntilVisible:
+    element:
+      id: "payment-option-5000"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "payment-option-5000"
+    enabled: true
+- assertVisible:
+    id: "payment-option-5000"
+    enabled: true
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: "payment-result"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-result"
+    text: "^선택한 돈 5,000원\\. 500원이 더 필요해요\\.$"
+- scrollUntilVisible:
+    element:
+      id: "checkout-complete"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "checkout-complete"
+    enabled: false
+- scrollUntilVisible:
+    element:
+      id: "payment-option-10000"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "payment-option-10000"
+    enabled: true
+- assertVisible:
+    id: "payment-option-10000"
+    enabled: true
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: "payment-result"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-result"
+    text: "^선택한 돈 10,000원\\. 이 돈으로 계산할 수 있어요!$"
+- scrollUntilVisible:
+    element:
+      id: "quiz-feedback"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "quiz-feedback"
+    text: "^거스름돈을 숫자로 적고 정답 확인을 눌러 주세요\\.$"
+- scrollUntilVisible:
+    element:
+      id: "checkout-complete"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "checkout-complete"
+    enabled: false
+
+# 오답으로는 계산할 수 없고, 정답을 맞힌 뒤에만 영수증을 엽니다.
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "quiz-answer"
+    enabled: true
+- inputText: "500"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "quiz-check"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "quiz-check"
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: "quiz-feedback"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "quiz-feedback"
+    text: "^다시 생각해 볼까요\\? 낼 돈에서 물건값을 빼 보세요\\.$"
+- scrollUntilVisible:
+    element:
+      id: "checkout-complete"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "checkout-complete"
+    enabled: false
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "quiz-answer"
+    enabled: true
+- eraseText: 5
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_ANSWER: "4500"
+      CART_QUANTITY: "3"
+      CART_TOTAL: "5,500"
+- scrollUntilVisible:
+    element:
+      id: "checkout-complete"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "checkout-complete"
+    enabled: true
+- tapOn:
+    id: "checkout-complete"
+    enabled: true
+- assertVisible:
+    id: "receipt-screen"
+- assertVisible:
+    id: "receipt-title"
+    text: "^계산을 마쳤어요!$"
+- assertNotVisible:
+    id: "market-list"
+- assertNotVisible:
+    id: "cart-summary"
+- assertNotVisible:
+    id: "payment-selector"
+- assertNotVisible:
+    id: "quiz-answer"
+- assertNotVisible:
+    id: "checkout-complete"
+- scrollUntilVisible:
+    element:
+      id: "receipt-item-sample-apple"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "receipt-item-sample-apple"
+    text: "^사과, 1개\\. 1,500원 × 2개, 3,000원\\.$"
+- scrollUntilVisible:
+    element:
+      id: "receipt-item-sample-milk"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "receipt-item-sample-milk"
+    text: "^우유, 1팩 · 1L\\. 2,500원 × 1개, 2,500원\\.$"
+- scrollUntilVisible:
+    element:
+      id: "receipt-total"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "receipt-total"
+    text: "^총 3개, 합계 5,500원\\.$"
+- scrollUntilVisible:
+    element:
+      id: "receipt-payment"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "receipt-payment"
+    text: "^낸 놀이돈 10,000원\\. 받은 거스름돈 4,500원\\. 계산 후 남은 놀이돈 4,500원\\.$"
+- takeScreenshot: receipt-apple-milk
+
+# 다시 장보기를 누르면 장바구니·선택·퀴즈가 비고 놀이돈은 10,000원부터 시작합니다.
+- scrollUntilVisible:
+    element:
+      id: "receipt-new-round"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "receipt-new-round"
+    enabled: true
+- assertVisible:
+    id: "cart-summary"
+    text: "^장바구니 총 0개, 합계 0원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 10,000원\\. 놀이돈 안에서 장을 봐요\\.$"
+- assertNotVisible:
+    id: "receipt-screen"
+- scrollUntilVisible:
+    element:
+      id: "payment-option-1000"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-option-1000"
+    enabled: false
+    selected: false
+- scrollUntilVisible:
+    element:
+      id: "payment-result"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-result"
+    text: "^선택한 돈 없음\\. 먼저 물건을 담아 주세요\\.$"
+- scrollUntilVisible:
+    element:
+      id: "checkout-complete"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "checkout-complete"
+    enabled: false
+- assertNotVisible:
+    id: "payment-quiz"
+- assertNotVisible:
+    id: "payment-change"
+
+# 물건값과 같은 돈을 낸 경우 거스름돈 0원도 정상 영수증으로 남습니다.
+- scrollUntilVisible:
+    element:
+      id: "product-sample-carrot-add"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "product-sample-carrot-add"
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: "payment-option-1000"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "payment-option-1000"
+    enabled: true
+- assertVisible:
+    id: "payment-option-1000"
+    enabled: true
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: "payment-result"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-result"
+    text: "^선택한 돈 1,000원\\. 이 돈으로 계산할 수 있어요!$"
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_ANSWER: "0"
+      CART_QUANTITY: "1"
+      CART_TOTAL: "1,000"
+- scrollUntilVisible:
+    element:
+      id: "checkout-complete"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "checkout-complete"
+    enabled: true
+- tapOn:
+    id: "checkout-complete"
+    enabled: true
+- assertVisible:
+    id: "receipt-screen"
+- assertVisible:
+    id: "receipt-title"
+    text: "^계산을 마쳤어요!$"
+- assertNotVisible:
+    id: "market-list"
+- assertNotVisible:
+    id: "cart-summary"
+- assertNotVisible:
+    id: "payment-selector"
+- assertNotVisible:
+    id: "quiz-answer"
+- assertNotVisible:
+    id: "checkout-complete"
+- scrollUntilVisible:
+    element:
+      id: "receipt-item-sample-carrot"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "receipt-item-sample-carrot"
+    text: "^당근, 1개\\. 1,000원 × 1개, 1,000원\\.$"
+- scrollUntilVisible:
+    element:
+      id: "receipt-total"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "receipt-total"
+    text: "^총 1개, 합계 1,000원\\.$"
+- scrollUntilVisible:
+    element:
+      id: "receipt-payment"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "receipt-payment"
+    text: "^낸 놀이돈 1,000원\\. 받은 거스름돈 0원\\. 계산 후 남은 놀이돈 9,000원\\.$"
+- takeScreenshot: receipt-exact
+- scrollUntilVisible:
+    element:
+      id: "receipt-new-round"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "receipt-new-round"
+    enabled: true
+- assertVisible:
+    id: "cart-summary"
+    text: "^장바구니 총 0개, 합계 0원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 10,000원\\. 놀이돈 안에서 장을 봐요\\.$"
+- assertNotVisible:
+    id: "receipt-screen"
+- scrollUntilVisible:
+    element:
+      id: "payment-option-1000"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-option-1000"
+    enabled: false
+    selected: false
+- scrollUntilVisible:
+    element:
+      id: "payment-result"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-result"
+    text: "^선택한 돈 없음\\. 먼저 물건을 담아 주세요\\.$"
+- scrollUntilVisible:
+    element:
+      id: "checkout-complete"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "checkout-complete"
+    enabled: false
+- assertNotVisible:
+    id: "payment-quiz"
+- assertNotVisible:
+    id: "payment-change"
+
+# 받은 거스름돈과 계산 뒤 남은 전체 놀이돈이 서로 다른 경우를 구별합니다.
+- scrollUntilVisible:
+    element:
+      id: "product-sample-carrot-add"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "product-sample-carrot-add"
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: "payment-option-5000"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "payment-option-5000"
+    enabled: true
+- assertVisible:
+    id: "payment-option-5000"
+    enabled: true
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: "payment-result"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-result"
+    text: "^선택한 돈 5,000원\\. 이 돈으로 계산할 수 있어요!$"
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_ANSWER: "4000"
+      CART_QUANTITY: "1"
+      CART_TOTAL: "1,000"
+- scrollUntilVisible:
+    element:
+      id: "checkout-complete"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "checkout-complete"
+    enabled: true
+- tapOn:
+    id: "checkout-complete"
+    enabled: true
+- assertVisible:
+    id: "receipt-screen"
+- assertVisible:
+    id: "receipt-title"
+    text: "^계산을 마쳤어요!$"
+- assertNotVisible:
+    id: "market-list"
+- assertNotVisible:
+    id: "cart-summary"
+- assertNotVisible:
+    id: "payment-selector"
+- assertNotVisible:
+    id: "quiz-answer"
+- assertNotVisible:
+    id: "checkout-complete"
+- scrollUntilVisible:
+    element:
+      id: "receipt-item-sample-carrot"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "receipt-item-sample-carrot"
+    text: "^당근, 1개\\. 1,000원 × 1개, 1,000원\\.$"
+- scrollUntilVisible:
+    element:
+      id: "receipt-total"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "receipt-total"
+    text: "^총 1개, 합계 1,000원\\.$"
+- scrollUntilVisible:
+    element:
+      id: "receipt-payment"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "receipt-payment"
+    text: "^낸 놀이돈 5,000원\\. 받은 거스름돈 4,000원\\. 계산 후 남은 놀이돈 9,000원\\.$"
+- takeScreenshot: receipt-different-change
+
+# 영수증도 메모리에만 있으므로 앱을 다시 실행하면 이전 구매가 남지 않습니다.
+- stopApp
+- launchApp:
+    appId: host.exp.exponent
+    clearState: false
+    stopApp: false
+    permissions: {}
+- waitForAnimationToEnd:
+    timeout: 10000
+- openLink: "${EXPO_URL}"
+- extendedWaitUntil:
+    visible:
+      id: "device-run-marker"
+      text: "^자동 검사 ${RUN_ID}$"
+    timeout: 90000
+- assertVisible:
+    id: "device-run-marker"
+    text: "^자동 검사 ${RUN_ID}$"
+- assertVisible:
+    id: "cart-summary"
+    text: "^장바구니 총 0개, 합계 0원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 10,000원\\. 놀이돈 안에서 장을 봐요\\.$"
+- assertNotVisible:
+    id: "receipt-screen"
+- scrollUntilVisible:
+    element:
+      id: "payment-option-1000"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-option-1000"
+    enabled: false
+    selected: false
+- scrollUntilVisible:
+    element:
+      id: "payment-result"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-result"
+    text: "^선택한 돈 없음\\. 먼저 물건을 담아 주세요\\.$"
+- scrollUntilVisible:
+    element:
+      id: "checkout-complete"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "checkout-complete"
+    enabled: false
+- assertNotVisible:
+    id: "payment-quiz"
+- assertNotVisible:
+    id: "payment-change"
+- assertNotVisible:
+    id: "receipt-title"
+- takeScreenshot: receipt-reset

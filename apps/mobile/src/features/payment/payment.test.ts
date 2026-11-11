@@ -13,9 +13,9 @@ import {
 } from './payment.ts';
 
 const catalog = [
-  { id: 'apple', priceKrw: 1500 },
-  { id: 'milk', priceKrw: 2500 },
-  { id: 'carrot', priceKrw: 1000 },
+  { id: 'apple', name: '사과', unit: '1개', priceKrw: 1500 },
+  { id: 'milk', name: '우유', unit: '1팩 · 1L', priceKrw: 2500 },
+  { id: 'carrot', name: '당근', unit: '1개', priceKrw: 1000 },
 ] as const;
 
 const reducer = createShoppingReducer(catalog);
@@ -176,6 +176,7 @@ test('돈 선택과 상품 변경은 이전 쇼핑 상태와 장바구니를 변
   const state: ShoppingState = Object.freeze({
     cart: Object.freeze({ apple: 2, milk: 1 }),
     selectedPaymentKrw: 5000,
+    receipt: null,
     quiz: Object.freeze({ answer: '', status: 'unanswered' }),
   });
   const actions = [
@@ -215,7 +216,7 @@ test('초기 쇼핑 상태는 빈 장바구니와 미선택 돈과 새 퀴즈를
   const first = createInitialShoppingState();
   const second = createInitialShoppingState();
   assert.deepEqual(first, {
-    cart: {}, selectedPaymentKrw: null, quiz: { answer: '', status: 'unanswered' },
+    cart: {}, selectedPaymentKrw: null, receipt: null, quiz: { answer: '', status: 'unanswered' },
   });
   assert.notEqual(first, second);
   assert.notEqual(first.cart, second.cart);
@@ -295,7 +296,7 @@ test('거스름돈을 계산할 수 없으면 입력과 확인과 다시 풀기�
 
 test('다른 돈을 고르면 정답도 초기화하고 새 거스름돈으로 채점한다', () => {
   const state: ShoppingState = {
-    cart: { carrot: 1 }, selectedPaymentKrw: 5000, quiz: { answer: '4000', status: 'correct' },
+    cart: { carrot: 1 }, selectedPaymentKrw: 5000, receipt: null, quiz: { answer: '4000', status: 'correct' },
   };
   let next = reducer(state, { type: 'select-payment', amountKrw: 1000 });
   assert.deepEqual(next.quiz, { answer: '', status: 'unanswered' });
@@ -306,7 +307,7 @@ test('다른 돈을 고르면 정답도 초기화하고 새 거스름돈으로 �
 
 test('돈 선택을 취소하면 퀴즈도 지우고 장바구니만 보존한다', () => {
   const state: ShoppingState = {
-    cart: { carrot: 1 }, selectedPaymentKrw: 5000, quiz: { answer: '4000', status: 'correct' },
+    cart: { carrot: 1 }, selectedPaymentKrw: 5000, receipt: null, quiz: { answer: '4000', status: 'correct' },
   };
   const next = reducer(state, { type: 'clear-payment' });
   assert.equal(next.cart, state.cart);
@@ -316,7 +317,7 @@ test('돈 선택을 취소하면 퀴즈도 지우고 장바구니만 보존한�
 
 test('상품 추가와 감소와 품목 삭제와 전체 비우기는 돈 선택과 답을 함께 초기화한다', () => {
   const state: ShoppingState = {
-    cart: { apple: 2, milk: 1 }, selectedPaymentKrw: 10000, quiz: { answer: '4500', status: 'correct' },
+    cart: { apple: 2, milk: 1 }, selectedPaymentKrw: 10000, receipt: null, quiz: { answer: '4500', status: 'correct' },
   };
   const actions: CartAction[] = [
     { type: 'add', productId: 'apple' },
@@ -335,7 +336,7 @@ test('상품 추가와 감소와 품목 삭제와 전체 비우기는 돈 선택
 
 test('같은 돈과 수량 상한과 없는 품목의 변화 없는 동작은 정답 상태도 보존한다', () => {
   const state: ShoppingState = {
-    cart: { carrot: 9 }, selectedPaymentKrw: 10000, quiz: { answer: '1000', status: 'correct' },
+    cart: { carrot: 9 }, selectedPaymentKrw: 10000, receipt: null, quiz: { answer: '1000', status: 'correct' },
   };
   const actions = [
     { type: 'select-payment', amountKrw: 10000 },
@@ -354,6 +355,7 @@ test('퀴즈 입력과 채점과 초기화는 이전 쇼핑 상태와 퀴즈를 
   const state: ShoppingState = Object.freeze({
     cart: Object.freeze({ apple: 2, milk: 1 }),
     selectedPaymentKrw: 10000,
+    receipt: null,
     quiz: Object.freeze({ answer: '4500', status: 'unanswered' }),
   });
   const actions = [
@@ -370,7 +372,202 @@ test('퀴즈 입력과 채점과 초기화는 이전 쇼핑 상태와 퀴즈를 
     assert.deepEqual(state, {
       cart: { apple: 2, milk: 1 },
       selectedPaymentKrw: 10000,
+      receipt: null,
       quiz: { answer: '4500', status: 'unanswered' },
     });
   }
+});
+
+test('빈 장바구니와 예산 초과와 미선택과 부족한 돈으로는 계산을 완료하지 않는다', () => {
+  const cases: ShoppingState[] = [
+    createInitialShoppingState(),
+    { ...createInitialShoppingState(), cart: { apple: 9 }, selectedPaymentKrw: 10000 },
+    { ...createInitialShoppingState(), cart: { carrot: 1 }, selectedPaymentKrw: null },
+    { ...createInitialShoppingState(), cart: { apple: 2, milk: 1 }, selectedPaymentKrw: 5000 },
+    { ...createInitialShoppingState(), cart: { carrot: 1 }, selectedPaymentKrw: 2000 },
+  ];
+  for (const original of cases) {
+    const state: ShoppingState = { ...original, quiz: { answer: '0', status: 'correct' } };
+    assert.equal(reducer(state, { type: 'complete-checkout' }), state);
+  }
+});
+
+test('답을 입력만 했거나 형식 오류 또는 오답 상태이면 계산 완료를 거부한다', () => {
+  for (const status of ['unanswered', 'invalid', 'incorrect'] as const) {
+    const state: ShoppingState = {
+      ...createInitialShoppingState(),
+      cart: { apple: 2, milk: 1 },
+      selectedPaymentKrw: 10000,
+      quiz: { answer: '4500', status },
+    };
+    assert.equal(reducer(state, { type: 'complete-checkout' }), state);
+  }
+});
+
+test('정답 표시가 있어도 현재 거스름돈과 답이 일치하는지 계산 완료 때 다시 검사한다', () => {
+  for (const answer of ['0', '', '4,500', '4500\n']) {
+    const state: ShoppingState = {
+      ...createInitialShoppingState(),
+      cart: { apple: 2, milk: 1 },
+      selectedPaymentKrw: 10000,
+      quiz: { answer, status: 'correct' },
+    };
+    assert.equal(reducer(state, { type: 'complete-checkout' }), state);
+  }
+  const products = catalog.map((product) => ({ ...product, priceKrw: Number(product.priceKrw) }));
+  const changingReducer = createShoppingReducer(products);
+  const state: ShoppingState = {
+    ...createInitialShoppingState(),
+    cart: { apple: 2, milk: 1 },
+    selectedPaymentKrw: 10000,
+    quiz: { answer: '4500', status: 'correct' },
+  };
+  products[0].priceKrw = 2000;
+  assert.equal(changingReducer(state, { type: 'complete-checkout' }), state);
+});
+
+test('5500원 장보기와 10000원 지불의 정답을 확인하면 영수증 생성과 쇼핑 초기화를 함께 수행한다', () => {
+  let state = createInitialShoppingState();
+  state = reducer(state, { type: 'add', productId: 'apple' });
+  state = reducer(state, { type: 'add', productId: 'apple' });
+  state = reducer(state, { type: 'add', productId: 'milk' });
+  state = reducer(state, { type: 'select-payment', amountKrw: 10000 });
+  state = reducer(state, { type: 'change-answer', answer: '04500' });
+  state = reducer(state, { type: 'check-answer' });
+  const completed = reducer(state, { type: 'complete-checkout' });
+  assert.deepEqual(completed, {
+    cart: {},
+    selectedPaymentKrw: null,
+    quiz: { answer: '', status: 'unanswered' },
+    receipt: {
+      items: [
+        { productId: 'apple', name: '사과', unit: '1개', unitPriceKrw: 1500, quantity: 2, lineTotalKrw: 3000 },
+        { productId: 'milk', name: '우유', unit: '1팩 · 1L', unitPriceKrw: 2500, quantity: 1, lineTotalKrw: 2500 },
+      ],
+      totalQuantity: 3,
+      totalPriceKrw: 5500,
+      paidAmountKrw: 10000,
+      changeAmountKrw: 4500,
+      startingBudgetKrw: 10000,
+      remainingBudgetKrw: 4500,
+    },
+  });
+});
+
+test('거스름돈 0원을 맞힌 경우에도 계산을 완료할 수 있다', () => {
+  const state: ShoppingState = {
+    ...createInitialShoppingState(),
+    cart: { carrot: 1 }, selectedPaymentKrw: 1000, quiz: { answer: '0', status: 'correct' },
+  };
+  const next = reducer(state, { type: 'complete-checkout' });
+  assert.ok(next.receipt);
+  assert.equal(next.receipt.changeAmountKrw, 0);
+  assert.equal(next.receipt.totalPriceKrw, 1000);
+});
+
+test('완료 영수증은 5000원 지불의 거스름돈과 전체 놀이돈 잔액을 별개로 보존한다', () => {
+  const state: ShoppingState = {
+    ...createInitialShoppingState(),
+    cart: { carrot: 1 }, selectedPaymentKrw: 5000, quiz: { answer: '4000', status: 'correct' },
+  };
+  const next = reducer(state, { type: 'complete-checkout' });
+  assert.ok(next.receipt);
+  assert.equal(next.receipt.paidAmountKrw, 5000);
+  assert.equal(next.receipt.changeAmountKrw, 4000);
+  assert.equal(next.receipt.remainingBudgetKrw, 9000);
+});
+
+test('영수증을 보고 있을 때 중복 완료와 상품·돈·퀴즈 변경은 모두 같은 상태를 유지한다', () => {
+  const state: ShoppingState = {
+    ...createInitialShoppingState(),
+    cart: { carrot: 1 }, selectedPaymentKrw: 1000, quiz: { answer: '0', status: 'correct' },
+  };
+  const completed = reducer(state, { type: 'complete-checkout' });
+  const actions = [
+    { type: 'complete-checkout' },
+    { type: 'add', productId: 'apple' },
+    { type: 'decrease', productId: 'carrot' },
+    { type: 'remove', productId: 'carrot' },
+    { type: 'clear' },
+    { type: 'select-payment', amountKrw: 5000 },
+    { type: 'clear-payment' },
+    { type: 'change-answer', answer: '1000' },
+    { type: 'check-answer' },
+    { type: 'retry-quiz' },
+  ] as const;
+  for (const action of actions) {
+    assert.equal(reducer(completed, action), completed);
+  }
+});
+
+test('계산 전 새 놀이 동작은 현재 장바구니와 선택과 답을 뜻하지 않게 지우지 않는다', () => {
+  const state: ShoppingState = {
+    ...createInitialShoppingState(),
+    cart: { carrot: 1 }, selectedPaymentKrw: 5000, quiz: { answer: '4000', status: 'correct' },
+  };
+  assert.equal(reducer(state, { type: 'start-new-round' }), state);
+  const initial = createInitialShoppingState();
+  assert.equal(reducer(initial, { type: 'start-new-round' }), initial);
+});
+
+test('새 놀이를 시작하면 10000원 예산으로 다시 구매할 수 있고 이전 영수증은 바뀌지 않는다', () => {
+  const state: ShoppingState = {
+    ...createInitialShoppingState(),
+    cart: { carrot: 1 }, selectedPaymentKrw: 5000, quiz: { answer: '4000', status: 'correct' },
+  };
+  const completed = reducer(state, { type: 'complete-checkout' });
+  const previousReceipt = completed.receipt;
+  let next = reducer(completed, { type: 'start-new-round' });
+  assert.deepEqual(next, createInitialShoppingState());
+  assert.equal(getBudgetSummary(getCartSummary(next.cart, catalog).totalPriceKrw).remainingKrw, 10000);
+  next = reducer(next, { type: 'add', productId: 'apple' });
+  next = reducer(next, { type: 'select-payment', amountKrw: 5000 });
+  next = reducer(next, { type: 'change-answer', answer: '3500' });
+  next = reducer(next, { type: 'check-answer' });
+  next = reducer(next, { type: 'complete-checkout' });
+  assert.ok(next.receipt);
+  assert.equal(next.receipt.startingBudgetKrw, 10000);
+  assert.equal(next.receipt.remainingBudgetKrw, 8500);
+  assert.equal(next.receipt.changeAmountKrw, 3500);
+  assert.notEqual(next.receipt, previousReceipt);
+  assert.equal(previousReceipt?.totalPriceKrw, 1000);
+  assert.equal(previousReceipt?.remainingBudgetKrw, 9000);
+});
+
+test('계산 완료와 새 놀이는 원래 장바구니·퀴즈·영수증 값을 직접 변경하지 않는다', () => {
+  const state: ShoppingState = Object.freeze({
+    cart: Object.freeze({ apple: 2, milk: 1 }),
+    selectedPaymentKrw: 10000,
+    quiz: Object.freeze({ answer: '4500', status: 'correct' }),
+    receipt: null,
+  });
+  const before = structuredClone(state);
+  const completed = reducer(state, { type: 'complete-checkout' });
+  assert.deepEqual(state, before);
+  assert.notEqual(completed.cart, state.cart);
+  assert.notEqual(completed.quiz, state.quiz);
+  assert.ok(completed.receipt);
+  completed.receipt.items.forEach(Object.freeze);
+  Object.freeze(completed.receipt.items);
+  Object.freeze(completed.receipt);
+  Object.freeze(completed);
+  const completedBefore = structuredClone(completed);
+  reducer(completed, { type: 'start-new-round' });
+  assert.deepEqual(completed, completedBefore);
+});
+
+test('사용자 지정 예산도 완료 조건과 영수증에 동일하게 적용한다', () => {
+  const smallBudgetReducer = createShoppingReducer(catalog, 5000);
+  const state: ShoppingState = {
+    ...createInitialShoppingState(),
+    cart: { carrot: 1 }, selectedPaymentKrw: 10000, quiz: { answer: '9000', status: 'correct' },
+  };
+  assert.equal(smallBudgetReducer(state, { type: 'complete-checkout' }), state);
+  const allowed: ShoppingState = {
+    ...state, selectedPaymentKrw: 5000, quiz: { answer: '4000', status: 'correct' },
+  };
+  const completed = smallBudgetReducer(allowed, { type: 'complete-checkout' });
+  assert.ok(completed.receipt);
+  assert.equal(completed.receipt.startingBudgetKrw, 5000);
+  assert.equal(completed.receipt.remainingBudgetKrw, 4000);
 });

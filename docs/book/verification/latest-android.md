@@ -1,11 +1,11 @@
 # Android 실기기 자동 검증 기록
 
-- 실행 시각: 2026-11-12 04:19:39 (Asia/Seoul)
+- 실행 시각: 2026-11-12 05:12:20 (Asia/Seoul)
 - 결과: **PASS**
-- 실행 ID: `20261111T191017380Z-9b74feb7`
+- 실행 ID: `20261111T195901433Z-1c4ab47a`
 - 기기: SM-S948N / Android 17
-- 검사 시작 HEAD: `85415bb76769e5434fcd08275f625e1183b729b0`
-- 검사 소스 SHA-256: `1c0cdd301484536e43eea88cdc5ab5efb35014458bac7f9be5898cc6a169118f`
+- 검사 시작 HEAD: `843ec07618070bbf7ed8bd62b4c58ce407f2ae85`
+- 검사 소스 SHA-256: `e7666817460acd3fbb1bb8004ab7ac264eee901da077098bc1d80aad2d7e40b5`
 - 도구: Maestro 2.12.1 / JDK 21 / USB 실기기 / Expo Go
 - 커밋 모드: 검사한 소스가 유지된 경우에만 자동 커밋. 실제 커밋 ID는 실행 요약 또는 git log에서 확인.
 
@@ -17,6 +17,7 @@ adb -s <선택한 실기기> shell settings put global stay_on_while_plugged_in 
 adb -s <선택한 실기기> shell settings get global stay_on_while_plugged_in
 maestro check-syntax apps/mobile/.maestro/payment.yaml
 maestro check-syntax apps/mobile/.maestro/solve-quiz.yaml
+maestro check-syntax apps/mobile/.maestro/receipt.yaml
 node --test scripts/device/git-guard.test.mjs
 cd apps/mobile
 npm test
@@ -53,11 +54,14 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 - 거스름돈 퀴즈: 빈 답과 0원 구분, 오답 수정·정답 확인·다시 풀기·입력 잠금.
 - 정답 전 계산 결과와 예산 잔액을 숨기고, 맞힌 뒤 계산식과 잔액을 공개한다.
 - 상품·낼 돈 변경은 퀴즈를 초기화하며 같은 선택과 수량 상한의 무변화는 풀이를 유지한다.
+- 정답 전 계산 완료 차단, 영수증 상품별 가격·수량·합계·지불액·거스름돈·잔액을 확인한다.
+- 0원 거스름돈도 완료하며, 다시 장보기와 영수증 상태의 재실행으로 새 놀이를 시작한다.
 
 ## 결과
 
 - maestro-syntax-main: 종료 코드 0
 - maestro-syntax-quiz: 종료 코드 0
+- maestro-syntax-receipt: 종료 코드 0
 - git-guard-tests: 종료 코드 0
 - unit-tests: 종료 코드 0
 - typecheck: 종료 코드 0
@@ -66,6 +70,6 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 - maestro-flow: 종료 코드 0
 - JUnit: 1 testcase, 실패 0, 오류 0, 건너뜀 0
 
-원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/20261111T191017380Z-9b74feb7/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.
+원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/20261111T195901433Z-1c4ab47a/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.
 
 이 기록은 해당 Android 실기기·검사 시점의 결과다. iPhone, 스토어용 APK/AAB/IPA 및 실제 이마트 가격 연동은 검증하지 않았다.
