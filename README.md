@@ -34,7 +34,7 @@
 - [x] 지불할 놀이돈 선택 코드·자동 검사·브라우저 검증 (2026-11-11)
 - [x] 갤럭시 지불할 놀이돈 선택·재실행 초기화 자동 검증 (`8309377`, 2026-11-12)
 - [x] 거스름돈 금액·계산식 구현 — [검증 기록 확인](docs/book/verification/latest-android.md)
-- [ ] 거스름돈 맞히기
+- [x] 거스름돈 답 입력·채점·다시 풀기 구현 — [검증 기록 확인](docs/book/verification/latest-android.md)
 - [ ] DB 구성과 허용된 실제 가격 연동
 - [ ] Android·iPhone 실기기 검증
 - [ ] 스토어 제출
@@ -43,7 +43,7 @@
 
 ## 첫 화면 실행
 
-[모바일 앱 실행 안내](apps/mobile/README.md)를 따라 갤럭시에서 확인할 수 있습니다. 예시 상품 6개와 담기·수량 조절·장바구니 합계, 놀이돈 10,000원을 기준으로 남을 돈과 부족한 돈 표시를 구현했습니다. 낼 놀이돈 1,000원·5,000원·10,000원 중 하나를 선택하고 물건값에 충분한지 알려주는 기능도 구현했습니다. 충분한 돈을 고르면 받을 거스름돈과 계산식을 표시하고, 딱 맞게 고른 경우 0원을 보여 줍니다. 예산 잔액과 거스름돈은 서로 다른 기준으로 계산합니다. 현재 장바구니와 돈 선택은 메모리에만 보관하므로 새로고침하면 초기화됩니다. DB와 실제 가격은 이후 단계입니다.
+[모바일 앱 실행 안내](apps/mobile/README.md)를 따라 갤럭시에서 확인할 수 있습니다. 예시 상품 6개와 담기·수량 조절·장바구니 합계, 놀이돈 10,000원을 기준으로 남을 돈과 부족한 돈 표시를 구현했습니다. 낼 놀이돈 1,000원·5,000원·10,000원 중 하나를 선택하고 물건값에 충분한지 알려주는 기능도 구현했습니다. 충분한 돈을 고르면 거스름돈을 입력해 맞히는 문제가 나옵니다. 정답을 맞히면 받을 거스름돈과 계산식을 공개하고, 딱 맞게 낸 경우에도 0원을 답으로 입력합니다. 예산 잔액과 거스름돈은 서로 다른 기준으로 계산합니다. 현재 장바구니와 돈 선택은 메모리에만 보관하므로 새로고침하면 초기화됩니다. DB와 실제 가격은 이후 단계입니다.
 
 ```bash
 cd apps/mobile
@@ -51,6 +51,6 @@ npm ci
 npm start
 ```
 
-[1장: 첫 앱과 검증 결과](docs/book/chapters/01-first-app.md) · [2장: 장바구니](docs/book/chapters/02-shopping-cart.md) · [3장: 놀이돈 예산](docs/book/chapters/03-play-money.md) · [3장 보충: 낼 놀이돈 선택](docs/book/chapters/03a-payment-selection.md) · [3장 보충: 거스름돈 계산](docs/book/chapters/03c-change-calculation.md)
+[1장: 첫 앱과 검증 결과](docs/book/chapters/01-first-app.md) · [2장: 장바구니](docs/book/chapters/02-shopping-cart.md) · [3장: 놀이돈 예산](docs/book/chapters/03-play-money.md) · [3장 보충: 낼 놀이돈 선택](docs/book/chapters/03a-payment-selection.md) · [3장 보충: 거스름돈 계산](docs/book/chapters/03c-change-calculation.md) · [3장 보충: 거스름돈 맞히기](docs/book/chapters/03d-change-quiz.md)
 
 현재 프로젝트는 Expo SDK 58입니다. [Expo Go 호환 오류 해결 기록](docs/book/chapters/01a-expo-go-sdk58.md)에 업데이트와 검증 내용을 남겼습니다.

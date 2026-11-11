@@ -1,11 +1,11 @@
 # Android 실기기 자동 검증 기록
 
-- 실행 시각: 2026-11-12 03:19:15 (Asia/Seoul)
+- 실행 시각: 2026-11-12 04:19:39 (Asia/Seoul)
 - 결과: **PASS**
-- 실행 ID: `20261111T181312912Z-be95b54f`
+- 실행 ID: `20261111T191017380Z-9b74feb7`
 - 기기: SM-S948N / Android 17
-- 검사 시작 HEAD: `8309377c907b88585c7c3330530f9cf365801fbb`
-- 검사 소스 SHA-256: `696ee726afcca599c1f3f2db81db5dc89e70782140d120026259d2b0c5fc82f8`
+- 검사 시작 HEAD: `85415bb76769e5434fcd08275f625e1183b729b0`
+- 검사 소스 SHA-256: `1c0cdd301484536e43eea88cdc5ab5efb35014458bac7f9be5898cc6a169118f`
 - 도구: Maestro 2.12.1 / JDK 21 / USB 실기기 / Expo Go
 - 커밋 모드: 검사한 소스가 유지된 경우에만 자동 커밋. 실제 커밋 ID는 실행 요약 또는 git log에서 확인.
 
@@ -15,6 +15,8 @@
 adb -s <선택한 실기기> shell settings get global stay_on_while_plugged_in
 adb -s <선택한 실기기> shell settings put global stay_on_while_plugged_in 7
 adb -s <선택한 실기기> shell settings get global stay_on_while_plugged_in
+maestro check-syntax apps/mobile/.maestro/payment.yaml
+maestro check-syntax apps/mobile/.maestro/solve-quiz.yaml
 node --test scripts/device/git-guard.test.mjs
 cd apps/mobile
 npm test
@@ -48,9 +50,14 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 - 받을 거스름돈과 계산식: 5,500원에 10,000원은 4,500원, 정확히 낸 금액은 0원.
 - 1,000원에 5,000원을 고르면 거스름돈 4,000원이며 예산 잔액 9,000원은 유지된다.
 - 부족한 돈으로 교체·선택 취소·상품 변경·비우기·재실행 시 이전 거스름돈이 사라진다.
+- 거스름돈 퀴즈: 빈 답과 0원 구분, 오답 수정·정답 확인·다시 풀기·입력 잠금.
+- 정답 전 계산 결과와 예산 잔액을 숨기고, 맞힌 뒤 계산식과 잔액을 공개한다.
+- 상품·낼 돈 변경은 퀴즈를 초기화하며 같은 선택과 수량 상한의 무변화는 풀이를 유지한다.
 
 ## 결과
 
+- maestro-syntax-main: 종료 코드 0
+- maestro-syntax-quiz: 종료 코드 0
 - git-guard-tests: 종료 코드 0
 - unit-tests: 종료 코드 0
 - typecheck: 종료 코드 0
@@ -59,6 +66,6 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 - maestro-flow: 종료 코드 0
 - JUnit: 1 testcase, 실패 0, 오류 0, 건너뜀 0
 
-원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/20261111T181312912Z-be95b54f/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.
+원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/20261111T191017380Z-9b74feb7/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.
 
 이 기록은 해당 Android 실기기·검사 시점의 결과다. iPhone, 스토어용 APK/AAB/IPA 및 실제 이마트 가격 연동은 검증하지 않았다.

@@ -1,0 +1,56 @@
+appId: host.exp.exponent
+name: 거스름돈 정답 입력
+# 호출부가 정해진 UP·DOWN 방향으로 입력칸을 찾은 뒤 공통 채점을 실행합니다.
+# 화면의 예산 잔액은 정답을 맞힌 뒤 공개되므로 먼저 가림 상태를 확인합니다.
+# 새 문제와 다시 풀기에서는 답이 이미 비어 있어야 하므로 기존 문자를 지우지 않습니다.
+---
+- assertVisible:
+    id: "cart-summary"
+    text: "^장바구니 총 ${CART_QUANTITY}개, 합계 ${CART_TOTAL}원\\. 오늘의 놀이돈 10,000원\\. 거스름돈을 맞히면 남을 돈을 보여 줘요\\.$"
+- assertVisible:
+    id: "quiz-answer"
+    enabled: true
+- tapOn:
+    id: "quiz-answer"
+    enabled: true
+- inputText: "${QUIZ_ANSWER}"
+- hideKeyboard
+# 오답을 고쳐 쓰면 이전 채점 결과가 지워져야 합니다.
+- scrollUntilVisible:
+    element:
+      id: "quiz-feedback"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "quiz-feedback"
+    text: "^거스름돈을 숫자로 적고 정답 확인을 눌러 주세요\\.$"
+- scrollUntilVisible:
+    element:
+      id: "quiz-check"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "quiz-check"
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: "quiz-feedback"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "quiz-feedback"
+    text: "^정답이에요! 거스름돈을 잘 계산했어요\\.$"
+- assertNotVisible:
+    id: "quiz-check"
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "quiz-answer"
+    enabled: false

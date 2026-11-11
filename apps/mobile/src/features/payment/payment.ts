@@ -1,23 +1,37 @@
 import { STARTING_BUDGET_KRW } from '../budget/budget.ts';
 import { createCartReducer, getCartSummary, type CartAction, type CartState } from '../cart/cart.ts';
 
+import { gradeChangeAnswer, type ChangeQuizState } from './change-quiz.ts';
+
 export const PAYMENT_OPTIONS_KRW = [1000, 5000, 10000] as const;
 
 export type ShoppingState = {
   cart: CartState;
   selectedPaymentKrw: number | null;
+  quiz: ChangeQuizState;
 };
 
 export type ShoppingAction =
   | CartAction
   | { type: 'select-payment'; amountKrw: number }
-  | { type: 'clear-payment' };
+  | { type: 'clear-payment' }
+  | { type: 'change-answer'; answer: string }
+  | { type: 'check-answer' }
+  | { type: 'retry-quiz' };
 
 type PaymentSummary = {
   status: 'empty' | 'over-budget' | 'unselected' | 'insufficient' | 'ready';
   missingAmountKrw: number;
   changeAmountKrw: number | null;
 };
+
+function createUnansweredQuiz(): ChangeQuizState {
+  return { answer: '', status: 'unanswered' };
+}
+
+export function createInitialShoppingState(): ShoppingState {
+  return { cart: {}, selectedPaymentKrw: null, quiz: createUnansweredQuiz() };
+}
 
 function isAvailablePayment(amountKrw: number | null, budgetKrw: number): amountKrw is number {
   return amountKrw !== null
@@ -32,6 +46,37 @@ export function createShoppingReducer(
   const cartReducer = createCartReducer(catalog);
 
   return function shoppingReducer(state: ShoppingState, action: ShoppingAction): ShoppingState {
+    if (action.type === 'change-answer' || action.type === 'check-answer' || action.type === 'retry-quiz') {
+      const { totalPriceKrw } = getCartSummary(state.cart, catalog);
+      const { changeAmountKrw } = getPaymentSummary(totalPriceKrw, state.selectedPaymentKrw, budgetKrw);
+
+      // 채점의 기준은 현재 장바구니와 고른 돈입니다. 돈이 부족하거나 선택 전이면 오래된 답을 채점하지 않습니다.
+      // 0원도 유효한 정답이므로 참/거짓 대신 null 여부로 준비 상태를 구분합니다.
+      if (changeAmountKrw === null) {
+        return state;
+      }
+
+      if (action.type === 'retry-quiz') {
+        return state.quiz.answer === '' && state.quiz.status === 'unanswered'
+          ? state
+          : { ...state, quiz: createUnansweredQuiz() };
+      }
+
+      // 정답을 맞힌 화면은 다시 풀기를 선택할 때까지 보존해 입력 실수로 결과가 사라지지 않게 합니다.
+      if (state.quiz.status === 'correct') {
+        return state;
+      }
+
+      if (action.type === 'change-answer') {
+        return state.quiz.answer === action.answer && state.quiz.status === 'unanswered'
+          ? state
+          : { ...state, quiz: { answer: action.answer, status: 'unanswered' } };
+      }
+
+      const status = gradeChangeAnswer(state.quiz.answer, changeAmountKrw);
+      return status === state.quiz.status ? state : { ...state, quiz: { ...state.quiz, status } };
+    }
+
     if (action.type === 'select-payment') {
       const { totalPriceKrw } = getCartSummary(state.cart, catalog);
 
@@ -46,17 +91,21 @@ export function createShoppingReducer(
       }
 
       // 적게 고른 돈도 받아 부족한 금액을 배우게 합니다. 여러 번 눌러도 금액은 누적하지 않습니다.
-      return { ...state, selectedPaymentKrw: action.amountKrw };
+      // 고른 돈이 달라지면 문제의 정답도 달라지므로 이전 입력과 채점 결과를 함께 지웁니다.
+      return { ...state, selectedPaymentKrw: action.amountKrw, quiz: createUnansweredQuiz() };
     }
 
     if (action.type === 'clear-payment') {
-      return state.selectedPaymentKrw === null ? state : { ...state, selectedPaymentKrw: null };
+      return state.selectedPaymentKrw === null
+        ? state
+        : { ...state, selectedPaymentKrw: null, quiz: createUnansweredQuiz() };
     }
 
     const cart = cartReducer(state.cart, action);
 
-    // 실제 상품 구성이 바뀐 경우에만 선택을 비웁니다. 수량 상한처럼 변화 없는 동작은 선택을 유지합니다.
-    return cart === state.cart ? state : { cart, selectedPaymentKrw: null };
+    // 상품 구성이 바뀌면 돈 선택과 퀴즈도 같은 상태 변경에서 지워 이전 문제의 답이 남지 않게 합니다.
+    // 수량 상한처럼 실제 변화 없는 동작은 선택과 풀이를 그대로 유지합니다.
+    return cart === state.cart ? state : { cart, selectedPaymentKrw: null, quiz: createUnansweredQuiz() };
   };
 }
 

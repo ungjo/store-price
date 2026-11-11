@@ -1,13 +1,13 @@
 import { StatusBar } from 'expo-status-bar';
 import { useReducer } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { PaymentSelector } from './src/components/payment-selector';
 import { QuantityControl } from './src/components/quantity-control';
 import { getCartSummary } from './src/features/cart/cart';
 import { getBudgetSummary, STARTING_BUDGET_KRW } from './src/features/budget/budget';
-import { createShoppingReducer } from './src/features/payment/payment';
+import { createInitialShoppingState, createShoppingReducer, getPaymentSummary } from './src/features/payment/payment';
 import { sampleProducts } from './src/data/sample-products';
 
 // 원 단위 정수 가격에 천 단위 구분 기호를 붙입니다. 원래 가격 값은 바꾸지 않습니다.
@@ -19,8 +19,8 @@ const deviceRunId = process.env.EXPO_PUBLIC_DEVICE_RUN_ID;
 
 export default function App() {
   // 물건이 바뀐 뒤 예전 돈 선택이 남지 않도록 장바구니와 선택 금액을 함께 관리합니다.
-  const [shopping, dispatch] = useReducer(shoppingReducer, { cart: {}, selectedPaymentKrw: null });
-  const { cart, selectedPaymentKrw } = shopping;
+  const [shopping, dispatch] = useReducer(shoppingReducer, undefined, createInitialShoppingState);
+  const { cart, selectedPaymentKrw, quiz } = shopping;
   const summary = getCartSummary(cart, sampleProducts);
   // 잔액도 장바구니 합계에서 매번 계산해 담기·빼기·비우기 뒤 금액이 항상 함께 바뀝니다.
   const budget = getBudgetSummary(summary.totalPriceKrw);
@@ -33,6 +33,10 @@ export default function App() {
       : summary.totalQuantity === 0
         ? '놀이돈 안에서 장을 봐요.'
         : '이대로 사면 남을 돈이에요.';
+  // 10,000원을 고르면 예산 잔액도 정답이 되므로, 맞히기 전에는 화면과 읽기 안내에서 함께 가립니다.
+  const hideBudgetAnswer = getPaymentSummary(summary.totalPriceKrw, selectedPaymentKrw).changeAmountKrw !== null
+    && quiz.status !== 'correct';
+  const quizBudgetHint = '거스름돈을 맞히면 남을 돈을 보여 줘요.';
   const selectedProducts = sampleProducts.filter((product) => (cart[product.id] ?? 0) > 0);
   const { width, fontScale } = useWindowDimensions();
   // 좁은 화면이나 큰 글자 설정에서는 상품을 한 줄에 하나씩 보여 읽기 쉽게 합니다.
@@ -42,191 +46,200 @@ export default function App() {
     <SafeAreaProvider>
       <SafeAreaView style={styles.screen}>
         <StatusBar style="dark" />
-        {/* 열 수가 바뀌면 key도 바꿔 FlatList를 새로 만들어 열 변경 오류를 피합니다. */}
-        <FlatList
-          key={columns}
-          testID="market-list"
-          data={sampleProducts}
-          extraData={shopping}
-          numColumns={columns}
-          keyExtractor={(item) => item.id}
-          style={styles.list}
-          contentContainerStyle={styles.content}
-          columnWrapperStyle={columns === 2 ? styles.row : undefined}
-          ListHeaderComponent={
-            <View>
-              {deviceRunId && (
-                <Text
-                  testID="device-run-marker"
-                  accessible
-                  accessibilityLabel={'자동 검사 ' + deviceRunId}
-                  style={styles.deviceRunMarker}
-                >
-                  자동 검사 중
-                </Text>
-              )}
-              <View style={styles.brand}>
-                <Text style={styles.brandIcon} accessible={false}>🌱</Text>
-                <Text style={styles.brandName}>꼬마 시장</Text>
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>시장놀이</Text>
-                </View>
-              </View>
-
-              <View style={styles.welcome}>
-                <Text style={styles.eyebrow}>어서 오세요!</Text>
-                <Text style={styles.title} accessibilityRole="header">
-                  오늘은 무엇을{'\n'}사 볼까요?
-                </Text>
-                <Text style={styles.description}>
-                  알록달록 우리 가게에서{'\n'}물건과 가격을 살펴봐요.
-                </Text>
-                <View style={styles.awning} accessible={false}>
-                  {Array.from({ length: 10 }, (_, index) => (
-                    <View
-                      key={index}
-                      style={[styles.stripe, index % 2 === 0 && styles.greenStripe]}
-                    />
-                  ))}
-                </View>
-              </View>
-
-              <View style={styles.notice}>
-                <Text style={styles.noticeTitle}>연습용 예시 가격이에요</Text>
-                <Text style={styles.noticeText}>
-                  놀이를 위해 만든 가격이에요.{'\n'}실제 이마트 판매 가격이 아니에요.
-                </Text>
-              </View>
-
-              <View
-                style={styles.playMoney}
-                accessible
-                accessibilityLabel={'오늘의 놀이돈 ' + won.format(STARTING_BUDGET_KRW) + '원. 이 돈 안에서 물건을 골라 봐요.'}
-              >
-                <View style={styles.summaryRow}>
-                  <Text style={styles.playMoneyLabel}>오늘의 놀이돈</Text>
-                  <Text style={styles.playMoneyAmount}>{won.format(STARTING_BUDGET_KRW)}원</Text>
-                </View>
-                <Text style={styles.playMoneyHint}>이 돈 안에서 물건을 골라 봐요.</Text>
-              </View>
-
-              <View style={styles.sectionHeading}>
-                <Text style={styles.sectionTitle} accessibilityRole="header">우리 가게 물건</Text>
-                <Text style={styles.count}>{sampleProducts.length}가지</Text>
-              </View>
-            </View>
-          }
-          renderItem={({ item }) => (
-            <View style={styles.product}>
-              {/* 상품 설명만 묶어서 읽고, 담기 버튼은 독립적으로 선택할 수 있게 합니다. */}
-              <View
-                accessible
-                accessibilityLabel={item.name + ', ' + item.unit + ', 연습용 가격 ' + won.format(item.priceKrw) + '원'}
-              >
-                <View style={[styles.productPicture, { backgroundColor: item.color }]}>
-                  <Text style={styles.emoji}>{item.emoji}</Text>
-                </View>
-                <Text style={styles.productName}>{item.name}</Text>
-                <Text style={styles.unit}>{item.unit}</Text>
-                <Text style={styles.price}>{won.format(item.priceKrw)}원</Text>
-              </View>
-              <QuantityControl
-                productId={item.id}
-                productName={item.name}
-                quantity={cart[item.id] ?? 0}
-                onAdd={() => dispatch({ type: 'add', productId: item.id })}
-                onDecrease={() => dispatch({ type: 'decrease', productId: item.id })}
-              />
-            </View>
-          )}
-          ListFooterComponent={
-            <View>
-              <View style={styles.cart}>
-                <View style={styles.cartHeading}>
-                  <Text style={styles.sectionTitle} accessibilityRole="header">내 장바구니</Text>
-                  <Text style={styles.count}>{summary.distinctProducts}가지 · {summary.totalQuantity}개</Text>
-                </View>
-                <Text style={styles.cartHint}>물건은 한 종류에 9개까지 담을 수 있어요.</Text>
-                {selectedProducts.length === 0 ? (
-                  <View style={styles.emptyCart}>
-                    <Text style={styles.emptyIcon} accessible={false}>🧺</Text>
-                    <Text testID="cart-empty" style={styles.emptyTitle}>아직 장바구니가 비어 있어요</Text>
-                    <Text style={styles.footerText}>마음에 드는 물건의 담기를 눌러 보세요.</Text>
-                  </View>
-                ) : (
-                  <View>
-                    {selectedProducts.map((product) => (
-                      <View key={product.id} style={styles.cartItem}>
-                        <View style={styles.cartItemInfo}>
-                          <Text style={styles.cartItemName}>{product.emoji} {product.name}</Text>
-                          <Text style={styles.cartItemDetail}>
-                            {won.format(product.priceKrw)}원 × {cart[product.id]}개
-                          </Text>
-                          <Text style={styles.cartItemPrice}>
-                            {won.format(product.priceKrw * cart[product.id])}원
-                          </Text>
-                        </View>
-                        <Pressable
-                          testID={'cart-' + product.id + '-remove'}
-                          accessibilityRole="button"
-                          accessibilityLabel={product.name + ' 모두 빼기'}
-                          onPress={() => dispatch({ type: 'remove', productId: product.id })}
-                          style={({ pressed }) => [styles.removeButton, pressed && styles.pressed]}
-                        >
-                          <Text style={styles.removeLabel}>빼기</Text>
-                        </Pressable>
-                      </View>
-                    ))}
-                    <Pressable
-                      testID="cart-clear"
-                      accessibilityRole="button"
-                      accessibilityLabel="장바구니 비우기"
-                      onPress={() => dispatch({ type: 'clear' })}
-                      style={({ pressed }) => [styles.clearButton, pressed && styles.pressed]}
-                    >
-                      <Text style={styles.removeLabel}>장바구니 비우기</Text>
-                    </Pressable>
-                  </View>
+        <KeyboardAvoidingView style={styles.keyboardArea} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          {/* 열 수가 바뀌면 key도 바꿔 FlatList를 새로 만들어 열 변경 오류를 피합니다. */}
+          <FlatList
+            key={columns}
+            testID="market-list"
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            data={sampleProducts}
+            extraData={shopping}
+            numColumns={columns}
+            keyExtractor={(item) => item.id}
+            style={styles.list}
+            contentContainerStyle={styles.content}
+            columnWrapperStyle={columns === 2 ? styles.row : undefined}
+            ListHeaderComponent={
+              <View>
+                {deviceRunId && (
+                  <Text
+                    testID="device-run-marker"
+                    accessible
+                    accessibilityLabel={'자동 검사 ' + deviceRunId}
+                    style={styles.deviceRunMarker}
+                  >
+                    자동 검사 중
+                  </Text>
                 )}
+                <View style={styles.brand}>
+                  <Text style={styles.brandIcon} accessible={false}>🌱</Text>
+                  <Text style={styles.brandName}>꼬마 시장</Text>
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>시장놀이</Text>
+                  </View>
+                </View>
+
+                <View style={styles.welcome}>
+                  <Text style={styles.eyebrow}>어서 오세요!</Text>
+                  <Text style={styles.title} accessibilityRole="header">
+                    오늘은 무엇을{'\n'}사 볼까요?
+                  </Text>
+                  <Text style={styles.description}>
+                    알록달록 우리 가게에서{'\n'}물건과 가격을 살펴봐요.
+                  </Text>
+                  <View style={styles.awning} accessible={false}>
+                    {Array.from({ length: 10 }, (_, index) => (
+                      <View
+                        key={index}
+                        style={[styles.stripe, index % 2 === 0 && styles.greenStripe]}
+                      />
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.notice}>
+                  <Text style={styles.noticeTitle}>연습용 예시 가격이에요</Text>
+                  <Text style={styles.noticeText}>
+                    놀이를 위해 만든 가격이에요.{'\n'}실제 이마트 판매 가격이 아니에요.
+                  </Text>
+                </View>
+
+                <View
+                  style={styles.playMoney}
+                  accessible
+                  accessibilityLabel={'오늘의 놀이돈 ' + won.format(STARTING_BUDGET_KRW) + '원. 이 돈 안에서 물건을 골라 봐요.'}
+                >
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.playMoneyLabel}>오늘의 놀이돈</Text>
+                    <Text style={styles.playMoneyAmount}>{won.format(STARTING_BUDGET_KRW)}원</Text>
+                  </View>
+                  <Text style={styles.playMoneyHint}>이 돈 안에서 물건을 골라 봐요.</Text>
+                </View>
+
+                <View style={styles.sectionHeading}>
+                  <Text style={styles.sectionTitle} accessibilityRole="header">우리 가게 물건</Text>
+                  <Text style={styles.count}>{sampleProducts.length}가지</Text>
+                </View>
               </View>
-              <PaymentSelector
-                totalPriceKrw={summary.totalPriceKrw}
-                selectedPaymentKrw={selectedPaymentKrw}
-                onSelect={(amountKrw) => dispatch({ type: 'select-payment', amountKrw })}
-                onClear={() => dispatch({ type: 'clear-payment' })}
-              />
+            }
+            renderItem={({ item }) => (
+              <View style={styles.product}>
+                {/* 상품 설명만 묶어서 읽고, 담기 버튼은 독립적으로 선택할 수 있게 합니다. */}
+                <View
+                  accessible
+                  accessibilityLabel={item.name + ', ' + item.unit + ', 연습용 가격 ' + won.format(item.priceKrw) + '원'}
+                >
+                  <View style={[styles.productPicture, { backgroundColor: item.color }]}>
+                    <Text style={styles.emoji}>{item.emoji}</Text>
+                  </View>
+                  <Text style={styles.productName}>{item.name}</Text>
+                  <Text style={styles.unit}>{item.unit}</Text>
+                  <Text style={styles.price}>{won.format(item.priceKrw)}원</Text>
+                </View>
+                <QuantityControl
+                  productId={item.id}
+                  productName={item.name}
+                  quantity={cart[item.id] ?? 0}
+                  onAdd={() => dispatch({ type: 'add', productId: item.id })}
+                  onDecrease={() => dispatch({ type: 'decrease', productId: item.id })}
+                />
+              </View>
+            )}
+            ListFooterComponent={
+              <View>
+                <View style={styles.cart}>
+                  <View style={styles.cartHeading}>
+                    <Text style={styles.sectionTitle} accessibilityRole="header">내 장바구니</Text>
+                    <Text style={styles.count}>{summary.distinctProducts}가지 · {summary.totalQuantity}개</Text>
+                  </View>
+                  <Text style={styles.cartHint}>물건은 한 종류에 9개까지 담을 수 있어요.</Text>
+                  {selectedProducts.length === 0 ? (
+                    <View style={styles.emptyCart}>
+                      <Text style={styles.emptyIcon} accessible={false}>🧺</Text>
+                      <Text testID="cart-empty" style={styles.emptyTitle}>아직 장바구니가 비어 있어요</Text>
+                      <Text style={styles.footerText}>마음에 드는 물건의 담기를 눌러 보세요.</Text>
+                    </View>
+                  ) : (
+                    <View>
+                      {selectedProducts.map((product) => (
+                        <View key={product.id} style={styles.cartItem}>
+                          <View style={styles.cartItemInfo}>
+                            <Text style={styles.cartItemName}>{product.emoji} {product.name}</Text>
+                            <Text style={styles.cartItemDetail}>
+                              {won.format(product.priceKrw)}원 × {cart[product.id]}개
+                            </Text>
+                            <Text style={styles.cartItemPrice}>
+                              {won.format(product.priceKrw * cart[product.id])}원
+                            </Text>
+                          </View>
+                          <Pressable
+                            testID={'cart-' + product.id + '-remove'}
+                            accessibilityRole="button"
+                            accessibilityLabel={product.name + ' 모두 빼기'}
+                            onPress={() => dispatch({ type: 'remove', productId: product.id })}
+                            style={({ pressed }) => [styles.removeButton, pressed && styles.pressed]}
+                          >
+                            <Text style={styles.removeLabel}>빼기</Text>
+                          </Pressable>
+                        </View>
+                      ))}
+                      <Pressable
+                        testID="cart-clear"
+                        accessibilityRole="button"
+                        accessibilityLabel="장바구니 비우기"
+                        onPress={() => dispatch({ type: 'clear' })}
+                        style={({ pressed }) => [styles.clearButton, pressed && styles.pressed]}
+                      >
+                        <Text style={styles.removeLabel}>장바구니 비우기</Text>
+                      </Pressable>
+                    </View>
+                  )}
+                </View>
+                <PaymentSelector
+                  totalPriceKrw={summary.totalPriceKrw}
+                  selectedPaymentKrw={selectedPaymentKrw}
+                  quiz={quiz}
+                  onAnswer={(answer) => dispatch({ type: 'change-answer', answer })}
+                  onCheck={() => dispatch({ type: 'check-answer' })}
+                  onRetry={() => dispatch({ type: 'retry-quiz' })}
+                  onSelect={(amountKrw) => dispatch({ type: 'select-payment', amountKrw })}
+                  onClear={() => dispatch({ type: 'clear-payment' })}
+                />
+              </View>
+            }
+          />
+          {/* 합계는 별도 상태로 저장하지 않아 수량과 금액이 서로 어긋나는 일을 막습니다. */}
+          <View
+            testID="cart-summary"
+            style={styles.summary}
+            accessible
+            accessibilityLiveRegion="polite"
+            accessibilityLabel={'장바구니 총 ' + summary.totalQuantity + '개, 합계 ' + won.format(summary.totalPriceKrw) + '원. 오늘의 놀이돈 ' + won.format(STARTING_BUDGET_KRW) + '원. ' + (hideBudgetAnswer ? quizBudgetHint : budgetLabel + ' ' + won.format(budgetAmountKrw) + '원. ' + budgetHint)}
+          >
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>🧺 담은 물건 {summary.totalQuantity}개</Text>
+              <Text style={styles.summaryPrice}>{won.format(summary.totalPriceKrw)}원</Text>
             </View>
-          }
-        />
-        {/* 합계는 별도 상태로 저장하지 않아 수량과 금액이 서로 어긋나는 일을 막습니다. */}
-        <View
-          testID="cart-summary"
-          style={styles.summary}
-          accessible
-          accessibilityLiveRegion="polite"
-          accessibilityLabel={'장바구니 총 ' + summary.totalQuantity + '개, 합계 ' + won.format(summary.totalPriceKrw) + '원. 오늘의 놀이돈 ' + won.format(STARTING_BUDGET_KRW) + '원. ' + budgetLabel + ' ' + won.format(budgetAmountKrw) + '원. ' + budgetHint}
-        >
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>🧺 담은 물건 {summary.totalQuantity}개</Text>
-            <Text style={styles.summaryPrice}>{won.format(summary.totalPriceKrw)}원</Text>
+            {/* 색만으로 구분하지 않고 남을 돈과 부족한 돈을 글자로도 알려줍니다. */}
+            <View style={[styles.balanceRow, budget.status === 'over' && styles.balanceOver]}>
+              <Text style={[styles.balanceLabel, budget.status === 'over' && styles.shortfallText]}>
+                {budgetLabel}
+              </Text>
+              <Text style={[styles.balanceAmount, budget.status === 'over' && styles.shortfallText]}>
+                {hideBudgetAnswer ? '?' : won.format(budgetAmountKrw)}원
+              </Text>
+            </View>
+            <Text style={styles.summaryHint}>{hideBudgetAnswer ? quizBudgetHint : budgetHint}</Text>
           </View>
-          {/* 색만으로 구분하지 않고 남을 돈과 부족한 돈을 글자로도 알려줍니다. */}
-          <View style={[styles.balanceRow, budget.status === 'over' && styles.balanceOver]}>
-            <Text style={[styles.balanceLabel, budget.status === 'over' && styles.shortfallText]}>
-              {budgetLabel}
-            </Text>
-            <Text style={[styles.balanceAmount, budget.status === 'over' && styles.shortfallText]}>
-              {won.format(budgetAmountKrw)}원
-            </Text>
-          </View>
-          <Text style={styles.summaryHint}>{budgetHint}</Text>
-        </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardArea: { flex: 1 },
   screen: { flex: 1, backgroundColor: '#FAF8F0' },
   deviceRunMarker: { color: '#4E6653', fontSize: 12, marginBottom: 8 },
   list: { flex: 1, width: '100%', maxWidth: 720, alignSelf: 'center' },

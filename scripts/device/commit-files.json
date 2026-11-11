@@ -22,5 +22,10 @@
   "scripts/device/commit-files.json",
   "scripts/device/verify.mjs",
   "apps/mobile/tsconfig.json",
-  "docs/book/chapters/03c-change-calculation.md"
+  "docs/book/chapters/03c-change-calculation.md",
+  "apps/mobile/src/components/change-quiz.tsx",
+  "apps/mobile/src/features/payment/change-quiz.ts",
+  "apps/mobile/src/features/payment/change-quiz.test.ts",
+  "apps/mobile/.maestro/solve-quiz.yaml",
+  "docs/book/chapters/03d-change-quiz.md"
 ]

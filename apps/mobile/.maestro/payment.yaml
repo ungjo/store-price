@@ -84,6 +84,8 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     centerElement: false
 - assertNotVisible:
     id: "payment-change"
+- assertNotVisible:
+    id: "payment-quiz"
 
 # 사과 2개와 우유 1개: 5,500원에서 5,000원을 고르면 500원이 부족합니다.
 - scrollUntilVisible:
@@ -140,6 +142,8 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     centerElement: false
 - assertNotVisible:
     id: "payment-change"
+- assertNotVisible:
+    id: "payment-quiz"
 - assertVisible:
     id: "cart-summary"
     text: "^장바구니 총 3개, 합계 5,500원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 4,500원\\. 이대로 사면 남을 돈이에요\\.$"
@@ -186,6 +190,191 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     id: "payment-result"
     text: "^선택한 돈 10,000원\\. 이 돈으로 계산할 수 있어요!$"
 # 낼 돈에서 물건값을 뺀 금액과 읽어 주는 계산식을 함께 확인합니다.
+
+# 첫 문제는 빈 답 제출, 오답 수정, 정답 잠금과 다시 풀기를 한 번씩 확인합니다.
+- assertVisible:
+    id: "cart-summary"
+    text: "^장바구니 총 3개, 합계 5,500원\\. 오늘의 놀이돈 10,000원\\. 거스름돈을 맞히면 남을 돈을 보여 줘요\\.$"
+- scrollUntilVisible:
+    element:
+      text: "^물건을 바꾸면 놀이돈을 다시 골라요\\.$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertNotVisible:
+    id: "payment-change"
+- scrollUntilVisible:
+    element:
+      id: "quiz-question"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "quiz-question"
+    text: "^낼 돈 10,000원, 물건값 5,500원\\. 거스름돈은 얼마일까요\\?$"
+- scrollUntilVisible:
+    element:
+      id: "quiz-check"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+# 입력칸과 확인 버튼 사이에는 스크롤을 넣지 않아 열린 키보드의 첫 탭을 확인합니다.
+- tapOn:
+    id: "quiz-answer"
+    enabled: true
+- tapOn:
+    id: "quiz-check"
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: "quiz-feedback"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "quiz-feedback"
+    text: "^숫자만 입력해 주세요\\. 거스름돈이 없으면 0을 적어요\\.$"
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "quiz-answer"
+    enabled: true
+- inputText: "500"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "quiz-check"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "quiz-check"
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: "quiz-feedback"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "quiz-feedback"
+    text: "^다시 생각해 볼까요\\? 낼 돈에서 물건값을 빼 보세요\\.$"
+- scrollUntilVisible:
+    element:
+      text: "^물건을 바꾸면 놀이돈을 다시 골라요\\.$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertNotVisible:
+    id: "payment-change"
+# 오답을 고쳐 쓰는 두 경우에만 기존 다섯 자리까지 지웁니다.
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "quiz-answer"
+    enabled: true
+- eraseText: 5
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_ANSWER: "4500"
+      CART_QUANTITY: "3"
+      CART_TOTAL: "5,500"
+- scrollUntilVisible:
+    element:
+      id: "payment-change"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-change"
+    text: "^받을 거스름돈 4,500원\\. 낼 돈 10,000원 빼기 물건값 5,500원은 4,500원\\.$"
+# 같은 놀이돈을 다시 누르는 동작은 이미 맞힌 답을 지우지 않습니다.
+- scrollUntilVisible:
+    element:
+      id: "payment-option-10000"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "payment-option-10000"
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: "quiz-feedback"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "quiz-feedback"
+    text: "^정답이에요! 거스름돈을 잘 계산했어요\\.$"
+- scrollUntilVisible:
+    element:
+      id: "payment-change"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-change"
+    text: "^받을 거스름돈 4,500원\\. 낼 돈 10,000원 빼기 물건값 5,500원은 4,500원\\.$"
+- scrollUntilVisible:
+    element:
+      id: "quiz-retry"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "quiz-retry"
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: "quiz-feedback"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "quiz-feedback"
+    text: "^거스름돈을 숫자로 적고 정답 확인을 눌러 주세요\\.$"
+- scrollUntilVisible:
+    element:
+      text: "^물건을 바꾸면 놀이돈을 다시 골라요\\.$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertNotVisible:
+    id: "payment-change"
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_ANSWER: "4500"
+      CART_QUANTITY: "3"
+      CART_TOTAL: "5,500"
 - scrollUntilVisible:
     element:
       id: "payment-change"
@@ -231,6 +420,8 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     centerElement: false
 - assertNotVisible:
     id: "payment-change"
+- assertNotVisible:
+    id: "payment-quiz"
 - scrollUntilVisible:
     element:
       id: "payment-option-10000"
@@ -253,6 +444,18 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 10,000원\\. 이 돈으로 계산할 수 있어요!$"
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_ANSWER: "4500"
+      CART_QUANTITY: "3"
+      CART_TOTAL: "5,500"
 - scrollUntilVisible:
     element:
       id: "payment-change"
@@ -290,6 +493,8 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     centerElement: false
 - assertNotVisible:
     id: "payment-change"
+- assertNotVisible:
+    id: "payment-quiz"
 - assertVisible:
     id: "cart-summary"
     text: "^장바구니 총 3개, 합계 5,500원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 4,500원\\. 이대로 사면 남을 돈이에요\\.$"
@@ -335,6 +540,8 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     centerElement: false
 - assertNotVisible:
     id: "payment-change"
+- assertNotVisible:
+    id: "payment-quiz"
 
 # 식빵을 더하면 예산에 딱 맞고, 당근을 더하면 선택이 풀리며 버튼이 비활성화됩니다.
 - scrollUntilVisible:
@@ -371,6 +578,47 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 10,000원\\. 이 돈으로 계산할 수 있어요!$"
+
+# 거스름돈 0원도 빈 답과 다릅니다. 먼저 빈 답은 거절하고 숫자 0을 제출합니다.
+- scrollUntilVisible:
+    element:
+      id: "quiz-question"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "quiz-question"
+    text: "^낼 돈 10,000원, 물건값 10,000원\\. 거스름돈은 얼마일까요\\?$"
+- scrollUntilVisible:
+    element:
+      id: "quiz-check"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "quiz-check"
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: "quiz-feedback"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "quiz-feedback"
+    text: "^숫자만 입력해 주세요\\. 거스름돈이 없으면 0을 적어요\\.$"
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_ANSWER: "0"
+      CART_QUANTITY: "5"
+      CART_TOTAL: "10,000"
 - scrollUntilVisible:
     element:
       id: "payment-change"
@@ -439,15 +687,18 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     centerElement: false
 - assertNotVisible:
     id: "payment-change"
+- assertNotVisible:
+    id: "payment-quiz"
 - takeScreenshot: payment-over-budget
 
 # 초과한 당근을 삭제하면 다시 선택할 수 있고 전체 비우기는 선택도 초기화합니다.
+# Expo Go의 오른쪽 위 메뉴와 겹치지 않게 삭제 버튼을 화면 안쪽으로 옮깁니다.
 - scrollUntilVisible:
     element:
       id: "cart-sample-carrot-remove"
     direction: UP
     timeout: 30000
-    centerElement: false
+    centerElement: true
 - tapOn:
     id: "cart-sample-carrot-remove"
     enabled: true
@@ -471,6 +722,8 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     centerElement: false
 - assertNotVisible:
     id: "payment-change"
+- assertNotVisible:
+    id: "payment-quiz"
 - scrollUntilVisible:
     element:
       id: "payment-option-10000"
@@ -493,6 +746,18 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 10,000원\\. 이 돈으로 계산할 수 있어요!$"
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_ANSWER: "0"
+      CART_QUANTITY: "5"
+      CART_TOTAL: "10,000"
 - scrollUntilVisible:
     element:
       id: "payment-change"
@@ -561,6 +826,8 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     centerElement: false
 - assertNotVisible:
     id: "payment-change"
+- assertNotVisible:
+    id: "payment-quiz"
 
 # 당근 1개와 1,000원은 정확합니다. 1개에서 빼면 품목과 선택이 함께 사라집니다.
 - scrollUntilVisible:
@@ -599,6 +866,18 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     text: "^선택한 돈 1,000원\\. 이 돈으로 계산할 수 있어요!$"
 - scrollUntilVisible:
     element:
+      id: "quiz-answer"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_ANSWER: "0"
+      CART_QUANTITY: "1"
+      CART_TOTAL: "1,000"
+- scrollUntilVisible:
+    element:
       id: "payment-change"
     direction: DOWN
     timeout: 30000
@@ -630,6 +909,80 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 5,000원\\. 이 돈으로 계산할 수 있어요!$"
+
+# 예산 잔액 9,000원은 거스름돈 답이 아닙니다. 4,000원을 맞혀야 공개됩니다.
+- assertVisible:
+    id: "cart-summary"
+    text: "^장바구니 총 1개, 합계 1,000원\\. 오늘의 놀이돈 10,000원\\. 거스름돈을 맞히면 남을 돈을 보여 줘요\\.$"
+- scrollUntilVisible:
+    element:
+      id: "quiz-question"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "quiz-question"
+    text: "^낼 돈 5,000원, 물건값 1,000원\\. 거스름돈은 얼마일까요\\?$"
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "quiz-answer"
+    enabled: true
+- inputText: "9000"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "quiz-check"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "quiz-check"
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: "quiz-feedback"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "quiz-feedback"
+    text: "^다시 생각해 볼까요\\? 낼 돈에서 물건값을 빼 보세요\\.$"
+- scrollUntilVisible:
+    element:
+      text: "^물건을 바꾸면 놀이돈을 다시 골라요\\.$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertNotVisible:
+    id: "payment-change"
+# 오답을 고쳐 쓰는 두 경우에만 기존 다섯 자리까지 지웁니다.
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "quiz-answer"
+    enabled: true
+- eraseText: 5
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_ANSWER: "4000"
+      CART_QUANTITY: "1"
+      CART_TOTAL: "1,000"
 - scrollUntilVisible:
     element:
       id: "payment-change"
@@ -664,6 +1017,18 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 1,000원\\. 이 돈으로 계산할 수 있어요!$"
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_ANSWER: "0"
+      CART_QUANTITY: "1"
+      CART_TOTAL: "1,000"
 - scrollUntilVisible:
     element:
       id: "payment-change"
@@ -702,6 +1067,8 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     centerElement: false
 - assertNotVisible:
     id: "payment-change"
+- assertNotVisible:
+    id: "payment-quiz"
 
 # 9개 상한의 비활성 버튼을 눌러도 수량과 이미 선택한 놀이돈이 바뀌지 않습니다.
 - scrollUntilVisible:
@@ -718,6 +1085,13 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     enabled: true
     repeat: 8
     delay: 250
+# 버튼과 수량 글자의 위치가 달라 수량 자체를 화면 안으로 가져온 뒤 확인합니다.
+- scrollUntilVisible:
+    element:
+      id: "product-sample-carrot-quantity"
+    direction: UP
+    timeout: 30000
+    centerElement: false
 - assertVisible:
     id: "product-sample-carrot-quantity"
     text: "^당근 9개 담김$"
@@ -751,6 +1125,18 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     text: "^선택한 돈 10,000원\\. 이 돈으로 계산할 수 있어요!$"
 - scrollUntilVisible:
     element:
+      id: "quiz-answer"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_ANSWER: "1000"
+      CART_QUANTITY: "9"
+      CART_TOTAL: "9,000"
+- scrollUntilVisible:
+    element:
       id: "payment-change"
     direction: DOWN
     timeout: 30000
@@ -768,6 +1154,12 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     id: "product-sample-carrot-add"
     enabled: false
     retryTapIfNoChange: false
+- scrollUntilVisible:
+    element:
+      id: "product-sample-carrot-quantity"
+    direction: UP
+    timeout: 30000
+    centerElement: false
 - assertVisible:
     id: "product-sample-carrot-quantity"
     text: "^당근 9개 담김$"
@@ -783,6 +1175,15 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 10,000원\\. 이 돈으로 계산할 수 있어요!$"
+- scrollUntilVisible:
+    element:
+      id: "quiz-feedback"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "quiz-feedback"
+    text: "^정답이에요! 거스름돈을 잘 계산했어요\\.$"
 - scrollUntilVisible:
     element:
       id: "payment-change"
@@ -823,6 +1224,8 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     centerElement: false
 - assertNotVisible:
     id: "payment-change"
+- assertNotVisible:
+    id: "payment-quiz"
 - scrollUntilVisible:
     element:
       id: "payment-option-10000"
@@ -847,6 +1250,18 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     text: "^선택한 돈 10,000원\\. 이 돈으로 계산할 수 있어요!$"
 - scrollUntilVisible:
     element:
+      id: "quiz-answer"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_ANSWER: "2000"
+      CART_QUANTITY: "8"
+      CART_TOTAL: "8,000"
+- scrollUntilVisible:
+    element:
       id: "payment-change"
     direction: DOWN
     timeout: 30000
@@ -854,12 +1269,13 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-change"
     text: "^받을 거스름돈 2,000원\\. 낼 돈 10,000원 빼기 물건값 8,000원은 2,000원\\.$"
+# Expo Go의 오른쪽 위 메뉴와 겹치지 않게 삭제 버튼을 화면 안쪽으로 옮깁니다.
 - scrollUntilVisible:
     element:
       id: "cart-sample-carrot-remove"
     direction: UP
     timeout: 30000
-    centerElement: false
+    centerElement: true
 - tapOn:
     id: "cart-sample-carrot-remove"
     enabled: true
@@ -883,6 +1299,8 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     centerElement: false
 - assertNotVisible:
     id: "payment-change"
+- assertNotVisible:
+    id: "payment-quiz"
 
 # 재실행 직전에 물건과 돈을 선택하여 메모리 상태 초기화를 실제로 확인합니다.
 - scrollUntilVisible:
@@ -916,6 +1334,18 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 1,000원\\. 이 돈으로 계산할 수 있어요!$"
+- scrollUntilVisible:
+    element:
+      id: "quiz-answer"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_ANSWER: "0"
+      CART_QUANTITY: "1"
+      CART_TOTAL: "1,000"
 - scrollUntilVisible:
     element:
       id: "payment-change"
@@ -1004,4 +1434,6 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     centerElement: false
 - assertNotVisible:
     id: "payment-change"
+- assertNotVisible:
+    id: "payment-quiz"
 - takeScreenshot: payment-reset

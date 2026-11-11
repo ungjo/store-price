@@ -340,6 +340,8 @@ function writeReport(status, reason = '') {
       'adb -s <선택한 실기기> shell settings put global stay_on_while_plugged_in 7',
       'adb -s <선택한 실기기> shell settings get global stay_on_while_plugged_in',
     ] : []),
+    'maestro check-syntax apps/mobile/.maestro/payment.yaml',
+    'maestro check-syntax apps/mobile/.maestro/solve-quiz.yaml',
     'node --test scripts/device/git-guard.test.mjs',
     'cd apps/mobile', 'npm test', 'npm run typecheck', 'npm run lint', 'npm run export:check',
     'EXPO_PUBLIC_DEVICE_RUN_ID=<실행 ID> node node_modules/expo/bin/cli start --localhost --port 8091 --clear',
@@ -364,8 +366,11 @@ function writeReport(status, reason = '') {
     '- 받을 거스름돈과 계산식: 5,500원에 10,000원은 4,500원, 정확히 낸 금액은 0원.',
     '- 1,000원에 5,000원을 고르면 거스름돈 4,000원이며 예산 잔액 9,000원은 유지된다.',
     '- 부족한 돈으로 교체·선택 취소·상품 변경·비우기·재실행 시 이전 거스름돈이 사라진다.',
+    '- 거스름돈 퀴즈: 빈 답과 0원 구분, 오답 수정·정답 확인·다시 풀기·입력 잠금.',
+    '- 정답 전 계산 결과와 예산 잔액을 숨기고, 맞힌 뒤 계산식과 잔액을 공개한다.',
+    '- 상품·낼 돈 변경은 퀴즈를 초기화하며 같은 선택과 수량 상한의 무변화는 풀이를 유지한다.',
     '', '## 결과', '',
-    ...checks.filter((check) => ['git-guard-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-flow'].includes(check.label))
+    ...checks.filter((check) => ['maestro-syntax-main', 'maestro-syntax-quiz', 'git-guard-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-flow'].includes(check.label))
       .map((check) => '- ' + check.label + ': 종료 코드 ' + check.exitCode),
     '- JUnit: ' + (junit ? `${junit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
     '', '원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/' + runId + '/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.',
@@ -419,6 +424,10 @@ try {
     say('준비 확인 완료. 실제 화면 검사와 커밋은 실행하지 않았습니다.');
   } else {
     verificationStarted = true;
+    // 일반 YAML 구문 검사만으로는 명령 형식 오류를 찾을 수 없어, 기기를 조작하기 전에 Maestro로 확인합니다.
+    for (const [label, file] of [['maestro-syntax-main', 'apps/mobile/.maestro/payment.yaml'], ['maestro-syntax-quiz', 'apps/mobile/.maestro/solve-quiz.yaml']]) {
+      await run(label, tools.maestro, ['check-syntax', file], { timeout: 60_000 });
+    }
     await prepareScreenAwake();
     say('기기: ' + device.model + ' / Android ' + device.android + '. 코드 검사를 시작합니다.');
     await run('git-guard-tests', process.execPath, ['--test', 'scripts/device/git-guard.test.mjs'], { timeout: timeout.check });

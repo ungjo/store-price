@@ -1,12 +1,19 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getPaymentSummary, PAYMENT_OPTIONS_KRW } from '../features/payment/payment';
+
+import { type ChangeQuizState } from '../features/payment/change-quiz';
+import { ChangeQuiz } from './change-quiz';
 
 type PaymentSelectorProps = {
   totalPriceKrw: number;
   selectedPaymentKrw: number | null;
   onSelect: (amountKrw: number) => void;
   onClear: () => void;
+  quiz: ChangeQuizState;
+  onAnswer: (answer: string) => void;
+  onCheck: () => void;
+  onRetry: () => void;
 };
 
 const won = new Intl.NumberFormat('ko-KR');
@@ -16,6 +23,10 @@ export function PaymentSelector({
   selectedPaymentKrw,
   onSelect,
   onClear,
+  quiz,
+  onAnswer,
+  onCheck,
+  onRetry,
 }: PaymentSelectorProps) {
   const payment = getPaymentSummary(totalPriceKrw, selectedPaymentKrw);
   const disabled = payment.status === 'empty' || payment.status === 'over-budget';
@@ -50,7 +61,7 @@ export function PaymentSelector({
             accessibilityLabel={won.format(amountKrw) + '원 놀이돈 고르기'}
             accessibilityState={{ disabled, selected }}
             disabled={disabled}
-            onPress={() => onSelect(amountKrw)}
+            onPress={() => { Keyboard.dismiss(); onSelect(amountKrw); }}
             style={({ pressed }) => [
               styles.option,
               selected && styles.selectedOption,
@@ -82,8 +93,18 @@ export function PaymentSelector({
         </Text>
         <Text style={[styles.message, needsMoreMoney && styles.insufficientText]}>{message}</Text>
       </View>
-      {/* 0원도 유효한 거스름돈이므로 null과 구분하고, 상품·돈 선택에서 매번 계산한 결과를 보여 줍니다. */}
+      {/* 0원도 문제로 풀 수 있게 null과 구분하며, 계산식은 정답을 맞힌 뒤에만 공개합니다. */}
       {payment.changeAmountKrw !== null && selectedPaymentKrw !== null && (
+        <ChangeQuiz
+          totalPriceKrw={totalPriceKrw}
+          selectedPaymentKrw={selectedPaymentKrw}
+          quiz={quiz}
+          onAnswer={onAnswer}
+          onCheck={onCheck}
+          onRetry={onRetry}
+        />
+      )}
+      {payment.changeAmountKrw !== null && selectedPaymentKrw !== null && quiz.status === 'correct' && (
         <View
           testID="payment-change"
           style={styles.changeResult}
@@ -109,7 +130,7 @@ export function PaymentSelector({
           testID="payment-clear"
           accessibilityRole="button"
           accessibilityLabel="놀이돈 선택 취소"
-          onPress={onClear}
+          onPress={() => { Keyboard.dismiss(); onClear(); }}
           style={({ pressed }) => [styles.clearButton, pressed && styles.pressed]}
         >
           <Text style={styles.clearLabel}>선택 취소</Text>
