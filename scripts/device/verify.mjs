@@ -361,6 +361,9 @@ function writeReport(status, reason = '') {
     '- 놀이돈 예산 안·딱 맞음·초과와 예산 안으로 복귀.',
     '- 지불할 돈 단일 선택·부족액·선택 취소·상품 변경 시 선택 초기화.',
     '- 빈 장바구니와 예산 초과의 선택 차단·재실행 시 초기화.',
+    '- 받을 거스름돈과 계산식: 5,500원에 10,000원은 4,500원, 정확히 낸 금액은 0원.',
+    '- 1,000원에 5,000원을 고르면 거스름돈 4,000원이며 예산 잔액 9,000원은 유지된다.',
+    '- 부족한 돈으로 교체·선택 취소·상품 변경·비우기·재실행 시 이전 거스름돈이 사라진다.',
     '', '## 결과', '',
     ...checks.filter((check) => ['git-guard-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-flow'].includes(check.label))
       .map((check) => '- ' + check.label + ': 종료 코드 ' + check.exitCode),

@@ -75,6 +75,15 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 없음\\. 먼저 물건을 담아 주세요\\.$"
+# 화면 아래 안내문까지 내려가 거스름돈 카드가 화면 밖에 숨은 경우도 줄입니다.
+- scrollUntilVisible:
+    element:
+      text: "^물건을 바꾸면 놀이돈을 다시 골라요\\.$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertNotVisible:
+    id: "payment-change"
 
 # 사과 2개와 우유 1개: 5,500원에서 5,000원을 고르면 500원이 부족합니다.
 - scrollUntilVisible:
@@ -123,6 +132,14 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 5,000원\\. 500원이 더 필요해요\\.$"
+- scrollUntilVisible:
+    element:
+      text: "^물건을 바꾸면 놀이돈을 다시 골라요\\.$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertNotVisible:
+    id: "payment-change"
 - assertVisible:
     id: "cart-summary"
     text: "^장바구니 총 3개, 합계 5,500원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 4,500원\\. 이대로 사면 남을 돈이에요\\.$"
@@ -168,10 +185,83 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 10,000원\\. 이 돈으로 계산할 수 있어요!$"
+# 낼 돈에서 물건값을 뺀 금액과 읽어 주는 계산식을 함께 확인합니다.
+- scrollUntilVisible:
+    element:
+      id: "payment-change"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-change"
+    text: "^받을 거스름돈 4,500원\\. 낼 돈 10,000원 빼기 물건값 5,500원은 4,500원\\.$"
 - assertVisible:
     id: "cart-summary"
     text: "^장바구니 총 3개, 합계 5,500원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 4,500원\\. 이대로 사면 남을 돈이에요\\.$"
 - takeScreenshot: payment-ready
+
+# 계산 가능한 돈에서 부족한 돈으로 바꾸면 이전 거스름돈도 사라져야 합니다.
+- scrollUntilVisible:
+    element:
+      id: "payment-option-5000"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "payment-option-5000"
+    enabled: true
+- assertVisible:
+    id: "payment-option-5000"
+    enabled: true
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: "payment-result"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-result"
+    text: "^선택한 돈 5,000원\\. 500원이 더 필요해요\\.$"
+- scrollUntilVisible:
+    element:
+      text: "^물건을 바꾸면 놀이돈을 다시 골라요\\.$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertNotVisible:
+    id: "payment-change"
+- scrollUntilVisible:
+    element:
+      id: "payment-option-10000"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "payment-option-10000"
+    enabled: true
+- assertVisible:
+    id: "payment-option-10000"
+    enabled: true
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: "payment-result"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-result"
+    text: "^선택한 돈 10,000원\\. 이 돈으로 계산할 수 있어요!$"
+- scrollUntilVisible:
+    element:
+      id: "payment-change"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-change"
+    text: "^받을 거스름돈 4,500원\\. 낼 돈 10,000원 빼기 물건값 5,500원은 4,500원\\.$"
 
 # 선택 취소는 장바구니를 보존하고, 상품 추가는 이전 돈 선택을 지웁니다.
 - scrollUntilVisible:
@@ -186,12 +276,20 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - scrollUntilVisible:
     element:
       id: "payment-result"
-    direction: DOWN
+    direction: UP
     timeout: 30000
     centerElement: false
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 없음\\. 낼 놀이돈을 하나 골라 주세요\\.$"
+- scrollUntilVisible:
+    element:
+      text: "^물건을 바꾸면 놀이돈을 다시 골라요\\.$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertNotVisible:
+    id: "payment-change"
 - assertVisible:
     id: "cart-summary"
     text: "^장바구니 총 3개, 합계 5,500원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 4,500원\\. 이대로 사면 남을 돈이에요\\.$"
@@ -229,6 +327,14 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 없음\\. 낼 놀이돈을 하나 골라 주세요\\.$"
+- scrollUntilVisible:
+    element:
+      text: "^물건을 바꾸면 놀이돈을 다시 골라요\\.$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertNotVisible:
+    id: "payment-change"
 
 # 식빵을 더하면 예산에 딱 맞고, 당근을 더하면 선택이 풀리며 버튼이 비활성화됩니다.
 - scrollUntilVisible:
@@ -265,6 +371,15 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 10,000원\\. 이 돈으로 계산할 수 있어요!$"
+- scrollUntilVisible:
+    element:
+      id: "payment-change"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-change"
+    text: "^받을 거스름돈 0원\\. 낼 돈 10,000원 빼기 물건값 10,000원은 0원\\.$"
 - scrollUntilVisible:
     element:
       id: "product-sample-carrot-add"
@@ -316,6 +431,14 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 없음\\. 물건을 조금 빼고 놀이돈을 골라요\\.$"
+- scrollUntilVisible:
+    element:
+      text: "^물건을 바꾸면 놀이돈을 다시 골라요\\.$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertNotVisible:
+    id: "payment-change"
 - takeScreenshot: payment-over-budget
 
 # 초과한 당근을 삭제하면 다시 선택할 수 있고 전체 비우기는 선택도 초기화합니다.
@@ -342,6 +465,14 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     text: "^선택한 돈 없음\\. 낼 놀이돈을 하나 골라 주세요\\.$"
 - scrollUntilVisible:
     element:
+      text: "^물건을 바꾸면 놀이돈을 다시 골라요\\.$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertNotVisible:
+    id: "payment-change"
+- scrollUntilVisible:
+    element:
       id: "payment-option-10000"
     direction: UP
     timeout: 30000
@@ -362,6 +493,15 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 10,000원\\. 이 돈으로 계산할 수 있어요!$"
+- scrollUntilVisible:
+    element:
+      id: "payment-change"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-change"
+    text: "^받을 거스름돈 0원\\. 낼 돈 10,000원 빼기 물건값 10,000원은 0원\\.$"
 - scrollUntilVisible:
     element:
       id: "cart-clear"
@@ -413,6 +553,14 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 없음\\. 먼저 물건을 담아 주세요\\.$"
+- scrollUntilVisible:
+    element:
+      text: "^물건을 바꾸면 놀이돈을 다시 골라요\\.$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertNotVisible:
+    id: "payment-change"
 
 # 당근 1개와 1,000원은 정확합니다. 1개에서 빼면 품목과 선택이 함께 사라집니다.
 - scrollUntilVisible:
@@ -451,6 +599,82 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     text: "^선택한 돈 1,000원\\. 이 돈으로 계산할 수 있어요!$"
 - scrollUntilVisible:
     element:
+      id: "payment-change"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-change"
+    text: "^받을 거스름돈 0원\\. 낼 돈 1,000원 빼기 물건값 1,000원은 0원\\.$"
+
+# 거스름돈 4,000원과 예산 잔액 9,000원을 구별한 뒤 원래 선택으로 돌아갑니다.
+- scrollUntilVisible:
+    element:
+      id: "payment-option-5000"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "payment-option-5000"
+    enabled: true
+- assertVisible:
+    id: "payment-option-5000"
+    enabled: true
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: "payment-result"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-result"
+    text: "^선택한 돈 5,000원\\. 이 돈으로 계산할 수 있어요!$"
+- scrollUntilVisible:
+    element:
+      id: "payment-change"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-change"
+    text: "^받을 거스름돈 4,000원\\. 낼 돈 5,000원 빼기 물건값 1,000원은 4,000원\\.$"
+- assertVisible:
+    id: "cart-summary"
+    text: "^장바구니 총 1개, 합계 1,000원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 9,000원\\. 이대로 사면 남을 돈이에요\\.$"
+- scrollUntilVisible:
+    element:
+      id: "payment-option-1000"
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: "payment-option-1000"
+    enabled: true
+- assertVisible:
+    id: "payment-option-1000"
+    enabled: true
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: "payment-result"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-result"
+    text: "^선택한 돈 1,000원\\. 이 돈으로 계산할 수 있어요!$"
+- scrollUntilVisible:
+    element:
+      id: "payment-change"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-change"
+    text: "^받을 거스름돈 0원\\. 낼 돈 1,000원 빼기 물건값 1,000원은 0원\\.$"
+- scrollUntilVisible:
+    element:
       id: "product-sample-carrot-decrease"
     direction: UP
     timeout: 30000
@@ -470,6 +694,14 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 없음\\. 먼저 물건을 담아 주세요\\.$"
+- scrollUntilVisible:
+    element:
+      text: "^물건을 바꾸면 놀이돈을 다시 골라요\\.$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertNotVisible:
+    id: "payment-change"
 
 # 9개 상한의 비활성 버튼을 눌러도 수량과 이미 선택한 놀이돈이 바뀌지 않습니다.
 - scrollUntilVisible:
@@ -519,6 +751,15 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     text: "^선택한 돈 10,000원\\. 이 돈으로 계산할 수 있어요!$"
 - scrollUntilVisible:
     element:
+      id: "payment-change"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-change"
+    text: "^받을 거스름돈 1,000원\\. 낼 돈 10,000원 빼기 물건값 9,000원은 1,000원\\.$"
+- scrollUntilVisible:
+    element:
       id: "product-sample-carrot-add"
     direction: UP
     timeout: 30000
@@ -542,6 +783,15 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 10,000원\\. 이 돈으로 계산할 수 있어요!$"
+- scrollUntilVisible:
+    element:
+      id: "payment-change"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-change"
+    text: "^받을 거스름돈 1,000원\\. 낼 돈 10,000원 빼기 물건값 9,000원은 1,000원\\.$"
 
 # 수량 감소와 선택된 품목 삭제도 돈 선택을 초기화합니다.
 - scrollUntilVisible:
@@ -567,6 +817,14 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     text: "^선택한 돈 없음\\. 낼 놀이돈을 하나 골라 주세요\\.$"
 - scrollUntilVisible:
     element:
+      text: "^물건을 바꾸면 놀이돈을 다시 골라요\\.$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertNotVisible:
+    id: "payment-change"
+- scrollUntilVisible:
+    element:
       id: "payment-option-10000"
     direction: UP
     timeout: 30000
@@ -589,6 +847,15 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     text: "^선택한 돈 10,000원\\. 이 돈으로 계산할 수 있어요!$"
 - scrollUntilVisible:
     element:
+      id: "payment-change"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-change"
+    text: "^받을 거스름돈 2,000원\\. 낼 돈 10,000원 빼기 물건값 8,000원은 2,000원\\.$"
+- scrollUntilVisible:
+    element:
       id: "cart-sample-carrot-remove"
     direction: UP
     timeout: 30000
@@ -608,6 +875,14 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 없음\\. 먼저 물건을 담아 주세요\\.$"
+- scrollUntilVisible:
+    element:
+      text: "^물건을 바꾸면 놀이돈을 다시 골라요\\.$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertNotVisible:
+    id: "payment-change"
 
 # 재실행 직전에 물건과 돈을 선택하여 메모리 상태 초기화를 실제로 확인합니다.
 - scrollUntilVisible:
@@ -641,6 +916,15 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 1,000원\\. 이 돈으로 계산할 수 있어요!$"
+- scrollUntilVisible:
+    element:
+      id: "payment-change"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: "payment-change"
+    text: "^받을 거스름돈 0원\\. 낼 돈 1,000원 빼기 물건값 1,000원은 0원\\.$"
 - assertVisible:
     id: "cart-summary"
     text: "^장바구니 총 1개, 합계 1,000원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 9,000원\\. 이대로 사면 남을 돈이에요\\.$"
@@ -712,4 +996,12 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "payment-result"
     text: "^선택한 돈 없음\\. 먼저 물건을 담아 주세요\\.$"
+- scrollUntilVisible:
+    element:
+      text: "^물건을 바꾸면 놀이돈을 다시 골라요\\.$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertNotVisible:
+    id: "payment-change"
 - takeScreenshot: payment-reset

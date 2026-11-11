@@ -16,6 +16,7 @@ export type ShoppingAction =
 type PaymentSummary = {
   status: 'empty' | 'over-budget' | 'unselected' | 'insufficient' | 'ready';
   missingAmountKrw: number;
+  changeAmountKrw: number | null;
 };
 
 function isAvailablePayment(amountKrw: number | null, budgetKrw: number): amountKrw is number {
@@ -65,22 +66,24 @@ export function getPaymentSummary(
   budgetKrw: number = STARTING_BUDGET_KRW,
 ): PaymentSummary {
   // 먼저 장바구니의 구매 가능 여부를 알려야 돈 선택 안내와 예산 초과 안내가 충돌하지 않습니다.
+  // 계산할 수 없는 거스름돈은 null로 두어, 정확히 냈을 때의 유효한 0원과 구분합니다.
   if (totalPriceKrw <= 0) {
-    return { status: 'empty', missingAmountKrw: 0 };
+    return { status: 'empty', missingAmountKrw: 0, changeAmountKrw: null };
   }
 
   if (totalPriceKrw > budgetKrw) {
-    return { status: 'over-budget', missingAmountKrw: 0 };
+    return { status: 'over-budget', missingAmountKrw: 0, changeAmountKrw: null };
   }
 
   if (!isAvailablePayment(selectedPaymentKrw, budgetKrw)) {
-    return { status: 'unselected', missingAmountKrw: 0 };
+    return { status: 'unselected', missingAmountKrw: 0, changeAmountKrw: null };
   }
 
   if (selectedPaymentKrw < totalPriceKrw) {
-    return { status: 'insufficient', missingAmountKrw: totalPriceKrw - selectedPaymentKrw };
+    return { status: 'insufficient', missingAmountKrw: totalPriceKrw - selectedPaymentKrw, changeAmountKrw: null };
   }
 
-  // ready는 돈이 충분하다는 뜻이며, 이 단계에서 결제 완료나 거스름돈 계산을 처리하지 않습니다.
-  return { status: 'ready', missingAmountKrw: 0 };
+  // 거스름돈은 실제로 고른 놀이돈에서 물건값을 뺍니다. 전체 예산에서 뺀 남을 돈과는 다릅니다.
+  // 계산 결과만 돌려주며 장바구니·돈 선택을 바꾸거나 결제 완료로 처리하지 않습니다.
+  return { status: 'ready', missingAmountKrw: 0, changeAmountKrw: selectedPaymentKrw - totalPriceKrw };
 }

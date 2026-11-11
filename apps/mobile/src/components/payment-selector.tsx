@@ -82,6 +82,28 @@ export function PaymentSelector({
         </Text>
         <Text style={[styles.message, needsMoreMoney && styles.insufficientText]}>{message}</Text>
       </View>
+      {/* 0원도 유효한 거스름돈이므로 null과 구분하고, 상품·돈 선택에서 매번 계산한 결과를 보여 줍니다. */}
+      {payment.changeAmountKrw !== null && selectedPaymentKrw !== null && (
+        <View
+          testID="payment-change"
+          style={styles.changeResult}
+          accessible
+          accessibilityLiveRegion="polite"
+          accessibilityLabel={'받을 거스름돈 ' + won.format(payment.changeAmountKrw) + '원. 낼 돈 ' + won.format(selectedPaymentKrw) + '원 빼기 물건값 ' + won.format(totalPriceKrw) + '원은 ' + won.format(payment.changeAmountKrw) + '원.'}
+        >
+          <Text style={styles.changeLabel}>받을 거스름돈</Text>
+          <Text style={styles.changeAmount}>{won.format(payment.changeAmountKrw)}원</Text>
+          <Text style={styles.changeRule}>낼 돈 − 물건값</Text>
+          <Text style={styles.changeEquation}>
+            {won.format(selectedPaymentKrw)}원 − {won.format(totalPriceKrw)}원 = {won.format(payment.changeAmountKrw)}원
+          </Text>
+          <Text style={styles.changeHint}>
+            {payment.changeAmountKrw === 0
+              ? '딱 맞게 골랐어요. 거스름돈은 0원이에요.'
+              : '이 돈을 내면 돌려받을 돈이에요.'}
+          </Text>
+        </View>
+      )}
       {selectedPaymentKrw !== null && (
         <Pressable
           testID="payment-clear"
@@ -118,6 +140,12 @@ const styles = StyleSheet.create({
   resultAmount: { fontSize: 22, fontWeight: '800', color: '#255B42', marginTop: 6 },
   message: { fontSize: 16, lineHeight: 25, color: '#315239', fontWeight: '700', marginTop: 8 },
   insufficientText: { color: '#7B4A16' },
+  changeResult: { backgroundColor: '#FFF5D8', borderColor: '#E9D49C', borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 12 },
+  changeLabel: { fontSize: 18, fontWeight: '700', color: '#60431C' },
+  changeAmount: { fontSize: 28, fontWeight: '800', color: '#60431C', marginTop: 6 },
+  changeRule: { fontSize: 14, color: '#70532C', marginTop: 12 },
+  changeEquation: { fontSize: 18, lineHeight: 28, fontWeight: '700', color: '#60431C', marginTop: 4 },
+  changeHint: { fontSize: 15, lineHeight: 24, color: '#70532C', marginTop: 8 },
   clearButton: { minHeight: 48, alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#91A688', marginTop: 12 },
   clearLabel: { fontSize: 15, fontWeight: '700', color: '#315239' },
   resetHint: { fontSize: 13, lineHeight: 21, color: '#627064', marginTop: 12 },

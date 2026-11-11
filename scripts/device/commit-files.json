@@ -21,5 +21,6 @@
   "scripts/device/git-guard.test.mjs",
   "scripts/device/commit-files.json",
   "scripts/device/verify.mjs",
-  "apps/mobile/tsconfig.json"
+  "apps/mobile/tsconfig.json",
+  "docs/book/chapters/03c-change-calculation.md"
 ]
