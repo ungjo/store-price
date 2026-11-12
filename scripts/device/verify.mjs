@@ -6,6 +6,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { assertGitStateUnchanged, captureGitState, commitVerifiedChange } from './git-guard.mjs';
+import {
+  assertCatalogEnvironmentUnchanged, captureCatalogEnvironment, checkCatalogHttp,
+  createCatalogLogWriter, pinnedCatalogEnvironment, redactCatalogText,
+} from './catalog-http-check.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const mobileRoot = path.join(repoRoot, 'apps/mobile');
@@ -35,6 +39,9 @@ const activeChildren = new Set();
 const checks = [];
 let lockFd;
 let gitState;
+let catalogEnvironment;
+let catalogBefore;
+let catalogAfter;
 let selectedSerial;
 let device;
 let tools;
@@ -57,7 +64,7 @@ const startedAt = new Date();
 
 function safeError(error) {
   const raw = error instanceof Error ? error.message : String(error);
-  return raw.replaceAll(selectedSerial || '\0', '<selected-device>').replace(/\x1b\[[0-9;]*m/gu, '').slice(0, 800);
+  return redactCatalogText(catalogEnvironment, raw).replaceAll(selectedSerial || '\0', '<selected-device>').replace(/\x1b\[[0-9;]*m/gu, '').slice(0, 800);
 }
 
 function say(text) {
@@ -91,6 +98,8 @@ function invocation(file, commandArgs) {
 function startLogged(label, file, commandArgs, options = {}) {
   const spec = invocation(file, commandArgs);
   const log = fs.createWriteStream(path.join(runDir, label + '.log'), { flags: 'a' });
+  const outLog = createCatalogLogWriter(catalogEnvironment, (text) => log.write(text));
+  const errLog = createCatalogLogWriter(catalogEnvironment, (text) => log.write(text));
   const child = spawn(spec.file, spec.args, {
     cwd: options.cwd || repoRoot,
     env: options.env || tools?.env || process.env,
@@ -103,18 +112,20 @@ function startLogged(label, file, commandArgs, options = {}) {
   let stdout = '';
   let stderr = '';
   child.stdout.on('data', (chunk) => {
-    log.write(chunk);
+    outLog.write(chunk);
     if (stdout.length < 4_000_000) stdout += chunk.toString('utf8');
   });
   child.stderr.on('data', (chunk) => {
-    log.write(chunk);
+    errLog.write(chunk);
     if (stderr.length < 4_000_000) stderr += chunk.toString('utf8');
   });
   const done = new Promise((resolve) => {
     let spawnError;
-    child.on('error', (error) => { spawnError = error; log.write(String(error)); });
+    child.on('error', (error) => { spawnError = error; log.write(safeError(error)); });
     child.on('close', (code, signal) => {
       activeChildren.delete(child);
+      outLog.end();
+      errLog.end();
       log.end();
       resolve({ code, signal, stdout, stderr, spawnError });
     });
@@ -161,7 +172,21 @@ function resolveTools() {
     MAESTRO_CLI_NO_ANALYTICS: '1',
     MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED: 'true',
   };
-  return { adb, maestro, java, npm, expo, env };
+  return { adb, maestro, java, npm, expo, env: catalogEnvironment ? pinnedCatalogEnvironment(catalogEnvironment, env) : env };
+}
+
+async function verifyCatalogHttp(label, previous) {
+  const started = Date.now();
+  try {
+    assertCatalogEnvironmentUnchanged(catalogEnvironment);
+    const result = await checkCatalogHttp(catalogEnvironment, { previous });
+    assertCatalogEnvironmentUnchanged(catalogEnvironment);
+    checks.push({ label, exitCode: 0, milliseconds: Date.now() - started });
+    return result;
+  } catch (error) {
+    checks.push({ label, exitCode: 1, milliseconds: Date.now() - started });
+    throw error;
+  }
 }
 
 async function ensurePortUnused() {
@@ -333,6 +358,8 @@ function writeReport(status, reason = '') {
     '- 기기: ' + (device?.model || '미확인') + ' / Android ' + (device?.android || '미확인'),
     '- 검사 시작 HEAD: `' + gitState.head + '`',
     '- 검사 소스 SHA-256: `' + gitState.sourceHash + '`',
+    '- 검사 설정 SHA-256: `' + catalogEnvironment.fingerprint + '` (설정 값은 기록하지 않음)',
+    '- 공개 상품 SHA-256: `' + catalogAfter.fingerprint + '` (실행 전후 일치)',
     '- 도구: Maestro 2.12.1 / JDK 21 / USB 실기기 / Expo Go',
     '- 커밋 모드: ' + (noCommit ? '검사·기록만 수행 (--no-commit)' : '검사한 소스가 유지된 경우에만 자동 커밋. 실제 커밋 ID는 실행 요약 또는 git log에서 확인.'),
     ...(reason ? ['', '중단 이유: ' + reason.replace(/[\r\n]/gu, ' ')] : []),
@@ -346,6 +373,7 @@ function writeReport(status, reason = '') {
     'maestro check-syntax apps/mobile/.maestro/solve-quiz.yaml',
     'maestro check-syntax apps/mobile/.maestro/receipt.yaml',
     'node --test scripts/device/git-guard.test.mjs',
+    'node --experimental-strip-types --test scripts/device/catalog-http-check.test.mjs',
     'npm --prefix scripts/database test',
     'cd apps/mobile', 'npm test', 'npm run typecheck', 'npm run lint', 'npm run export:check',
     'EXPO_PUBLIC_DEVICE_RUN_ID=<실행 ID> node node_modules/expo/bin/cli start --localhost --port 8091 --clear',
@@ -363,7 +391,9 @@ function writeReport(status, reason = '') {
     '- 이 보고서는 종료 정리 전에 작성된다. 실제 복구 결과와 실행한 정리 명령의 종료 코드는 원본 summary.json의 screenAwake 및 checks에 기록한다.',
     '', '## 확인한 항목', '',
     '- PGlite의 메모리 PostgreSQL에서 상품·가격 이력 제약, 예시 데이터, 공개 카탈로그와 역할별 읽기·쓰기 권한을 검사했다.',
-    '- DB 검사는 로컬 SQL 검증이며 Supabase 클라우드의 키·HTTP API·노출 스키마 설정은 검증하지 않았다.',
+    '- 공개 키 REST GET으로 예시 상품 6개와 비공개 스키마·승인 메모 읽기 차단을 실행 전후 확인했다. 쓰기·관리자 API는 호출하지 않았다.',
+    '- 앱 검사·번들·Expo 서버에는 같은 설정을 전달하고 EXPO_NO_DOTENV=1로 고정했다. 환경 파일과 선택한 프로세스 설정의 변경도 검사했다.',
+    '- 실제 앱의 Supabase 출처·상품 6개 로딩을 최초 실행·다시 장보기·재실행에서 확인했다. 외부 상품의 일시적 변경을 연속 감시하는 검사는 아니다.',
     '- 이 실행만의 화면 표시를 확인해 이전 번들로 검사가 통과하는 것을 차단했다.',
     '- 장바구니 담기·합계·수량 감소·9개 상한·품목 삭제·전체 비우기.',
     '- 놀이돈 예산 안·딱 맞음·초과와 예산 안으로 복귀.',
@@ -378,7 +408,7 @@ function writeReport(status, reason = '') {
     '- 정답 전 계산 완료 차단, 영수증 상품별 가격·수량·합계·지불액·거스름돈·잔액을 확인한다.',
     '- 0원 거스름돈도 완료하며, 다시 장보기와 영수증 상태의 재실행으로 새 놀이를 시작한다.',
     '', '## 결과', '',
-    ...checks.filter((check) => ['maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'git-guard-tests', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-flow'].includes(check.label))
+    ...checks.filter((check) => ['maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'git-guard-tests', 'catalog-http-check-tests', 'catalog-http-before', 'catalog-http-after', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-flow'].includes(check.label))
       .map((check) => '- ' + check.label + ': 종료 코드 ' + check.exitCode),
     '- JUnit: ' + (junit ? `${junit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
     '', '원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/' + runId + '/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.',
@@ -426,6 +456,7 @@ try {
   fs.mkdirSync(runDir);
   say('설치 도구·USB 실기기·Git 상태를 확인합니다.');
   gitState = captureGitState(repoRoot);
+  if (!doctor) catalogEnvironment = captureCatalogEnvironment(mobileRoot);
   await preflight();
   if (doctor) {
     overallStatus = 'ready';
@@ -439,6 +470,7 @@ try {
     await prepareScreenAwake();
     say('기기: ' + device.model + ' / Android ' + device.android + '. 코드 검사를 시작합니다.');
     await run('git-guard-tests', process.execPath, ['--test', 'scripts/device/git-guard.test.mjs'], { timeout: timeout.check });
+    await run('catalog-http-check-tests', process.execPath, ['--experimental-strip-types', '--test', 'scripts/device/catalog-http-check.test.mjs'], { timeout: timeout.check });
     // 실제 PostgreSQL 엔진에서 DB 권한과 가격 공개 조건을 확인한 뒤 앱·실기기 검사로 넘어갑니다.
     say('database-tests 확인 중');
     await run('database-tests', process.execPath, [tools.npm, '--prefix', 'scripts/database', 'test'], { timeout: timeout.check });
@@ -447,11 +479,13 @@ try {
       await run(label, process.execPath, [tools.npm, 'run', script], { cwd: mobileRoot, timeout: label === 'export' ? timeout.export : timeout.check });
     }
     assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
+    say('공개 상품과 비공개 읽기 차단을 실제 REST GET으로 확인합니다.');
+    catalogBefore = await verifyCatalogHttp('catalog-http-before');
     await ensurePortUnused();
     say('전용 Expo 서버와 새 실행 화면을 준비합니다.');
     expoServer = startLogged('expo-server', process.execPath, [tools.expo, 'start', '--localhost', '--port', String(port), '--clear'], {
       cwd: mobileRoot,
-      env: { ...tools.env, EXPO_PUBLIC_DEVICE_RUN_ID: runId },
+      env: pinnedCatalogEnvironment(catalogEnvironment, tools.env, runId),
     });
     await waitForServer();
     await prepareReverse();
@@ -467,9 +501,12 @@ try {
     junit = readJunit(path.join(runDir, 'result.xml'));
     if (interrupted) throw new Error('사용자가 검사를 중단했습니다.');
     assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
+    catalogAfter = await verifyCatalogHttp('catalog-http-after', catalogBefore);
+    assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
     // 부분 검사 성공은 전체 회귀 검증을 대신하지 않으므로 공개 보고서와 커밋을 만들지 않습니다.
     if (!receiptOnly) {
       writeReport('PASS');
+      assertCatalogEnvironmentUnchanged(catalogEnvironment);
       if (!noCommit) {
         const result = commitVerifiedChange({ repoRoot, state: gitState, reportPath, message });
         commit = result.commit;
@@ -493,6 +530,7 @@ try {
     fs.writeFileSync(path.join(runDir, 'summary.json'), JSON.stringify({
       runId, scope: receiptOnly ? 'receipt-only' : 'full', status: overallStatus, startedAt: startedAt.toISOString(), finishedAt: new Date().toISOString(),
       device, sourceHash: gitState?.sourceHash, head: gitState?.head, checks, junit, commit, screenAwake,
+      catalog: { environmentFingerprint: catalogEnvironment?.fingerprint, before: catalogBefore, after: catalogAfter },
     }, null, 2) + '\n');
     say('원본 기록: .artifacts/device/' + runId + '/');
   }

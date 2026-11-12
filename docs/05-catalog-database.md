@@ -1,6 +1,6 @@
-# 상품 DB 준비와 Supabase 프로젝트 확인
+# 상품 DB와 Supabase 앱 연결
 
-현재 앱은 내장 예시 상품 6개를 사용한다. 이번 단계에서는 Supabase에 적용할 DB 구조·예시 데이터와 로컬 PostgreSQL 검사를 준비했다. 앱의 원격 DB 읽기와 기존 Supabase 프로젝트 적용은 연결 확인 후 진행한다.
+상품 DB 기반은 `06cb47c`에 포함했다. 새 Supabase 프로젝트에 직접 만든 예시 6개를 적용했고 SQL Editor와 공개 키 HTTP 조회에서 목록을 확인했다. 현재는 앱의 원격 읽기·실패 처리와 전체 검증을 진행하는 단계다. 원격 DB의 가격도 실제 이마트 가격이 아닌 자체 예시다.
 
 ## 파일과 실행
 
@@ -24,7 +24,7 @@ PGlite 0.5.16을 별도 개발 의존성으로 사용한다. 이 PC에서 Postgr
 
 ```bash
 cd apps/mobile
-npm run verify:device -- --message "feat: 상품 DB 구조와 공개 권한 검증 추가"
+npm run verify:device -- --message "feat: Supabase 공개 상품 목록 읽기 연결"
 ```
 
 DB 검사만 통과한 것으로 자동 커밋하지 않는다. 실행기는 DB 검사 이후 앱 검사와 갤럭시 전체 검사를 완료하고 파일 지문이 유지되는 경우에만 결과 기록과 커밋을 만든다.
@@ -36,7 +36,7 @@ flowchart LR
   P["비공개 products<br/>상품·규격·예시 구분"] --> O["비공개 price_observations<br/>가격·출처·관측 시각·공개 상태"]
   P --> V["공개 play_catalog<br/>승인된 현재 놀이 가격"]
   O --> V
-  V --> A["앱의 공개 읽기 연결<br/>다음 단계"]
+  V --> A["Expo 앱의 공개 읽기<br/>한 번의 놀이 동안 가격 유지"]
 ```
 
 상품의 이름·규격과 가격 관측을 분리한다. 같은 상품의 가격이 바뀌면 관측 행을 새로 추가한다. 관측 사실과, 이미 관측이 있는 상품의 이름·규격은 덮어쓰지 못하게 했다. 다른 규격은 새 상품 ID로 관리한다.
@@ -64,20 +64,62 @@ catalog_private 스키마는 앱의 원본 직접 읽기 대상이 아니다. an
 
 일반 역할의 INSERT·UPDATE·DELETE·TRUNCATE 권한은 회수한다. 서버 관리자 service_role만 원본 자료를 관리한다. 이 역할은 RLS를 우회하므로 관리자 비밀 키를 앱이나 저장소에 넣지 않는다. 아동 사용자 계정은 만들지 않는다.
 
-## 기존 Supabase 프로젝트를 사용할 수 있는지 확인
+## 적용한 Supabase 프로젝트 확인
 
-사용자에게 Supabase 계정과 기존 프로젝트가 있음을 확인했다. 아직 해당 프로젝트의 연결·테이블 조회·적용은 완료하지 않았다. 연결 후 다음 정보를 먼저 읽어서 판단한다.
+사용자가 새 store-price 프로젝트를 만들었다. 적용 전 브라우저에서 Healthy 상태, FREE 요금제, Singapore(ap-southeast-1), PostgreSQL 17.11을 확인했다. catalog_private와 public.play_catalog가 없고 public 객체 수가 0인 것도 확인했다. anon·authenticated는 RLS 우회 권한이 없고 service_role은 우회할 수 있었다.
 
-1. 프로젝트 이름·상태와 다른 운영 서비스에서 사용하는지
-2. PostgreSQL 15 이상인지, anon·authenticated·service_role이 있는지
-3. catalog_private 스키마와 public.play_catalog 이름이 이미 사용 중인지
-4. Data API 노출 스키마에 비공개 원본 스키마가 포함되지 않는지
-5. 기존 테이블·권한에 영향을 주지 않고 새 구조를 적용할 수 있는지
+사용자가 SQL Editor에서 마이그레이션과 seed를 차례로 실행해 성공했다고 보고했다. 이후 SQL Editor의 공개 뷰 6행을 직접 읽었고, Node fetch의 공개 키 요청에서 HTTP 200·Content-Range 0-5/6과 이름·단위·가격·is_sample=true를 확인했다. 이 결과는 앱·실기기 검사와 구분한다.
 
-마이그레이션은 새 객체를 만드는 SQL이며 기존 객체를 삭제하거나 덮어쓰는 SQL이 아니다. 이름 충돌이 있으면 먼저 기존 구조를 확인한다. 무조건 삭제하거나 같은 이름의 테이블을 재사용하지 않는다. 운영 중인 다른 서비스와 공유할 경우에는 역할·공개 스키마·관리 범위를 함께 검토한다.
+다른 프로젝트에 적용할 때도 이름·용도·PostgreSQL 15 이상 여부, 기본 역할, 객체 이름 충돌, Data API 노출 범위를 먼저 확인한다. catalog_private는 노출 스키마에 추가하지 않는다. 마이그레이션은 새 객체를 만드는 SQL이며, 기존 객체를 무조건 삭제하거나 덮어쓰지 않는다.
 
-호환성과 대상 프로젝트를 확인한 후 마이그레이션, seed 순서로 적용한다. seed의 ON CONFLICT DO NOTHING은 기존 관리 상태를 덮어쓰지 않는다. seed를 다시 실행해도 철회한 가격이 자동 공개되지 않는다.
+마이그레이션 다음에 seed를 적용한다. seed의 ON CONFLICT DO NOTHING은 기존 관리 상태를 덮어쓰지 않는다. 반복 실행해도 철회한 가격이 자동 공개되지 않는다.
 
-그다음 실제 Supabase의 공개 키로 카탈로그 읽기와 노출 범위를 확인하고 앱 연결을 구현한다. 로컬 PGlite 검사는 Supabase 키의 역할 매핑·PostgREST·HTTP 통신·실제 프로젝트 설정을 대신하지 않는다.
+## 앱의 공개 연결 설정
 
-[Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security) · [PostgreSQL 뷰 권한](https://www.postgresql.org/docs/current/sql-createview.html) · [Supabase 키 종류](https://supabase.com/docs/guides/getting-started/api-keys) · [PGlite](https://pglite.dev/docs/)
+처음 설정하는 작업 폴더의 Git Bash에서 다음 명령을 사용한다. -n은 이미 있는 .env.local을 보존한다.
+
+```bash
+cd apps/mobile
+cp -n .env.example .env.local
+```
+
+.env.local에서 다음 두 변수의 가짜 값을 본인 프로젝트의 값으로 바꾼다.
+
+| 변수 | 값 |
+| --- | --- |
+| EXPO_PUBLIC_SUPABASE_URL | 본인 프로젝트 Connect 화면에서 복사한 HTTPS URL |
+| EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY | 본인 프로젝트의 publishable 키 |
+
+실제 키 값은 문서·검사 로그에 출력하지 않는다. .env.local은 Git에서 제외하고 변수 이름과 가짜 값만 있는 .env.example을 공유한다. 이 제외 규칙이 앱 번들 안의 값을 숨겨 주는 것은 아니다. EXPO_PUBLIC_ 값은 앱에 공개되므로 secret·service_role 키는 넣지 않는다.
+
+Expo SDK 58은 표준 .env 파일을 읽고 process.env.EXPO_PUBLIC_이름의 직접 점 표기를 번들에 반영한다. .env.test·.env.staging을 별도 환경 선택 방법으로 사용하지 않는다. 변경한 값을 보려면 앱을 완전히 새로고침한다. [Expo 환경 변수](https://docs.expo.dev/guides/environment-variables/)
+
+publishable 키는 공개 클라이언트용이며 그 자체로 읽기 전용 키는 아니다. 이 프로젝트의 GRANT·RLS가 읽기를 허용하고 원본 쓰기를 막는다. 현재 앱은 별도 아동 계정이나 사용자 로그인 없이 GET /rest/v1/play_catalog를 요청하며, 키는 apikey 헤더에만 전달한다. [Supabase API 키](https://supabase.com/docs/guides/getting-started/api-keys) · [REST API](https://supabase.com/docs/guides/api)
+
+## 목록을 읽고 새 놀이를 시작하는 흐름
+
+처음에는 “가게 물건을 가져오고 있어요”를 표시한다. 앱은 필요한 열을 선택하고 sort_order·id 순으로 요청한다. 본문을 읽는 시간까지 포함한 제한 시간은 12초이며, HTTP 응답·자료 형식·가격·중복 ID·전체 행 수를 검증한다. 원 단위 정수 1~10,000원과 원 가격·놀이 가격 일치가 필요하다. 목록이 1,000개를 넘거나 일부가 누락된 응답은 부분 목록으로 시작하지 않는다.
+
+| 상태 | 화면과 선택 |
+| --- | --- |
+| 조회 중 | 기다림 안내 |
+| 조회 성공 | 원격 출처를 표시하고 받은 목록으로 놀이 시작 |
+| 빈 목록 | “아직 준비된 물건이 없어요”, 다시 불러오기 또는 예시 선택 |
+| 설정 없음 | “가게를 준비하고 있어요”, 다시 불러오기 또는 예시 선택 |
+| 통신·자료 오류 | “물건을 불러오지 못했어요”, 다시 불러오기 또는 예시 선택 |
+
+연결 오류를 숨기고 내장 예시로 자동 전환하지 않는다. 사용자가 **예시 상품으로 놀이하기**를 누르면 원격 요청을 중단하고 내장 예시 6개로 시작한다. 늦게 끝난 이전 요청이 선택한 목록을 덮어쓰지 않게 했다. 원격 예시와 내장 예시는 모두 예시임을 표시하며 가져온 경로도 구분한다.
+
+받은 목록과 가격은 한 번의 놀이 동안 유지한다. 원격 영수증에서 **다시 장보기**를 누르면 목록을 다시 조회하고 빈 장바구니·놀이돈 10,000원으로 시작한다. 내장 예시에서는 같은 예시로 새 놀이를 시작한다. 장바구니·돈 선택·채점·영수증은 메모리에만 남고 재시작하면 초기화된다. 원격 자료를 저장하는 영구 오프라인 캐시는 이번 범위에 없다.
+
+## 원격 조회와 전체 검사 구분
+
+사전 확인에서는 Node fetch로 실제 공개 목록을 읽었다. 로컬 PGlite 검사는 Supabase 키의 역할 매핑·PostgREST·HTTP 통신·실제 프로젝트 설정을 대신하지 않는다.
+
+원격 검사 파일은 scripts/device/catalog-http-check.mjs다. 별도 npm 명령을 만들지 않고 기존 자동 실행기의 catalog-http-before·catalog-http-after 단계에서 검사한다. 공개 목록을 앱과 같은 검증 함수로 읽어 예시 6개와 비교하고, 비공개 원본 스키마와 공개 뷰의 approval_notes 접근이 거부되는지 읽기 요청으로 확인한다. 이 HTTP 검사는 서버 자료를 추가·수정·삭제하지 않는다.
+
+실행기는 환경 설정을 검사하고 앱 검사·번들·새 개발 서버에 같은 설정을 전달한다. 환경 파일이나 실제 적용 값이 검사 중 달라졌는지 지문으로 확인한다. 출력에는 키 대신 상품 수와 검증 결과를 남긴다.
+
+카탈로그 도메인 단위 검사 28개, 원격 검증기 단위 검사 10개, 앱 전체 타입·ESLint 검사는 통과했다. 실제 공개 키로 예시 6개 일치와 비공개 스키마·승인 메모 접근 차단을 확인했다. 별도 브라우저 검사에서는 잘못된 클라이언트 키로 오류를 만들고 내장 예시 선택 후 사과 1개의 1,500원·잔액 8,500원을 확인했다. 앱 전체 단위 검사와 갤럭시 전체 검사는 아직 성공으로 기록하지 않았다. 이 변경과 함께 커밋한 [검증 기록](book/verification/latest-android.md)의 실행 기준 HEAD와 각 단계 결과를 확인한다. 이전 실행 기록을 현재 코드의 검증으로 대신하지 않는다. [개발 과정과 실제 사전 확인 결과](book/chapters/04a-supabase-catalog.md)
+
+[Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security) · [PostgreSQL 뷰 권한](https://www.postgresql.org/docs/current/sql-createview.html) · [PGlite](https://pglite.dev/docs/)

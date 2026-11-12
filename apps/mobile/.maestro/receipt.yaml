@@ -21,6 +21,17 @@ name: 계산 완료와 영수증 실기기 회귀 검사
 - assertVisible:
     id: "device-run-marker"
     text: "^자동 검사 ${RUN_ID}$"
+- extendedWaitUntil:
+    visible:
+      id: "catalog-source-marker"
+      text: "^상품 출처 supabase$"
+    timeout: 30000
+- assertVisible:
+    id: "catalog-source-marker"
+    text: "^상품 출처 supabase$"
+- assertVisible:
+    id: "catalog-loaded-count"
+    text: "^불러온 상품 6개$"
 - assertVisible:
     id: "cart-summary"
     text: "^장바구니 총 0개, 합계 0원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 10,000원\\. 놀이돈 안에서 장을 봐요\\.$"
@@ -293,6 +304,17 @@ name: 계산 완료와 영수증 실기기 회귀 검사
 - tapOn:
     id: "receipt-new-round"
     enabled: true
+- extendedWaitUntil:
+    visible:
+      id: "catalog-source-marker"
+      text: "^상품 출처 supabase$"
+    timeout: 30000
+- assertVisible:
+    id: "catalog-source-marker"
+    text: "^상품 출처 supabase$"
+- assertVisible:
+    id: "catalog-loaded-count"
+    text: "^불러온 상품 6개$"
 - assertVisible:
     id: "cart-summary"
     text: "^장바구니 총 0개, 합계 0원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 10,000원\\. 놀이돈 안에서 장을 봐요\\.$"
@@ -439,6 +461,17 @@ name: 계산 완료와 영수증 실기기 회귀 검사
 - tapOn:
     id: "receipt-new-round"
     enabled: true
+- extendedWaitUntil:
+    visible:
+      id: "catalog-source-marker"
+      text: "^상품 출처 supabase$"
+    timeout: 30000
+- assertVisible:
+    id: "catalog-source-marker"
+    text: "^상품 출처 supabase$"
+- assertVisible:
+    id: "catalog-loaded-count"
+    text: "^불러온 상품 6개$"
 - assertVisible:
     id: "cart-summary"
     text: "^장바구니 총 0개, 합계 0원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 10,000원\\. 놀이돈 안에서 장을 봐요\\.$"
@@ -595,6 +628,17 @@ name: 계산 완료와 영수증 실기기 회귀 검사
 - assertVisible:
     id: "device-run-marker"
     text: "^자동 검사 ${RUN_ID}$"
+- extendedWaitUntil:
+    visible:
+      id: "catalog-source-marker"
+      text: "^상품 출처 supabase$"
+    timeout: 30000
+- assertVisible:
+    id: "catalog-source-marker"
+    text: "^상품 출처 supabase$"
+- assertVisible:
+    id: "catalog-loaded-count"
+    text: "^불러온 상품 6개$"
 - assertVisible:
     id: "cart-summary"
     text: "^장바구니 총 0개, 합계 0원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 10,000원\\. 놀이돈 안에서 장을 봐요\\.$"

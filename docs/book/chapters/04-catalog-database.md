@@ -72,4 +72,6 @@ npm run verify:device -- --message "feat: 상품 DB 구조와 공개 권한 검�
 
 기존 Supabase 프로젝트의 이름·용도·PostgreSQL 버전·현재 테이블과 공개 스키마를 읽어서 재사용 가능 여부를 판단한다. 충돌 여부를 확인한 뒤 마이그레이션과 자체 예시를 적용하고 공개 키를 통한 실제 읽기를 검사한다. 그 뒤 앱에 원격 카탈로그와 예시 대체 동작을 연결한다. 계정 비밀번호나 관리자 키는 코드·원고·Git에 저장하지 않는다.
 
+후속 기록: 새 프로젝트 적용과 공개 키 조회, 앱 연결은 [04장 보충](04a-supabase-catalog.md)에 기록했다. 위 내용은 이 장을 작성한 당시의 로컬 검증 범위를 유지한다.
+
 참고: [PGlite 문서](https://pglite.dev/docs/) · [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security) · [PostgreSQL CREATE VIEW](https://www.postgresql.org/docs/current/sql-createview.html)

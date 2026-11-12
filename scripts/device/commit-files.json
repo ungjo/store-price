@@ -41,5 +41,12 @@
   "apps/mobile/src/data/sample-products.ts",
   "docs/05-catalog-database.md",
   "docs/book/chapters/04-catalog-database.md",
-  "docs/01-setup.md"
+  "docs/01-setup.md",
+  "apps/mobile/.env.example",
+  "apps/mobile/src/components/catalog-loader.tsx",
+  "apps/mobile/src/features/catalog/catalog.ts",
+  "apps/mobile/src/features/catalog/catalog.test.ts",
+  "scripts/device/catalog-http-check.mjs",
+  "scripts/device/catalog-http-check.test.mjs",
+  "docs/book/chapters/04a-supabase-catalog.md"
 ]

@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { useReducer } from 'react';
+import { useMemo, useReducer } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,20 +9,35 @@ import { QuantityControl } from './src/components/quantity-control';
 import { getCartSummary } from './src/features/cart/cart';
 import { getBudgetSummary, STARTING_BUDGET_KRW } from './src/features/budget/budget';
 import { createInitialShoppingState, createShoppingReducer, getPaymentSummary } from './src/features/payment/payment';
-import { sampleProducts } from './src/data/sample-products';
+import { CatalogLoader, type CatalogSource } from './src/components/catalog-loader';
+import type { CatalogProduct } from './src/features/catalog/catalog';
 
 // 원 단위 정수 가격에 천 단위 구분 기호를 붙입니다. 원래 가격 값은 바꾸지 않습니다.
 const won = new Intl.NumberFormat('ko-KR');
 
-const shoppingReducer = createShoppingReducer(sampleProducts);
 // 검사 실행 번호를 번들에 넣어 이전 서버나 캐시된 화면을 성공으로 오인하지 않게 합니다.
 const deviceRunId = process.env.EXPO_PUBLIC_DEVICE_RUN_ID;
 
 export default function App() {
+  return (
+    <CatalogLoader>
+      {(products, source, reload) => <MarketScreen products={products} source={source} reload={reload} />}
+    </CatalogLoader>
+  );
+}
+
+function MarketScreen({ products, source, reload }: {
+  products: readonly CatalogProduct[];
+  source: CatalogSource;
+  reload: () => void;
+}) {
+  // 불러온 목록을 한 번의 놀이 동안 고정해 장바구니와 영수증의 가격이 중간에 달라지지 않게 합니다.
+  const shoppingReducer = useMemo(() => createShoppingReducer(products), [products]);
+  const allSamples = products.every((product) => product.isSample);
   // 물건이 바뀐 뒤 예전 돈 선택이 남지 않도록 장바구니와 선택 금액을 함께 관리합니다.
   const [shopping, dispatch] = useReducer(shoppingReducer, undefined, createInitialShoppingState);
   const { cart, selectedPaymentKrw, quiz } = shopping;
-  const summary = getCartSummary(cart, sampleProducts);
+  const summary = getCartSummary(cart, products);
   // 잔액도 장바구니 합계에서 매번 계산해 담기·빼기·비우기 뒤 금액이 항상 함께 바뀝니다.
   const budget = getBudgetSummary(summary.totalPriceKrw);
   const budgetLabel = budget.status === 'over' ? '부족한 돈' : '남을 돈';
@@ -38,7 +53,7 @@ export default function App() {
   const hideBudgetAnswer = getPaymentSummary(summary.totalPriceKrw, selectedPaymentKrw).changeAmountKrw !== null
     && quiz.status !== 'correct';
   const quizBudgetHint = '거스름돈을 맞히면 남을 돈을 보여 줘요.';
-  const selectedProducts = sampleProducts.filter((product) => (cart[product.id] ?? 0) > 0);
+  const selectedProducts = products.filter((product) => (cart[product.id] ?? 0) > 0);
   const { width, fontScale } = useWindowDimensions();
   // 좁은 화면이나 큰 글자 설정에서는 상품을 한 줄에 하나씩 보여 읽기 쉽게 합니다.
   const columns = width >= 380 && fontScale <= 1.2 ? 2 : 1;
@@ -49,7 +64,7 @@ export default function App() {
       <SafeAreaProvider>
         <SafeAreaView style={styles.screen}>
           <StatusBar style="dark" />
-          <ShoppingReceipt receipt={shopping.receipt} onNewRound={() => dispatch({ type: 'start-new-round' })} />
+          <ShoppingReceipt receipt={shopping.receipt} onNewRound={() => source === 'supabase' ? reload() : dispatch({ type: 'start-new-round' })} />
         </SafeAreaView>
       </SafeAreaProvider>
     );
@@ -66,7 +81,7 @@ export default function App() {
             testID="market-list"
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
-            data={sampleProducts}
+            data={products}
             extraData={shopping}
             numColumns={columns}
             keyExtractor={(item) => item.id}
@@ -76,14 +91,22 @@ export default function App() {
             ListHeaderComponent={
               <View>
                 {deviceRunId && (
-                  <Text
-                    testID="device-run-marker"
-                    accessible
-                    accessibilityLabel={'자동 검사 ' + deviceRunId}
-                    style={styles.deviceRunMarker}
-                  >
-                    자동 검사 중
-                  </Text>
+                  <View>
+                    <Text
+                      testID="device-run-marker"
+                      accessible
+                      accessibilityLabel={'자동 검사 ' + deviceRunId}
+                      style={styles.deviceRunMarker}
+                    >
+                      자동 검사 중
+                    </Text>
+                    <Text testID="catalog-source-marker" accessible accessibilityLabel={'상품 출처 ' + source} style={styles.deviceRunMarker}>
+                      상품 출처 확인
+                    </Text>
+                    <Text testID="catalog-loaded-count" accessible accessibilityLabel={'불러온 상품 ' + products.length + '개'} style={styles.deviceRunMarker}>
+                      불러온 상품 {products.length}개
+                    </Text>
+                  </View>
                 )}
                 <View style={styles.brand}>
                   <Text style={styles.brandIcon} accessible={false}>🌱</Text>
@@ -112,9 +135,12 @@ export default function App() {
                 </View>
 
                 <View style={styles.notice}>
-                  <Text style={styles.noticeTitle}>연습용 예시 가격이에요</Text>
+                  <Text style={styles.noticeTitle}>{allSamples ? '연습용 예시 가격이에요' : '가격을 살펴보고 골라요'}</Text>
                   <Text style={styles.noticeText}>
-                    놀이를 위해 만든 가격이에요.{'\n'}실제 이마트 판매 가격이 아니에요.
+                    {allSamples ? '놀이를 위해 만든 가격이에요.\n실제 이마트 판매 가격이 아니에요.' : '예시 상품에는 연습용 가격이 표시돼요.\n판매 가격은 확인한 시점에 따라 달라질 수 있어요.'}
+                  </Text>
+                  <Text testID="catalog-origin" style={styles.noticeText}>
+                    {source === 'supabase' ? '가게에서 불러온 상품이에요.' : '앱에 준비된 예시 상품으로 놀고 있어요.'}
                   </Text>
                 </View>
 
@@ -132,7 +158,7 @@ export default function App() {
 
                 <View style={styles.sectionHeading}>
                   <Text style={styles.sectionTitle} accessibilityRole="header">우리 가게 물건</Text>
-                  <Text style={styles.count}>{sampleProducts.length}가지</Text>
+                  <Text style={styles.count}>{products.length}가지</Text>
                 </View>
               </View>
             }
@@ -141,7 +167,7 @@ export default function App() {
                 {/* 상품 설명만 묶어서 읽고, 담기 버튼은 독립적으로 선택할 수 있게 합니다. */}
                 <View
                   accessible
-                  accessibilityLabel={item.name + ', ' + item.unit + ', 연습용 가격 ' + won.format(item.priceKrw) + '원'}
+                  accessibilityLabel={item.name + ', ' + item.unit + (item.isSample ? ', 연습용 가격 ' : ', 가격 ') + won.format(item.priceKrw) + '원'}
                 >
                   <View style={[styles.productPicture, { backgroundColor: item.color }]}>
                     <Text style={styles.emoji}>{item.emoji}</Text>
@@ -149,6 +175,7 @@ export default function App() {
                   <Text style={styles.productName}>{item.name}</Text>
                   <Text style={styles.unit}>{item.unit}</Text>
                   <Text style={styles.price}>{won.format(item.priceKrw)}원</Text>
+                  {!allSamples && item.isSample && <Text style={styles.unit}>연습용 가격</Text>}
                 </View>
                 <QuantityControl
                   productId={item.id}

@@ -29,7 +29,7 @@
 | 01 | Expo 앱 뼈대 | TypeScript·번들 확인, 기기 실행 방법 제공 | chore: scaffold Expo TypeScript app |
 | 02 | 상품과 장바구니 | 담기·빼기·수량·합계 동작 | feat: add sample catalog and shopping cart |
 | 03 | 계산·거스름돈 놀이 | 예산·지불·정답 로직 검증 | feat: add checkout and change practice |
-| 04 | DB 설계 | 상품·가격 이력·공개 읽기·관리자 쓰기 검증 | feat: add catalog database and access rules |
+| 04 | DB 설계·앱 연결 | 상품·가격 이력·공개 읽기·관리자 쓰기, 원격 목록·실패 처리 검증 | feat: add catalog database and access rules |
 | 05 | 실제 가격 연결 | 이용 범위 확인, 수집·검증·갱신·실패 기록 | feat: import approved price data |
 | 06 | 아동 사용성 | 실기기·큰 글자·접근성·오프라인 확인 | feat: improve child-friendly play flow |
 | 07 | 출시 테스트 | 개발 빌드·TestFlight·Play 테스트 | test: prepare mobile release candidate |
@@ -43,9 +43,11 @@
 
 거스름돈 금액과 계산식은 `85415bb`에 포함했습니다. 앱 테스트 34개, 커밋 보호 테스트 9개, 타입·ESLint·세 플랫폼 번들과 갤럭시 화면·상태 조건 101개가 통과했고 사용자가 GitHub 업로드를 확인했습니다. [거스름돈 계산 기록](book/chapters/03c-change-calculation.md)
 
-거스름돈 맞히기는 `843ec07`, 계산 완료·영수증은 `5d7321b`에서 구현했습니다. 현재는 상품·가격 이력·공개 카탈로그와 RLS를 준비하는 DB 단계입니다. 로컬 PostgreSQL 검사 34개를 통과했고, 기존 Supabase 프로젝트 호환성·적용 및 앱의 원격 읽기 연결은 다음 확인 항목입니다. [상품 DB 개발 기록](book/chapters/04-catalog-database.md)
+거스름돈 맞히기는 `843ec07`, 계산 완료·영수증은 `5d7321b`, 상품 DB 기반은 `06cb47c`에 포함했습니다. 로컬 PostgreSQL 검사 34개를 통과한 구조와 자체 예시를 새 Supabase 프로젝트에 적용했습니다. SQL Editor의 6행과 공개 키를 사용한 실제 HTTP 200 응답을 확인했습니다. [상품 DB 개발 기록](book/chapters/04-catalog-database.md)
 
-이 변경의 최종 자동 검사 결과는 [실기기 검증 기록](book/verification/latest-android.md)에서 실행 기준 HEAD와 함께 확인합니다. 검사한 소스가 그대로 유지되고 모든 검사에 통과해야 로컬 커밋합니다. GitHub 업로드는 별도 요청에 따라 진행합니다. 놀이 영수증은 메모리에만 남습니다. 이번 DB 검사는 로컬 SQL 검증이며 클라우드 연결 성공을 의미하지 않습니다. iPhone 실기기 검증과 실제 가격 연동은 후속 단계입니다.
+현재는 앱에서 원격 목록을 읽고, 실패 시 재시도하거나 내장 예시를 선택하는 흐름을 연결하는 단계입니다. 받은 가격은 한 번의 놀이 동안 유지하고 원격 영수증의 다시 장보기에서 새로 조회합니다. 카탈로그 단위 검사·원격 읽기 권한·앱 타입과 코드 검사, 브라우저의 오류 후 내장 예시 선택을 확인했습니다. 앱 전체 단위 검사와 갤럭시 검사의 최종 결과는 아직 기록하지 않았습니다. [Supabase 상품 읽기 기록](book/chapters/04a-supabase-catalog.md)
+
+이 변경의 최종 자동 검사 결과는 [실기기 검증 기록](book/verification/latest-android.md)에서 실행 기준 HEAD와 함께 확인합니다. 검사한 소스가 그대로 유지되고 모든 검사에 통과해야 로컬 커밋합니다. GitHub 업로드는 별도 요청에 따라 진행합니다. 놀이 영수증은 메모리에만 남습니다. 로컬 SQL 검사, 실제 HTTP 조회, 앱·실기기 검증은 각각의 실행 근거로 구분합니다. 원격 DB에도 자체 예시만 있으며, iPhone 실기기 검증과 실제 가격 연동은 후속 단계입니다.
 
 ## 구성
 

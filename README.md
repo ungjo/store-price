@@ -7,7 +7,7 @@
 ## 개발 방식
 
 - 앱: Expo + React Native + TypeScript
-- DB: Supabase용 PostgreSQL 스키마·공개 권한 준비, 로컬 SQL 검사는 PGlite
+- DB: Supabase PostgreSQL·공개 카탈로그 읽기, 로컬 SQL 검사는 PGlite
 - 출시 빌드 계획: Expo EAS Build / Submit
 - 기록: 기능 단계별 Git 커밋 + 책 원고
 - 저장소: https://github.com/ungjo/store-price
@@ -19,7 +19,7 @@
 3. [실제 가격 데이터 확보 계획](docs/03-price-data.md)
 4. [책 원고와 커밋 읽는 법](docs/book/README.md)
 5. [갤럭시 자동 검사·기록·커밋](docs/04-device-automation.md)
-6. [상품 DB와 Supabase 프로젝트 확인](docs/05-catalog-database.md)
+6. [상품 DB와 Supabase 연결 안내](docs/05-catalog-database.md)
 
 ## 현재 진행
 
@@ -38,7 +38,8 @@
 - [x] 거스름돈 답 입력·채점·다시 풀기 구현 — [검증 기록 확인](docs/book/verification/latest-android.md)
 - [x] 계산 완료·놀이 영수증·다시 장보기 구현 — [검증 기록 확인](docs/book/verification/latest-android.md)
 - [x] 상품 DB 스키마·예시 데이터·로컬 SQL 권한 검사 — [개발 기록](docs/book/chapters/04-catalog-database.md)
-- [ ] 기존 Supabase 프로젝트 적용과 앱의 원격 카탈로그 읽기
+- [x] 새 Supabase 프로젝트에 예시 6개 적용, 공개 키 HTTP 조회 확인 (2026-11-12)
+- [ ] 앱의 원격 카탈로그 읽기·오류 처리·실기기 검증 — [개발 기록](docs/book/chapters/04a-supabase-catalog.md)
 - [ ] 허용된 실제 가격 연동
 - [ ] Android·iPhone 실기기 검증
 - [ ] 스토어 제출
@@ -47,7 +48,7 @@
 
 ## 첫 화면 실행
 
-[모바일 앱 실행 안내](apps/mobile/README.md)를 따라 갤럭시에서 확인할 수 있습니다. 예시 상품 6개와 담기·수량 조절·장바구니 합계, 놀이돈 10,000원을 기준으로 남을 돈과 부족한 돈 표시를 구현했습니다. 낼 놀이돈 1,000원·5,000원·10,000원 중 하나를 선택하고 물건값에 충분한지 알려주는 기능도 구현했습니다. 충분한 돈을 고르면 거스름돈을 입력해 맞히는 문제가 나옵니다. 정답을 맞히면 받을 거스름돈과 계산식을 공개하고, 딱 맞게 낸 경우에도 0원을 답으로 입력합니다. 예산 잔액과 거스름돈은 서로 다른 기준으로 계산합니다. 정답 후 계산 완료를 누르면 상품별 내역·총액·낸 돈·거스름돈·남은 돈을 영수증으로 보여 줍니다. 다시 장보기는 새 놀이돈 10,000원으로 시작합니다. 장바구니·돈 선택·영수증은 메모리에만 보관하므로 새로고침하면 초기화됩니다. 상품 DB 구조와 로컬 SQL 검사는 준비했으며, Supabase 프로젝트 적용·앱의 원격 읽기·실제 가격 연결은 다음 단계입니다.
+[모바일 앱 실행 안내](apps/mobile/README.md)를 따라 갤럭시에서 확인할 수 있습니다. 예시 상품 6개와 담기·수량 조절·장바구니 합계, 놀이돈 10,000원을 기준으로 남을 돈과 부족한 돈 표시를 구현했습니다. 낼 놀이돈 1,000원·5,000원·10,000원 중 하나를 선택하고 물건값에 충분한지 알려주는 기능도 구현했습니다. 충분한 돈을 고르면 거스름돈을 입력해 맞히는 문제가 나옵니다. 정답을 맞히면 받을 거스름돈과 계산식을 공개하고, 딱 맞게 낸 경우에도 0원을 답으로 입력합니다. 예산 잔액과 거스름돈은 서로 다른 기준으로 계산합니다. 정답 후 계산 완료를 누르면 상품별 내역·총액·낸 돈·거스름돈·남은 돈을 영수증으로 보여 줍니다. 다시 장보기는 새 놀이돈 10,000원으로 시작합니다. 장바구니·돈 선택·영수증은 메모리에만 보관하므로 새로고침하면 초기화됩니다. 상품 DB 기반은 `06cb47c`에 포함했습니다. 새 Supabase 프로젝트에서 공개 키로 예시 6개를 읽는 HTTP 요청을 확인했고, 앱의 원격 읽기와 오류 처리 검증을 진행합니다. 원격 목록도 직접 만든 예시이며 실제 이마트 가격 연결은 후속 단계입니다.
 
 ```bash
 cd apps/mobile
@@ -55,6 +56,6 @@ npm ci
 npm start
 ```
 
-[1장: 첫 앱과 검증 결과](docs/book/chapters/01-first-app.md) · [2장: 장바구니](docs/book/chapters/02-shopping-cart.md) · [3장: 놀이돈 예산](docs/book/chapters/03-play-money.md) · [3장 보충: 낼 놀이돈 선택](docs/book/chapters/03a-payment-selection.md) · [3장 보충: 거스름돈 계산](docs/book/chapters/03c-change-calculation.md) · [3장 보충: 거스름돈 맞히기](docs/book/chapters/03d-change-quiz.md) · [3장 보충: 계산 완료와 영수증](docs/book/chapters/03e-checkout-receipt.md) · [4장: 상품 DB 구조와 권한](docs/book/chapters/04-catalog-database.md)
+[1장: 첫 앱과 검증 결과](docs/book/chapters/01-first-app.md) · [2장: 장바구니](docs/book/chapters/02-shopping-cart.md) · [3장: 놀이돈 예산](docs/book/chapters/03-play-money.md) · [3장 보충: 낼 놀이돈 선택](docs/book/chapters/03a-payment-selection.md) · [3장 보충: 거스름돈 계산](docs/book/chapters/03c-change-calculation.md) · [3장 보충: 거스름돈 맞히기](docs/book/chapters/03d-change-quiz.md) · [3장 보충: 계산 완료와 영수증](docs/book/chapters/03e-checkout-receipt.md) · [4장: 상품 DB 구조와 권한](docs/book/chapters/04-catalog-database.md) · [4장 보충: Supabase 상품 읽기](docs/book/chapters/04a-supabase-catalog.md)
 
 현재 프로젝트는 Expo SDK 58입니다. [Expo Go 호환 오류 해결 기록](docs/book/chapters/01a-expo-go-sdk58.md)에 업데이트와 검증 내용을 남겼습니다.
