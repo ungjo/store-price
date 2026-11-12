@@ -2,7 +2,7 @@
 
 초등학교 1~3학년 아이들이 상품을 고르고 놀이돈으로 계산하며 거스름돈을 배우는 Android·iOS 앱입니다.
 
-실제 가격의 목표 출처는 **SSG.COM 이마트 온라인 상품 가격**입니다. 오프라인 이마트 점포의 현재 가격을 의미하지 않습니다. 데이터 이용 범위가 확인되기 전에는 직접 만든 **연습용 예시 가격**만 사용합니다. 이마트·SSG 공식 앱 또는 제휴 앱이 아닙니다.
+실제 가격의 목표 출처는 **SSG.COM 이마트 온라인 상품 가격**입니다. 오프라인 이마트 점포의 현재 가격을 의미하지 않습니다. 데이터 이용 범위가 확인되기 전에는 앱에 직접 만든 **연습용 예시 가격**만 공개합니다. 실제 페이지에서 확인한 가격은 별도의 비공개 관측으로 다룹니다. 이마트·SSG 공식 앱 또는 제휴 앱이 아닙니다.
 
 ## 개발 방식
 
@@ -39,8 +39,9 @@
 - [x] 계산 완료·놀이 영수증·다시 장보기 구현 — [검증 기록 확인](docs/book/verification/latest-android.md)
 - [x] 상품 DB 스키마·예시 데이터·로컬 SQL 권한 검사 — [개발 기록](docs/book/chapters/04-catalog-database.md)
 - [x] 새 Supabase 프로젝트에 예시 6개 적용, 공개 키 HTTP 조회 확인 (2026-11-12)
-- [ ] 앱의 원격 카탈로그 읽기·오류 처리·실기기 검증 — [개발 기록](docs/book/chapters/04a-supabase-catalog.md)
-- [ ] 허용된 실제 가격 연동
+- [x] 앱의 원격 카탈로그 읽기·오류 처리·실기기 검증 (`1f994f3`) — [개발 기록](docs/book/chapters/04a-supabase-catalog.md)
+- [x] 실제 가격 3개의 비공개 관측 적재·DB 검증 — [개발 기록](docs/book/chapters/04b-real-price-intake.md)
+- [ ] 허용된 실제 가격의 앱 공개·자동 갱신
 - [ ] Android·iPhone 실기기 검증
 - [ ] 스토어 제출
 
@@ -48,7 +49,7 @@
 
 ## 첫 화면 실행
 
-[모바일 앱 실행 안내](apps/mobile/README.md)를 따라 갤럭시에서 확인할 수 있습니다. 예시 상품 6개와 담기·수량 조절·장바구니 합계, 놀이돈 10,000원을 기준으로 남을 돈과 부족한 돈 표시를 구현했습니다. 낼 놀이돈 1,000원·5,000원·10,000원 중 하나를 선택하고 물건값에 충분한지 알려주는 기능도 구현했습니다. 충분한 돈을 고르면 거스름돈을 입력해 맞히는 문제가 나옵니다. 정답을 맞히면 받을 거스름돈과 계산식을 공개하고, 딱 맞게 낸 경우에도 0원을 답으로 입력합니다. 예산 잔액과 거스름돈은 서로 다른 기준으로 계산합니다. 정답 후 계산 완료를 누르면 상품별 내역·총액·낸 돈·거스름돈·남은 돈을 영수증으로 보여 줍니다. 다시 장보기는 새 놀이돈 10,000원으로 시작합니다. 장바구니·돈 선택·영수증은 메모리에만 보관하므로 새로고침하면 초기화됩니다. 상품 DB 기반은 `06cb47c`에 포함했습니다. 새 Supabase 프로젝트에서 공개 키로 예시 6개를 읽는 HTTP 요청을 확인했고, 앱의 원격 읽기와 오류 처리 검증을 진행합니다. 원격 목록도 직접 만든 예시이며 실제 이마트 가격 연결은 후속 단계입니다.
+[모바일 앱 실행 안내](apps/mobile/README.md)를 따라 갤럭시에서 확인할 수 있습니다. 예시 상품 6개와 담기·수량 조절·장바구니 합계, 놀이돈 10,000원을 기준으로 남을 돈과 부족한 돈 표시를 구현했습니다. 낼 놀이돈 1,000원·5,000원·10,000원 중 하나를 선택하고 물건값에 충분한지 알려주는 기능도 구현했습니다. 충분한 돈을 고르면 거스름돈을 입력해 맞히는 문제가 나옵니다. 정답을 맞히면 받을 거스름돈과 계산식을 공개하고, 딱 맞게 낸 경우에도 0원을 답으로 입력합니다. 예산 잔액과 거스름돈은 서로 다른 기준으로 계산합니다. 정답 후 계산 완료를 누르면 상품별 내역·총액·낸 돈·거스름돈·남은 돈을 영수증으로 보여 줍니다. 다시 장보기는 새 놀이돈 10,000원으로 시작합니다. 장바구니·돈 선택·영수증은 메모리에만 보관하므로 새로고침하면 초기화됩니다. 상품 DB 기반은 `06cb47c`, Supabase의 공개 예시 6개를 읽는 앱 연결·오류 처리·갤럭시 검증은 `1f994f3`에 포함했습니다. 현재 비공개로 기록하는 실제 가격은 공개 앱 목록과 구분하며, 실제 가격의 앱 공개는 후속 단계입니다.
 
 ```bash
 cd apps/mobile
@@ -56,6 +57,6 @@ npm ci
 npm start
 ```
 
-[1장: 첫 앱과 검증 결과](docs/book/chapters/01-first-app.md) · [2장: 장바구니](docs/book/chapters/02-shopping-cart.md) · [3장: 놀이돈 예산](docs/book/chapters/03-play-money.md) · [3장 보충: 낼 놀이돈 선택](docs/book/chapters/03a-payment-selection.md) · [3장 보충: 거스름돈 계산](docs/book/chapters/03c-change-calculation.md) · [3장 보충: 거스름돈 맞히기](docs/book/chapters/03d-change-quiz.md) · [3장 보충: 계산 완료와 영수증](docs/book/chapters/03e-checkout-receipt.md) · [4장: 상품 DB 구조와 권한](docs/book/chapters/04-catalog-database.md) · [4장 보충: Supabase 상품 읽기](docs/book/chapters/04a-supabase-catalog.md)
+[1장: 첫 앱과 검증 결과](docs/book/chapters/01-first-app.md) · [2장: 장바구니](docs/book/chapters/02-shopping-cart.md) · [3장: 놀이돈 예산](docs/book/chapters/03-play-money.md) · [3장 보충: 낼 놀이돈 선택](docs/book/chapters/03a-payment-selection.md) · [3장 보충: 거스름돈 계산](docs/book/chapters/03c-change-calculation.md) · [3장 보충: 거스름돈 맞히기](docs/book/chapters/03d-change-quiz.md) · [3장 보충: 계산 완료와 영수증](docs/book/chapters/03e-checkout-receipt.md) · [4장: 상품 DB 구조와 권한](docs/book/chapters/04-catalog-database.md) · [4장 보충: Supabase 상품 읽기](docs/book/chapters/04a-supabase-catalog.md) · [4장 보충: 실제 가격 비공개 관측](docs/book/chapters/04b-real-price-intake.md)
 
 현재 프로젝트는 Expo SDK 58입니다. [Expo Go 호환 오류 해결 기록](docs/book/chapters/01a-expo-go-sdk58.md)에 업데이트와 검증 내용을 남겼습니다.

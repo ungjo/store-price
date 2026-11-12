@@ -390,7 +390,8 @@ function writeReport(status, reason = '') {
     '- 종료 정리에서는 현재 값이 여전히 7일 때만 원래 값을 복구한다. 중간에 바뀐 값은 보존한다.',
     '- 이 보고서는 종료 정리 전에 작성된다. 실제 복구 결과와 실행한 정리 명령의 종료 코드는 원본 summary.json의 screenAwake 및 checks에 기록한다.',
     '', '## 확인한 항목', '',
-    '- PGlite의 메모리 PostgreSQL에서 상품·가격 이력 제약, 예시 데이터, 공개 카탈로그와 역할별 읽기·쓰기 권한을 검사했다.',
+    '- PGlite의 메모리 PostgreSQL에서 상품·가격 이력 제약, 예시 데이터, 수동 가격 관측의 비공개 조건, 공개 카탈로그와 역할별 읽기·쓰기 권한을 검사했다.',
+    '- 실제 가격 입력 검증과 저장 SQL 생성은 자체 작성한 테스트 자료로 검사했다. 원격 비공개 적재 결과는 이번 개발 장의 별도 조회 기록을 따른다.',
     '- 공개 키 REST GET으로 예시 상품 6개와 비공개 스키마·승인 메모 읽기 차단을 실행 전후 확인했다. 쓰기·관리자 API는 호출하지 않았다.',
     '- 앱 검사·번들·Expo 서버에는 같은 설정을 전달하고 EXPO_NO_DOTENV=1로 고정했다. 환경 파일과 선택한 프로세스 설정의 변경도 검사했다.',
     '- 실제 앱의 Supabase 출처·상품 6개 로딩을 최초 실행·다시 장보기·재실행에서 확인했다. 외부 상품의 일시적 변경을 연속 감시하는 검사는 아니다.',
@@ -412,7 +413,7 @@ function writeReport(status, reason = '') {
       .map((check) => '- ' + check.label + ': 종료 코드 ' + check.exitCode),
     '- JUnit: ' + (junit ? `${junit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
     '', '원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/' + runId + '/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.',
-    '', '이 기록은 해당 Android 실기기·검사 시점의 결과다. iPhone, 스토어용 APK/AAB/IPA 및 실제 이마트 가격 연동은 검증하지 않았다.', '',
+    '', '이 기록은 해당 Android 실기기·검사 시점의 결과다. iPhone, 스토어용 APK/AAB/IPA 및 실제 이마트 가격의 앱 공개 표시는 검증하지 않았다. 앱은 공개 예시 상품 6개로 검사한다.', '',
   ];
   fs.mkdirSync(path.dirname(path.join(repoRoot, reportPath)), { recursive: true });
   fs.writeFileSync(path.join(repoRoot, reportPath), lines.join('\n'));

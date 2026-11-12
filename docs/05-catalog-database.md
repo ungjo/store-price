@@ -1,14 +1,17 @@
 # 상품 DB와 Supabase 앱 연결
 
-상품 DB 기반은 `06cb47c`에 포함했다. 새 Supabase 프로젝트에 직접 만든 예시 6개를 적용했고 SQL Editor와 공개 키 HTTP 조회에서 목록을 확인했다. 현재는 앱의 원격 읽기·실패 처리와 전체 검증을 진행하는 단계다. 원격 DB의 가격도 실제 이마트 가격이 아닌 자체 예시다.
+상품 DB 기반은 `06cb47c`, 앱의 원격 읽기·실패 처리와 갤럭시 검증은 `1f994f3`에 포함했다. 사용자가 앱의 원격 목록과 GitHub 업로드를 확인했다. 이어 실제 페이지에서 확인한 가격 3개를 비공개 검토용 관측으로 저장하고 재조회했다. 공개 카탈로그는 자체 예시 6개다.
 
 ## 파일과 실행
 
 | 파일 | 역할 |
 | --- | --- |
 | supabase/migrations/20261112090000_catalog.sql | 상품·가격 이력·공개 카탈로그·권한 |
+| supabase/migrations/20261112102641_manual_price_observations.sql | 직접 확인한 실제 가격의 비공개 보관 제약 |
 | supabase/seed.sql | 직접 만든 예시 6개. 실제 이마트 가격이 아님 |
 | scripts/database/database.test.mjs | 실제 SQL 제약·권한·공개 조건 검사 |
+| scripts/database/manual-observations.mjs | 관측 입력 검증과 원자적인 적재 SQL 생성 |
+| scripts/database/manual-observations.test.mjs | 잘못된 입력·조건·중복 처리 검사 |
 | scripts/database/package-lock.json | DB 검사 엔진 버전 재현 |
 
 저장소 루트의 Git Bash에서:
@@ -24,7 +27,7 @@ PGlite 0.5.16을 별도 개발 의존성으로 사용한다. 이 PC에서 Postgr
 
 ```bash
 cd apps/mobile
-npm run verify:device -- --message "feat: Supabase 공개 상품 목록 읽기 연결"
+npm run verify:device -- --message "feat: SSG 실제 가격 비공개 관측 저장 추가"
 ```
 
 DB 검사만 통과한 것으로 자동 커밋하지 않는다. 실행기는 DB 검사 이후 앱 검사와 갤럭시 전체 검사를 완료하고 파일 지문이 유지되는 경우에만 결과 기록과 커밋을 만든다.
@@ -44,6 +47,18 @@ flowchart LR
 가격은 원래 금액과 놀이 금액을 별도로 보관한다. 이번 단계는 exact 규칙만 지원하므로 두 금액이 같아야 한다. numeric 값에 정수·양수·범위 제약을 걸고 공개 뷰에서 integer로 반환한다. integer 열에 소수를 넣었을 때 SQL이 먼저 반올림하는 일을 피하기 위한 선택이다.
 
 예시 가격의 observed_at은 NULL이다. 실제 자료는 출처 URL·출처 상품 ID·실제 관측 시각과 유한한 공개 기한이 필요하다. created_at은 DB에 기록을 만든 시각이며 관측 시각을 대신하지 않는다.
+
+## 실제 페이지에서 확인한 가격 보관
+
+`manual_observation`은 공식 이마트몰 상세 페이지를 직접 열어 확인한 기록이다. `approved_api`·`approved_file`과 구분하고, 승인된 데이터 공급을 사용했다고 표시하지 않는다. 상품은 비활성, 관측은 `is_sample=false`, `rights_status=unknown`, `publication_state=draft`로 저장한다. 이 출처를 승인·공개 상태로 바꾸는 입력은 DB 제약으로 거절한다. 향후 승인된 자료를 받으면 기존 관측을 덮어쓰지 않고 새로운 관측을 기록한다.
+
+입력 검증기는 한 번에 최대 20개를 다루며 상품 ID·공식 출처 URL의 일치, 원 단위 정수 가격, 규격, 확인 시각, 재고 표시를 확인한다. 금액은 표시된 상품 단위 가격이며 카드혜택가·적립금을 대신 넣지 않는다. 확인하지 않은 점포는 NULL, 배송지별 재고를 알 수 없으면 unknown으로 둔다. 관측 후 24시간 기한은 내부 기준이며 판매자의 가격 보장 기간이 아니다.
+
+실제 입력과 생성한 SQL은 Git에서 제외된 `.artifacts/catalog/`에 보관한다. 원본 입력의 오류나 기존 상품·관측과의 충돌이 있으면 부분 적재하지 않고 전체 작업을 실패시킨다. 같은 관측을 다시 적용하는 경우에는 중복 이력을 만들거나 기존 사실을 바꾸지 않는다. 이 모듈 자체는 웹사이트에 접속하거나 DB 인증 정보를 읽지 않는다.
+
+공개 뷰와 앱은 이 비공개 관측을 반환하지 않는다. 실제 자료 적재 확인은 관리자 조회로, 앱에 보이지 않는지는 공개 역할·HTTP·갤럭시 검사로 나누어 확인한다. [실제 가격 관측의 개발 기록](book/chapters/04b-real-price-intake.md)
+
+2026-11-12 19:29:28 KST에 실제 Supabase 재조회로 입력과 저장된 상품·관측의 모든 필드를 비교했다. 비공개 실제 상품 3개·관측 3개, 기존 예시를 포함한 전체 상품 9개·관측 9개를 확인했다. 같은 적재 SQL을 다시 실행해도 이 수가 늘지 않았고, 공개 뷰는 예시 6개·실제 자료 0개였다. 로컬 검사는 DB 통합 48개·입력 15개, 합계 63개가 통과했다. 이후 전체 앱·갤럭시 결과는 같은 커밋의 검증 기록과 구분해서 확인한다.
 
 ## 공개되는 가격
 
@@ -120,6 +135,8 @@ publishable 키는 공개 클라이언트용이며 그 자체로 읽기 전용 �
 
 실행기는 환경 설정을 검사하고 앱 검사·번들·새 개발 서버에 같은 설정을 전달한다. 환경 파일이나 실제 적용 값이 검사 중 달라졌는지 지문으로 확인한다. 출력에는 키 대신 상품 수와 검증 결과를 남긴다.
 
-카탈로그 도메인 단위 검사 28개, 원격 검증기 단위 검사 10개, 앱 전체 타입·ESLint 검사는 통과했다. 실제 공개 키로 예시 6개 일치와 비공개 스키마·승인 메모 접근 차단을 확인했다. 별도 브라우저 검사에서는 잘못된 클라이언트 키로 오류를 만들고 내장 예시 선택 후 사과 1개의 1,500원·잔액 8,500원을 확인했다. 앱 전체 단위 검사와 갤럭시 전체 검사는 아직 성공으로 기록하지 않았다. 이 변경과 함께 커밋한 [검증 기록](book/verification/latest-android.md)의 실행 기준 HEAD와 각 단계 결과를 확인한다. 이전 실행 기록을 현재 코드의 검증으로 대신하지 않는다. [개발 과정과 실제 사전 확인 결과](book/chapters/04a-supabase-catalog.md)
+`1f994f3`에서는 앱 단위 검사 93개, DB 검사 34개, 원격 검증기 단위 검사 10개와 타입·ESLint·세 플랫폼 번들·갤럭시 전체 검사가 통과했다. 실제 공개 키로 예시 6개 일치와 비공개 스키마·승인 메모 접근 차단도 확인했다. 별도 브라우저 검사에서는 잘못된 클라이언트 키로 오류를 만들고 내장 예시 선택 후 사과 1개의 1,500원·잔액 8,500원을 확인했다. [연결 단계의 개발 과정](book/chapters/04a-supabase-catalog.md)
+
+위 결과는 앞 단계의 근거다. 현재 변경의 최종 결과는 같은 커밋의 [검증 기록](book/verification/latest-android.md)에서 실행 기준 HEAD와 각 단계 결과를 확인한다. 이전 실행 기록을 현재 코드의 검증으로 대신하지 않는다.
 
 [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security) · [PostgreSQL 뷰 권한](https://www.postgresql.org/docs/current/sql-createview.html) · [PGlite](https://pglite.dev/docs/)

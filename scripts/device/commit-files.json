@@ -48,5 +48,10 @@
   "apps/mobile/src/features/catalog/catalog.test.ts",
   "scripts/device/catalog-http-check.mjs",
   "scripts/device/catalog-http-check.test.mjs",
-  "docs/book/chapters/04a-supabase-catalog.md"
+  "docs/book/chapters/04a-supabase-catalog.md",
+  "docs/03-price-data.md",
+  "supabase/migrations/20261112102641_manual_price_observations.sql",
+  "scripts/database/manual-observations.mjs",
+  "scripts/database/manual-observations.test.mjs",
+  "docs/book/chapters/04b-real-price-intake.md"
 ]

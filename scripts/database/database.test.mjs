@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import test, { before, after } from 'node:test';
 
 import { PGlite } from '@electric-sql/pglite';
 
 import { sampleProducts } from '../../apps/mobile/src/data/sample-products.ts';
+import { buildManualImportSql, prepareManualObservations } from './manual-observations.mjs';
 
-const migrationUrl = new URL('../../supabase/migrations/20261112090000_catalog.sql', import.meta.url);
+const migrationsUrl = new URL('../../supabase/migrations/', import.meta.url);
 const seedUrl = new URL('../../supabase/seed.sql', import.meta.url);
 const publicRoles = ['anon', 'authenticated'];
 const firstObservationId = '00000000-0000-4000-8000-000000000001';
@@ -26,13 +27,17 @@ before(async () => {
     CREATE ROLE authenticated NOLOGIN NOSUPERUSER NOBYPASSRLS;
     CREATE ROLE service_role NOLOGIN NOSUPERUSER BYPASSRLS;
   `);
-  const migration = await readFile(migrationUrl, 'utf8');
+  const migrationNames = (await readdir(migrationsUrl)).filter((name) => /^\d{14}_[a-z0-9_]+\.sql$/u.test(name)).sort();
+  assert.ok(migrationNames.length > 0, '실제 migration 파일을 읽어 검사해야 합니다.');
   seed = await readFile(seedUrl, 'utf8');
   // seed 자체의 BEGIN/COMMIT은 최초 적용에서 실행하고, 재실행 검사에서는 바깥 롤백을 보존하도록 경계만 제외합니다.
   assert.deepEqual(seed.match(/^(?:BEGIN|COMMIT);\r?$/gmu)?.map((line) => line.trim()), ['BEGIN;', 'COMMIT;']);
   isolatedSeed = seed.replace(/^(?:BEGIN|COMMIT);\r?$/gmu, '');
   try {
-    await db.exec(migration);
+    // 실제 배포 순서대로 누적 migration을 적용해 이전 제약을 바꾼 후의 최종 구조를 검사합니다.
+    for (const name of migrationNames) {
+      await db.exec(await readFile(new URL(name, migrationsUrl), 'utf8'));
+    }
     await db.exec(seed);
   } catch (error) {
     // 준비 실패 시 긴 전체 SQL을 각 검사에 반복 출력하지 않고 원인과 위치만 남깁니다.
@@ -126,6 +131,44 @@ function sampleObservation(overrides = {}) {
     display_until: null,
     ...overrides,
   });
+}
+
+function manualObservation(overrides = {}) {
+  return observation({
+    source_kind: 'manual_observation',
+    rights_status: 'unknown',
+    publication_state: 'draft',
+    approval_notes: '검사용 가상 수동 관측. 실제 상품 자료나 이용허락이 아닙니다.',
+    ...overrides,
+  });
+}
+
+const manualImportNow = '2026-11-12T10:01:00.000Z';
+
+function manualImportInput(overrides = {}) {
+  // 실제 판매 자료는 테스트나 Git에 넣지 않습니다. URL의 상품 번호도 검사용 가짜 값입니다.
+  return {
+    sourceProductId: '9999999999991',
+    sourceUrl: 'https://emart.ssg.com/item/itemView.ssg?itemId=9999999999991&siteNo=6001',
+    name: '테스트 전용 가상 상품',
+    unitLabel: '가상 1봉',
+    priceKrw: 1234,
+    observedAt: '2026-11-12T10:00:00.000Z',
+    availability: 'available',
+    promotionType: 'none',
+    priceBasis: 'displayed_item_total',
+    notes: '실제 상품이 아닌 자체 작성 검증 자료',
+    loginContext: '로그인하지 않음',
+    deliveryContext: '배송지를 선택하지 않음',
+    ...overrides,
+  };
+}
+
+function manualImportSql(input) {
+  const sql = buildManualImportSql(input, { now: manualImportNow });
+  // 생성기의 실제 트랜잭션 경계를 확인한 뒤 검사 바깥 ROLLBACK을 보존합니다.
+  assert.deepEqual(sql.match(/^(?:BEGIN|COMMIT);\r?$/gmu)?.map((line) => line.trim()), ['BEGIN;', 'COMMIT;']);
+  return sql.replace(/^(?:BEGIN|COMMIT);\r?$/gmu, '');
 }
 
 async function fixture(productOverrides = {}, observationOverrides = {}) {
@@ -608,4 +651,249 @@ test('관측이 있는 상품도 표시 색상·그림·순서·활성 상태는
     const { rows } = await db.query('SELECT emoji, color, sort_order, is_active FROM catalog_private.products WHERE id = $1', ['test-real']);
     assert.deepEqual(rows, [{ emoji: '🧺', color: '#FFFFFF', sort_order: 101, is_active: false }]);
   });
+});
+
+test('관리자는 수동 관측을 실제 자료 구분의 미승인 비공개 초안으로 보관할 수 있다', async () => {
+  await rollback(async () => {
+    await setRole('service_role');
+    await insert('products', product({ is_active: false }));
+    await insert('price_observations', manualObservation());
+    const { rows } = await db.query(`
+      SELECT is_sample, source_kind, rights_status, publication_state,
+        source_product_id, source_url, source_price_krw::integer AS price
+      FROM catalog_private.price_observations WHERE id = $1
+    `, [observationId]);
+    assert.deepEqual(rows, [{
+      is_sample: false,
+      source_kind: 'manual_observation',
+      rights_status: 'unknown',
+      publication_state: 'draft',
+      source_product_id: 'test-source-item',
+      source_url: 'https://example.invalid/test-item',
+      price: 2000,
+    }]);
+  });
+});
+
+test('수동 관측은 상품이 활성 상태여도 공개 뷰와 원본 RLS에서 숨겨진다', async () => {
+  for (const role of publicRoles) {
+    await rollback(async () => {
+      await insert('products', product({ is_active: true }));
+      await insert('price_observations', manualObservation());
+      // 우연히 비활성 상태여서 숨겨진 결과가 아닌지 활성 상품과 임시 스키마 권한으로 확인합니다.
+      await db.exec('GRANT USAGE ON SCHEMA catalog_private TO ' + role);
+      await setRole(role);
+      assert.deepEqual(await visible(), []);
+      assert.deepEqual((await db.query('SELECT id FROM catalog_private.price_observations WHERE id = $1', [observationId])).rows, []);
+      assert.equal((await db.query('SELECT id FROM public.play_catalog')).rows.length, sampleProducts.length);
+    });
+  }
+});
+
+test('수동 관측을 승인·철회·공개 상태로 직접 저장할 수 없다', async () => {
+  const cases = [
+    { rights_status: 'app_approved' },
+    { rights_status: 'revoked' },
+    { publication_state: 'published' },
+    { publication_state: 'withdrawn' },
+    { rights_status: 'app_approved', publication_state: 'published' },
+  ];
+  for (const fields of cases) {
+    await expectFailure(async () => {
+      await insert('products', product());
+      await insert('price_observations', manualObservation(fields));
+    }, '23514');
+  }
+});
+
+test('수동 관측도 출처·시각·유한한 기한과 정확한 원 단위 가격이 필요하다', async () => {
+  const cases = [
+    { observed_at: null },
+    { observed_at: 'infinity' },
+    { source_product_id: null },
+    { source_url: null },
+    { source_url: 'http://example.invalid/test-item' },
+    { display_until: null },
+    { display_until: 'infinity' },
+    { display_until: past },
+    { sales_channel: 'sample' },
+    { source_price_krw: 2000.5, play_price_krw: 2000.5 },
+    { play_price_krw: 1500 },
+  ];
+  for (const fields of cases) {
+    await expectFailure(async () => {
+      await insert('products', product());
+      await insert('price_observations', manualObservation(fields));
+    }, '23514');
+  }
+  await expectFailure(async () => {
+    await insert('products', product({ is_sample: true }));
+    await insert('price_observations', manualObservation({ is_sample: true }));
+  }, '23514');
+});
+
+test('관리자도 기존 수동 관측의 상태를 승인·공개로 승격할 수 없다', async () => {
+  for (const [key, value] of [
+    ['rights_status', 'app_approved'],
+    ['rights_status', 'revoked'],
+    ['publication_state', 'published'],
+    ['publication_state', 'withdrawn'],
+  ]) {
+    await expectFailure(async () => {
+      await insert('products', product());
+      await insert('price_observations', manualObservation());
+      await setRole('service_role');
+      await db.query('UPDATE catalog_private.price_observations SET ' + key + ' = $2 WHERE id = $1', [observationId, value]);
+    }, '23514');
+  }
+});
+
+test('수동 관측의 출처를 허락된 API·파일로 바꾸거나 관측 사실을 덮어쓸 수 없다', async () => {
+  const cases = [
+    ['source_kind', 'approved_api'],
+    ['source_kind', 'approved_file'],
+    ['source_url', 'https://example.invalid/changed'],
+    ['source_product_id', 'changed-source'],
+    ['observed_at', new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()],
+  ];
+  for (const [key, value] of cases) {
+    await expectFailure(async () => {
+      await insert('products', product());
+      await insert('price_observations', manualObservation());
+      await setRole('service_role');
+      await db.query('UPDATE catalog_private.price_observations SET ' + key + ' = $2 WHERE id = $1', [observationId, value]);
+    }, '23514');
+  }
+});
+
+test('수동 관측을 보관해도 예시 seed 재실행과 공개 상품 6개의 내용은 유지된다', async () => {
+  await rollback(async () => {
+    await insert('products', product({ is_active: false }));
+    await insert('price_observations', manualObservation());
+    const stored = (await db.query('SELECT * FROM catalog_private.price_observations WHERE id = $1', [observationId])).rows;
+    await db.exec(isolatedSeed);
+    assert.deepEqual((await db.query('SELECT * FROM catalog_private.price_observations WHERE id = $1', [observationId])).rows, stored);
+    await setRole('anon');
+    const { rows } = await db.query(`
+      SELECT id, name, unit_label AS unit, play_price_krw AS "priceKrw", emoji, color, is_sample AS "isSample"
+      FROM public.play_catalog ORDER BY sort_order, id
+    `);
+    assert.deepEqual(rows, sampleProducts.map(({ id, name, unit, priceKrw, emoji, color, isSample }) => ({
+      id, name, unit, priceKrw, emoji, color, isSample,
+    })));
+  });
+});
+
+test('생성한 적재 SQL을 실행하면 비활성 상품과 미승인 수동 가격 이력이 함께 저장된다', async () => {
+  await rollback(async () => {
+    await setRole('service_role');
+    const input = [manualImportInput()];
+    const prepared = prepareManualObservations(input, { now: manualImportNow });
+    await db.exec(manualImportSql(input));
+    const storedProduct = (await db.query('SELECT * FROM catalog_private.products WHERE id = $1', [prepared.products[0].id])).rows[0];
+    const { created_at, ...productFields } = storedProduct;
+    assert.ok(created_at);
+    assert.deepEqual(productFields, prepared.products[0]);
+    const stored = (await db.query('SELECT * FROM catalog_private.price_observations WHERE id = $1', [prepared.observations[0].id])).rows[0];
+    const expected = prepared.observations[0];
+    for (const [key, value] of Object.entries(expected)) {
+      if (['observed_at', 'display_until'].includes(key)) {
+        assert.equal(Date.parse(stored[key]), Date.parse(value), key);
+      } else if (['source_price_krw', 'play_price_krw'].includes(key)) {
+        assert.equal(Number(stored[key]), value, key);
+      } else {
+        assert.equal(stored[key], value, key);
+      }
+    }
+  });
+});
+
+test('같은 관측의 적재 SQL을 재실행해도 이력을 중복하거나 관리자 표시 설정을 되돌리지 않는다', async () => {
+  await rollback(async () => {
+    const input = [manualImportInput()];
+    const sql = manualImportSql(input);
+    await db.exec(sql);
+    await db.query("UPDATE catalog_private.products SET is_active = true, color = '#FFFFFF', sort_order = 2000 WHERE id = $1", ['ssg-emart-9999999999991']);
+    const productsBefore = (await db.query('SELECT * FROM catalog_private.products ORDER BY id')).rows;
+    const pricesBefore = (await db.query('SELECT * FROM catalog_private.price_observations ORDER BY id')).rows;
+    await db.exec(sql);
+    await db.exec(sql);
+    assert.deepEqual((await db.query('SELECT * FROM catalog_private.products ORDER BY id')).rows, productsBefore);
+    assert.deepEqual((await db.query('SELECT * FROM catalog_private.price_observations ORDER BY id')).rows, pricesBefore);
+    await setRole('anon');
+    assert.equal((await db.query('SELECT id FROM public.play_catalog')).rows.length, sampleProducts.length);
+  });
+});
+
+test('같은 상품의 새로운 가격 관측을 적재하면 앞선 가격을 보존하고 새 이력을 만든다', async () => {
+  await rollback(async () => {
+    await db.exec(manualImportSql([manualImportInput()]));
+    await db.exec(manualImportSql([manualImportInput({ priceKrw: 1400, observedAt: '2026-11-12T10:00:30.000Z' })]));
+    const { rows } = await db.query(`
+      SELECT source_price_krw::integer AS price, publication_state, rights_status
+      FROM catalog_private.price_observations WHERE product_id = $1 ORDER BY observed_at
+    `, ['ssg-emart-9999999999991']);
+    assert.deepEqual(rows, [
+      { price: 1234, publication_state: 'draft', rights_status: 'unknown' },
+      { price: 1400, publication_state: 'draft', rights_status: 'unknown' },
+    ]);
+    assert.equal((await db.query('SELECT id FROM catalog_private.products WHERE id = $1', ['ssg-emart-9999999999991'])).rows.length, 1);
+  });
+});
+
+test('묶음 뒤쪽 상품의 이름 충돌이 나면 앞쪽 상품과 가격도 실제 트랜잭션에서 저장되지 않는다', async () => {
+  const conflictId = 'ssg-emart-9999999999992';
+  const firstId = 'ssg-emart-9999999999991';
+  await insert('products', product({ id: conflictId, name: '이미 보관된 다른 이름', unit_label: '가상 1봉', is_active: false }));
+  try {
+    const sql = buildManualImportSql([
+      manualImportInput(),
+      manualImportInput({
+        sourceProductId: '9999999999992',
+        sourceUrl: 'https://emart.ssg.com/item/itemView.ssg?itemId=9999999999992&siteNo=6001',
+      }),
+    ], { now: manualImportNow });
+    await assert.rejects(db.exec(sql), (error) => error.code === '23514');
+    // 오류가 난 명시적 트랜잭션을 정리하고, 앞서 삽입한 행까지 취소된 사실을 확인합니다.
+    await db.exec('ROLLBACK');
+    assert.deepEqual((await db.query('SELECT id FROM catalog_private.products WHERE id = $1', [firstId])).rows, []);
+    assert.deepEqual((await db.query('SELECT id FROM catalog_private.price_observations WHERE product_id = ANY($1)', [[firstId, conflictId]])).rows, []);
+    assert.deepEqual((await db.query('SELECT name FROM catalog_private.products WHERE id = $1', [conflictId])).rows, [{ name: '이미 보관된 다른 이름' }]);
+  } finally {
+    await db.exec('ROLLBACK');
+    await db.query('DELETE FROM catalog_private.price_observations WHERE product_id = ANY($1)', [[firstId, conflictId]]);
+    await db.query('DELETE FROM catalog_private.products WHERE id = ANY($1)', [[firstId, conflictId]]);
+  }
+});
+
+test('기존 관측의 관리 상태가 바뀐 뒤 예전 적재를 재시도하면 차이를 숨기지 않고 거부한다', async () => {
+  await expectFailure(async () => {
+    const input = [manualImportInput()];
+    const prepared = prepareManualObservations(input, { now: manualImportNow });
+    const sql = manualImportSql(input);
+    await db.exec(sql);
+    await db.query("UPDATE catalog_private.price_observations SET availability = 'out_of_stock' WHERE id = $1", [prepared.observations[0].id]);
+    await db.exec(sql);
+  }, '23514');
+});
+
+test('상품 이름과 메모의 따옴표·SQL 문장은 실행되지 않고 문자 자료로만 저장된다', async () => {
+  await rollback(async () => {
+    const name = "가상 상품 '; DROP SCHEMA public CASCADE; --";
+    const notes = "검사용 '따옴표'와 $manual_price_import$; DELETE FROM catalog_private.products; --";
+    await db.exec(manualImportSql([manualImportInput({ name, notes })]));
+    assert.deepEqual((await db.query('SELECT name FROM catalog_private.products WHERE id = $1', ['ssg-emart-9999999999991'])).rows, [{ name }]);
+    const { rows } = await db.query('SELECT approval_notes FROM catalog_private.price_observations WHERE product_id = $1', ['ssg-emart-9999999999991']);
+    assert.ok(rows[0].approval_notes.includes(notes));
+    assert.equal((await db.query('SELECT id FROM public.play_catalog')).rows.length, sampleProducts.length);
+  });
+});
+
+test('앱 역할은 생성된 관리자 적재 SQL도 실행할 수 없다', async () => {
+  for (const role of publicRoles) {
+    await expectFailure(async () => {
+      await setRole(role);
+      await db.exec(manualImportSql([manualImportInput()]));
+    }, '42501');
+  }
 });
