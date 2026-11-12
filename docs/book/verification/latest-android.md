@@ -1,11 +1,11 @@
 # Android 실기기 자동 검증 기록
 
-- 실행 시각: 2026-11-12 05:12:20 (Asia/Seoul)
+- 실행 시각: 2026-11-12 18:08:41 (Asia/Seoul)
 - 결과: **PASS**
-- 실행 ID: `20261111T195901433Z-1c4ab47a`
+- 실행 ID: `20261112T085458790Z-b4e4e504`
 - 기기: SM-S948N / Android 17
-- 검사 시작 HEAD: `843ec07618070bbf7ed8bd62b4c58ce407f2ae85`
-- 검사 소스 SHA-256: `e7666817460acd3fbb1bb8004ab7ac264eee901da077098bc1d80aad2d7e40b5`
+- 검사 시작 HEAD: `5d7321b0544f9a7546fa77d048bcf21059cbc1af`
+- 검사 소스 SHA-256: `b4eac4819e8fe9bfb176bbd7e058e512218f421b774f7f5d9258b66b2959ec34`
 - 도구: Maestro 2.12.1 / JDK 21 / USB 실기기 / Expo Go
 - 커밋 모드: 검사한 소스가 유지된 경우에만 자동 커밋. 실제 커밋 ID는 실행 요약 또는 git log에서 확인.
 
@@ -19,6 +19,7 @@ maestro check-syntax apps/mobile/.maestro/payment.yaml
 maestro check-syntax apps/mobile/.maestro/solve-quiz.yaml
 maestro check-syntax apps/mobile/.maestro/receipt.yaml
 node --test scripts/device/git-guard.test.mjs
+npm --prefix scripts/database test
 cd apps/mobile
 npm test
 npm run typecheck
@@ -43,6 +44,8 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 
 ## 확인한 항목
 
+- PGlite의 메모리 PostgreSQL에서 상품·가격 이력 제약, 예시 데이터, 공개 카탈로그와 역할별 읽기·쓰기 권한을 검사했다.
+- DB 검사는 로컬 SQL 검증이며 Supabase 클라우드의 키·HTTP API·노출 스키마 설정은 검증하지 않았다.
 - 이 실행만의 화면 표시를 확인해 이전 번들로 검사가 통과하는 것을 차단했다.
 - 장바구니 담기·합계·수량 감소·9개 상한·품목 삭제·전체 비우기.
 - 놀이돈 예산 안·딱 맞음·초과와 예산 안으로 복귀.
@@ -63,6 +66,7 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 - maestro-syntax-quiz: 종료 코드 0
 - maestro-syntax-receipt: 종료 코드 0
 - git-guard-tests: 종료 코드 0
+- database-tests: 종료 코드 0
 - unit-tests: 종료 코드 0
 - typecheck: 종료 코드 0
 - lint: 종료 코드 0
@@ -70,6 +74,6 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 - maestro-flow: 종료 코드 0
 - JUnit: 1 testcase, 실패 0, 오류 0, 건너뜀 0
 
-원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/20261111T195901433Z-1c4ab47a/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.
+원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/20261112T085458790Z-b4e4e504/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.
 
 이 기록은 해당 Android 실기기·검사 시점의 결과다. iPhone, 스토어용 APK/AAB/IPA 및 실제 이마트 가격 연동은 검증하지 않았다.

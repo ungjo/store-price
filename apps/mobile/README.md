@@ -103,11 +103,18 @@ export:check는 Android·iOS·웹의 JavaScript 번들을 생성합니다. APK/A
 
 **다시 장보기**는 빈 장바구니와 새 놀이돈 10,000원으로 돌아갑니다. 영수증은 현재 놀이에만 남으며 다시 장보기나 앱 재시작 때 사라집니다. [구현·검증 과정](../../docs/book/chapters/03e-checkout-receipt.md)을 참고하세요.
 
+## 상품 DB 준비
+
+상품·가격 이력·공개 읽기 구조와 로컬 SQL 검사를 준비했습니다. 앱은 계속 내장 예시 6개를 사용하며, 기존 Supabase 프로젝트 확인과 원격 읽기 연결은 다음 단계입니다. [DB 실행과 연결 안내](../../docs/05-catalog-database.md)를 참고하세요.
+
 ## 갤럭시 자동 검사
 
 2026-11-12 사용자 요청으로 반복 검사·기록·커밋을 자동화합니다. USB 디버깅으로 연결된 갤럭시에서 Maestro가 실제 화면을 조작합니다. 설치·연결과 최초 자동 실행 결과는 [자동 검사 안내](../../docs/04-device-automation.md)를 참고합니다.
 
+DB 검사 도구는 처음 한 번 설치합니다. 현재 apps/mobile 경로 기준입니다.
+
 ```bash
+npm --prefix ../../scripts/database ci
 npm run device:doctor
 npm run verify:device
 ```

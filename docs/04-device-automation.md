@@ -24,6 +24,7 @@
 저장소 루트에서:
 
 ```bash
+npm --prefix scripts/database ci
 cd apps/mobile
 npm run device:doctor
 npm run verify:device
@@ -47,6 +48,7 @@ npm run verify:receipt
 
 ## 검사와 기록
 
+- PGlite의 메모리 PostgreSQL에서 상품·가격 이력·예시 데이터·공개 조건·역할별 권한을 검사한다. 실제 Supabase 클라우드/HTTP 검증과 구분한다.
 - 기존 장바구니·예산·놀이돈 단위 테스트, 타입 검사, ESLint, 세 플랫폼 번들을 검사한다.
 - 별도 PC 서버에서 이번 실행의 식별자를 앱에 넣고, 갤럭시에서도 같은 값을 읽어 최신 소스를 실행 중인지 확인한다.
 - 실제 화면에서 담기·수량 변경·합계·금액 선택·부족 안내·선택 취소·예산 초과 차단·회복·전체 비우기·다시 열기 초기화를 검사한다.

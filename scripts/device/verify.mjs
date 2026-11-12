@@ -346,6 +346,7 @@ function writeReport(status, reason = '') {
     'maestro check-syntax apps/mobile/.maestro/solve-quiz.yaml',
     'maestro check-syntax apps/mobile/.maestro/receipt.yaml',
     'node --test scripts/device/git-guard.test.mjs',
+    'npm --prefix scripts/database test',
     'cd apps/mobile', 'npm test', 'npm run typecheck', 'npm run lint', 'npm run export:check',
     'EXPO_PUBLIC_DEVICE_RUN_ID=<실행 ID> node node_modules/expo/bin/cli start --localhost --port 8091 --clear',
     'cd ../..',
@@ -361,6 +362,8 @@ function writeReport(status, reason = '') {
     '- 종료 정리에서는 현재 값이 여전히 7일 때만 원래 값을 복구한다. 중간에 바뀐 값은 보존한다.',
     '- 이 보고서는 종료 정리 전에 작성된다. 실제 복구 결과와 실행한 정리 명령의 종료 코드는 원본 summary.json의 screenAwake 및 checks에 기록한다.',
     '', '## 확인한 항목', '',
+    '- PGlite의 메모리 PostgreSQL에서 상품·가격 이력 제약, 예시 데이터, 공개 카탈로그와 역할별 읽기·쓰기 권한을 검사했다.',
+    '- DB 검사는 로컬 SQL 검증이며 Supabase 클라우드의 키·HTTP API·노출 스키마 설정은 검증하지 않았다.',
     '- 이 실행만의 화면 표시를 확인해 이전 번들로 검사가 통과하는 것을 차단했다.',
     '- 장바구니 담기·합계·수량 감소·9개 상한·품목 삭제·전체 비우기.',
     '- 놀이돈 예산 안·딱 맞음·초과와 예산 안으로 복귀.',
@@ -375,7 +378,7 @@ function writeReport(status, reason = '') {
     '- 정답 전 계산 완료 차단, 영수증 상품별 가격·수량·합계·지불액·거스름돈·잔액을 확인한다.',
     '- 0원 거스름돈도 완료하며, 다시 장보기와 영수증 상태의 재실행으로 새 놀이를 시작한다.',
     '', '## 결과', '',
-    ...checks.filter((check) => ['maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'git-guard-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-flow'].includes(check.label))
+    ...checks.filter((check) => ['maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'git-guard-tests', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-flow'].includes(check.label))
       .map((check) => '- ' + check.label + ': 종료 코드 ' + check.exitCode),
     '- JUnit: ' + (junit ? `${junit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
     '', '원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/' + runId + '/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.',
@@ -436,6 +439,9 @@ try {
     await prepareScreenAwake();
     say('기기: ' + device.model + ' / Android ' + device.android + '. 코드 검사를 시작합니다.');
     await run('git-guard-tests', process.execPath, ['--test', 'scripts/device/git-guard.test.mjs'], { timeout: timeout.check });
+    // 실제 PostgreSQL 엔진에서 DB 권한과 가격 공개 조건을 확인한 뒤 앱·실기기 검사로 넘어갑니다.
+    say('database-tests 확인 중');
+    await run('database-tests', process.execPath, [tools.npm, '--prefix', 'scripts/database', 'test'], { timeout: timeout.check });
     for (const [label, script] of [['unit-tests', 'test'], ['typecheck', 'typecheck'], ['lint', 'lint'], ['export', 'export:check']]) {
       say(label + ' 확인 중');
       await run(label, process.execPath, [tools.npm, 'run', script], { cwd: mobileRoot, timeout: label === 'export' ? timeout.export : timeout.check });

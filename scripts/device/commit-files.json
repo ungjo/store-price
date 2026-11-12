@@ -32,5 +32,14 @@
   "apps/mobile/src/features/payment/receipt.ts",
   "apps/mobile/src/features/payment/receipt.test.ts",
   "apps/mobile/.maestro/receipt.yaml",
-  "docs/book/chapters/03e-checkout-receipt.md"
+  "docs/book/chapters/03e-checkout-receipt.md",
+  "supabase/migrations/20261112090000_catalog.sql",
+  "supabase/seed.sql",
+  "scripts/database/package.json",
+  "scripts/database/package-lock.json",
+  "scripts/database/database.test.mjs",
+  "apps/mobile/src/data/sample-products.ts",
+  "docs/05-catalog-database.md",
+  "docs/book/chapters/04-catalog-database.md",
+  "docs/01-setup.md"
 ]

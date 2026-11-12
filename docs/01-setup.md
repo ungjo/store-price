@@ -1,6 +1,6 @@
 # 1. 필요한 프로그램과 환경 준비
 
-확인일: 2026-11-09 (한국 시간)
+초기 확인: 2026-11-09. DB 준비·연결 상태 갱신: 2026-11-12 (한국 시간).
 
 ## 준비 목록
 
@@ -12,7 +12,8 @@
 | GitHub | 코드와 원고 원격 저장 | 지금 | 사용자가 store-price 저장소 지정 |
 | Expo / React Native / TypeScript | Android·iOS 앱 개발 | 앱 생성 시 | SDK 58 업데이트·코드·번들 검사 완료 |
 | Expo Go | 휴대전화에서 첫 예제 실행 | 첫 화면 확인 시 | 갤럭시에 SDK 58용 Expo Go 설치 확인 |
-| Supabase | PostgreSQL DB와 API | DB 개발 단계 | 계정·프로젝트 생성 전 |
+| Supabase | PostgreSQL DB와 API | DB 개발 단계 | 사용자 계정·기존 프로젝트 있음. 호환성·연결 확인 대기 |
+| PGlite | 로컬 PostgreSQL SQL·권한 검사 | DB 개발 단계 | 0.5.16 / PostgreSQL 18.6, Windows·Node 26에서 34개 검사 통과 |
 | Expo 계정 / EAS CLI | 개발용·출시용 클라우드 빌드 | 실기기 개발 빌드 단계 | 로그인 전 |
 | Android Studio | Android 에뮬레이터·로컬 네이티브 빌드 | 필요할 때 | 일반 설치 경로에서 미발견 |
 | Apple / Google 개발자 계정 | 스토어 테스트와 출시 | 배포 준비 단계 | 확인 전 |
