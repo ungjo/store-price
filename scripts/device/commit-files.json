@@ -61,5 +61,11 @@
   "scripts/device/private-price-preview.test.mjs",
   "scripts/device/start-price-preview.mjs",
   "apps/mobile/.maestro/real-price-preview.yaml",
-  "docs/book/chapters/04c-real-price-preview.md"
+  "docs/book/chapters/04c-real-price-preview.md",
+  "apps/mobile/src/features/catalog/catalog-session.ts",
+  "apps/mobile/src/features/catalog/catalog-session.test.ts",
+  "apps/mobile/src/features/catalog/catalog-device-fixture.ts",
+  "apps/mobile/src/features/catalog/catalog-device-fixture.test.ts",
+  "apps/mobile/.maestro/catalog-loading-choice.yaml",
+  "docs/book/chapters/05-offline-sample-play.md"
 ]

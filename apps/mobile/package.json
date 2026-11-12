@@ -26,7 +26,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "export:check": "expo export --platform all",
-    "test": "node --experimental-strip-types --test src/features/cart/cart.test.ts src/features/budget/budget.test.ts src/features/payment/payment.test.ts src/features/payment/change-quiz.test.ts src/features/payment/receipt.test.ts src/features/catalog/catalog.test.ts src/features/catalog/real-price-preview.test.ts",
+    "test": "node --experimental-strip-types --test src/features/cart/cart.test.ts src/features/budget/budget.test.ts src/features/payment/payment.test.ts src/features/payment/change-quiz.test.ts src/features/payment/receipt.test.ts src/features/catalog/catalog.test.ts src/features/catalog/real-price-preview.test.ts src/features/catalog/catalog-session.test.ts src/features/catalog/catalog-device-fixture.test.ts",
     "start:price-preview": "node ../../scripts/device/start-price-preview.mjs",
     "verify:device": "node ../../scripts/device/verify.mjs",
     "verify:device:check": "node ../../scripts/device/verify.mjs --no-commit",

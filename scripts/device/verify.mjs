@@ -38,6 +38,7 @@ if (!message.trim() || /[\r\n\0]/u.test(message)) throw new Error('커밋 메시
 if (previewPath && receiptOnly && !doctor) throw new Error('실제 가격 미리보기는 전체 검사와 함께 실행해 주세요.');
 
 const runId = new Date().toISOString().replace(/[-:.]/gu, '') + '-' + randomBytes(4).toString('hex');
+const loadingRunId = runId + '-loading';
 const artifactRoot = path.join(repoRoot, '.artifacts/device');
 const runDir = path.join(artifactRoot, runId);
 const lockPath = path.join(artifactRoot, 'lock');
@@ -64,6 +65,7 @@ let interrupted = false;
 let publicReportWritten = false;
 let verificationStarted = false;
 let junit;
+let loadingJunit;
 let commit = null;
 let overallStatus = 'blocked';
 const screenAwake = {
@@ -283,6 +285,45 @@ async function waitForServer() {
   throw new Error('검사용 Expo 서버의 준비 제한 시간을 넘었습니다.');
 }
 
+async function stopExpoStage() {
+  // 두 검사 모드는 서버 환경을 공유하지 않습니다. 직접 실행한 서버가 끝난 뒤 같은 포트를 다시 씁니다.
+  const task = expoServer;
+  if (!task) return;
+  killOwnChild(task.child);
+  let timer;
+  try {
+    await Promise.race([
+      task.done,
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('앞 단계의 검사용 Expo 서버가 종료되지 않았습니다.')), 15_000); }),
+    ]);
+  } finally { clearTimeout(timer); }
+  expoServer = undefined;
+  await ensurePortUnused();
+}
+
+async function verifyLoadingChoice() {
+  const fixtureEnv = pinnedCatalogEnvironment(catalogEnvironment, tools.env, loadingRunId);
+  fixtureEnv.EXPO_PUBLIC_CATALOG_TEST_SCENARIO = 'pending-choice';
+  expoServer = startLogged('expo-loading-server', process.execPath, [tools.expo, 'start', '--localhost', '--port', String(port), '--clear'], {
+    cwd: mobileRoot, env: fixtureEnv,
+  });
+  await waitForServer();
+  await wakeScreenForUi();
+  say('연결을 기다리는 동안 예시 상품을 고르는 화면을 별도 검사합니다. 휴대전화 통신 설정은 바꾸지 않습니다.');
+  const stageDir = path.join(runDir, 'maestro-loading');
+  await run('maestro-loading-choice', tools.maestro, [
+    '--device', selectedSerial, 'test', '-e', 'EXPO_URL=exp://127.0.0.1:' + port, '-e', 'RUN_ID=' + loadingRunId,
+    '--format', 'junit', '--output', path.join(runDir, 'loading-result.xml'),
+    '--test-output-dir', stageDir, '--debug-output', stageDir,
+    'apps/mobile/.maestro/catalog-loading-choice.yaml',
+  ], { timeout: 300_000 });
+  loadingJunit = readJunit(path.join(runDir, 'loading-result.xml'));
+  assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
+  assertCatalogEnvironmentUnchanged(catalogEnvironment);
+  assertPreviewUnchanged();
+  await stopExpoStage();
+}
+
 function reverseTarget(output, targetPort = port) {
   return output.split(/\r?\n/u).map((line) => line.trim().split(/\s+/u))
     .find((parts) => parts.at(-2) === 'tcp:' + targetPort)?.at(-1);
@@ -394,6 +435,7 @@ function writeReport(status, reason = '') {
     '- 검사 소스 SHA-256: `' + gitState.sourceHash + '`',
     '- 검사 설정 SHA-256: `' + catalogEnvironment.fingerprint + '` (설정 값은 기록하지 않음)',
     '- 공개 상품 SHA-256: `' + catalogAfter.fingerprint + '` (실행 전후 일치)',
+    '- 예시 선택 별도 실행 ID: `' + loadingRunId + '` (개발 검사 요청, 실제 통신 장애를 발생시키지 않음)',
     ...(previewAfter ? [
       '- 개발용 실제 가격 미리보기: ' + previewAfter.productCount + '개, DB 조회 시각 `' + previewAfter.fetchedAt + '`',
       '- 미리보기 원본 SHA-256: `' + previewAfter.sourceFingerprint + '` (실행 전후 일치)',
@@ -412,16 +454,20 @@ function writeReport(status, reason = '') {
     'maestro check-syntax apps/mobile/.maestro/payment.yaml',
     'maestro check-syntax apps/mobile/.maestro/solve-quiz.yaml',
     'maestro check-syntax apps/mobile/.maestro/receipt.yaml',
+    'maestro check-syntax apps/mobile/.maestro/catalog-loading-choice.yaml',
     'node --test scripts/device/git-guard.test.mjs',
     'node --experimental-strip-types --test scripts/device/catalog-http-check.test.mjs',
     'node --test scripts/device/private-price-preview.test.mjs',
     'npm --prefix scripts/database test',
     'cd apps/mobile', 'npm test', 'npm run typecheck', 'npm run lint', 'npm run export:check',
+    'EXPO_PUBLIC_DEVICE_RUN_ID=<실행 ID>-loading EXPO_PUBLIC_CATALOG_TEST_SCENARIO=pending-choice node node_modules/expo/bin/cli start --localhost --port 8091 --clear',
+    '# 예시 선택 검사 후 직접 시작한 서버만 종료하고, 검사 설정을 뺀 서버로 전체 검사를 다시 시작',
     'EXPO_PUBLIC_DEVICE_RUN_ID=<실행 ID> node node_modules/expo/bin/cli start --localhost --port 8091 --clear',
     'cd ../..',
     'adb -s <선택한 실기기> reverse --list',
     ...(createdReverse ? ['adb -s <선택한 실기기> reverse --no-rebind tcp:8091 tcp:8091'] : ['# 이미 있던 동일 포트 연결을 변경 없이 재사용']),
     ...(screenAwake.wakeRequested ? ['adb -s <선택한 실기기> shell input keyevent 224'] : []),
+    'maestro --device <선택한 실기기> test -e EXPO_URL=exp://127.0.0.1:8091 -e RUN_ID=<실행 ID>-loading --format junit --output <검사폴더>/loading-result.xml --test-output-dir <검사폴더>/maestro-loading --debug-output <검사폴더>/maestro-loading apps/mobile/.maestro/catalog-loading-choice.yaml',
     'maestro --device <선택한 실기기> test -e EXPO_URL=exp://127.0.0.1:8091 -e RUN_ID=<실행 ID> --format junit --output <검사폴더>/result.xml --test-output-dir <검사폴더>/maestro --debug-output <검사폴더>/maestro apps/mobile/.maestro/payment.yaml',
     '```', '',
     'Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. 위 명령의 실기기 식별자와 실행 폴더는 개인정보 보호를 위해 치환했다.',
@@ -435,6 +481,10 @@ function writeReport(status, reason = '') {
     '- 실제 가격 입력 검증과 저장 SQL 생성은 자체 작성한 테스트 자료로 검사했다. 원격 비공개 적재 결과는 이번 개발 장의 별도 조회 기록을 따른다.',
     '- 공개 키 REST GET으로 예시 상품 6개와 비공개 스키마·승인 메모 읽기 차단을 실행 전후 확인했다. 쓰기·관리자 API는 호출하지 않았다.',
     '- 앱 검사·번들·Expo 서버에는 같은 설정을 전달하고 EXPO_NO_DOTENV=1로 고정했다. 환경 파일과 선택한 프로세스 설정의 변경도 검사했다.',
+    '- 별도 개발 검사에서 상품 로딩 중 예시 놀이를 선택하고, 취소를 무시한 늦은 성공이 와도 예시 출처가 유지되는지 확인했다.',
+    '- 예시 사과 1개·1,500원으로 10,000원 지불·8,500원 정답·영수증·다시 장보기를 확인했다. 다시 장보기에서 상품 요청 수가 늘지 않는다.',
+    '- 휴대전화 Wi-Fi·모바일 데이터는 바꾸지 않았다. 실제 오프라인 연결이나 인터넷 없는 Expo Go 첫 실행을 검증한 결과는 아니다.',
+    '- 대기 요청 검사 설정은 일반 검사·배포 환경에서 제거하며, 별도 검사 뒤 Expo를 재시작해 실제 Supabase 연결로 전체 놀이를 검사했다.',
     '- 실제 앱의 Supabase 출처·상품 6개 로딩을 최초 실행·다시 장보기·재실행에서 확인했다. 외부 상품의 일시적 변경을 연속 감시하는 검사는 아니다.',
     ...(previewAfter ? [
       '- 별도 localhost·USB 연결로 비공개 실제 가격을 읽기 전용 표시했다. 상품명·규격·가격·출처·확인 시각·재고 상태를 원본 기대값과 비교했다.',
@@ -455,9 +505,10 @@ function writeReport(status, reason = '') {
     '- 정답 전 계산 완료 차단, 영수증 상품별 가격·수량·합계·지불액·거스름돈·잔액을 확인한다.',
     '- 0원 거스름돈도 완료하며, 다시 장보기와 영수증 상태의 재실행으로 새 놀이를 시작한다.',
     '', '## 결과', '',
-    ...checks.filter((check) => ['maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-flow'].includes(check.label))
+    ...checks.filter((check) => ['maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow'].includes(check.label))
       .map((check) => '- ' + check.label + ': 종료 코드 ' + check.exitCode),
     '- JUnit: ' + (junit ? `${junit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
+    '- 예시 선택 JUnit: ' + (loadingJunit ? `${loadingJunit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
     '', '원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/' + runId + '/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.',
     '', '이 기록은 해당 Android 실기기·검사 시점의 결과다. iPhone, 스토어용 APK/AAB/IPA 및 실제 이마트 가격의 앱 공개 표시는 검증하지 않았다. 앱은 공개 예시 상품 6개로 검사한다.', '',
   ];
@@ -524,7 +575,7 @@ try {
     if (previewState) previewSession = await startPrivatePreviewServer(previewState, { sessionId: runId });
     checkPreviewExpectations = writePreviewExpectations(path.join(artifactRoot, 'private-preview-expectations.js'), previewSession);
     // 일반 YAML 구문 검사만으로는 명령 형식 오류를 찾을 수 없어, 기기를 조작하기 전에 Maestro로 확인합니다.
-    for (const [label, file] of [['maestro-syntax-main', 'apps/mobile/.maestro/payment.yaml'], ['maestro-syntax-quiz', 'apps/mobile/.maestro/solve-quiz.yaml'], ['maestro-syntax-receipt', 'apps/mobile/.maestro/receipt.yaml'], ['maestro-syntax-preview', 'apps/mobile/.maestro/real-price-preview.yaml']]) {
+    for (const [label, file] of [['maestro-syntax-main', 'apps/mobile/.maestro/payment.yaml'], ['maestro-syntax-quiz', 'apps/mobile/.maestro/solve-quiz.yaml'], ['maestro-syntax-receipt', 'apps/mobile/.maestro/receipt.yaml'], ['maestro-syntax-preview', 'apps/mobile/.maestro/real-price-preview.yaml'], ['maestro-syntax-loading', 'apps/mobile/.maestro/catalog-loading-choice.yaml']]) {
       await run(label, tools.maestro, ['check-syntax', file], { timeout: 60_000 });
     }
     await prepareScreenAwake();
@@ -550,13 +601,14 @@ try {
     say('공개 상품과 비공개 읽기 차단을 실제 REST GET으로 확인합니다.');
     catalogBefore = await verifyCatalogHttp('catalog-http-before');
     await ensurePortUnused();
+    createdReverse = await prepareReverse();
+    if (!receiptOnly) await verifyLoadingChoice();
     say('전용 Expo 서버와 새 실행 화면을 준비합니다.');
     expoServer = startLogged('expo-server', process.execPath, [tools.expo, 'start', '--localhost', '--port', String(port), '--clear'], {
       cwd: mobileRoot,
       env: previewEnvironment(pinnedCatalogEnvironment(catalogEnvironment, tools.env, runId), previewSession),
     });
     await waitForServer();
-    createdReverse = await prepareReverse();
     if (previewSession) createdPreviewReverse = await prepareReverse(PREVIEW_PORT);
     await wakeScreenForUi();
     say(receiptOnly ? '휴대전화에서 영수증 구간을 부분 검사합니다.' : '휴대전화에서 장바구니·거스름돈·계산 완료·영수증을 전체 검사합니다.');
@@ -580,6 +632,7 @@ try {
     assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
     // 부분 검사 성공은 전체 회귀 검증을 대신하지 않으므로 공개 보고서와 커밋을 만들지 않습니다.
     if (!receiptOnly) {
+      if (!loadingJunit) throw new Error('예시 선택 실기기 검사를 완료하지 않아 기록과 커밋을 만들지 않습니다.');
       writeReport('PASS');
       assertCatalogEnvironmentUnchanged(catalogEnvironment);
       assertPreviewUnchanged();
@@ -606,6 +659,7 @@ try {
     fs.writeFileSync(path.join(runDir, 'summary.json'), JSON.stringify({
       runId, scope: receiptOnly ? 'receipt-only' : 'full', status: overallStatus, startedAt: startedAt.toISOString(), finishedAt: new Date().toISOString(),
       device, sourceHash: gitState?.sourceHash, head: gitState?.head, checks, junit, commit, screenAwake,
+      loadingChoice: { runId: loadingRunId, junit: loadingJunit, scenario: 'pending-choice', networkSettingsChanged: false },
       catalog: { environmentFingerprint: catalogEnvironment?.fingerprint, before: catalogBefore, after: catalogAfter },
       privatePreview: { sourceFingerprint: previewState?.fingerprint, before: previewBefore, after: previewAfter, releaseScan },
     }, null, 2) + '\n');

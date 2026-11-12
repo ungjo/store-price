@@ -62,7 +62,8 @@ test('environment precedence and pinned Expo config are explicit without seriali
   const env = { [keyVariable]: 'sb_publishable_process' };
   const state = captureCatalogEnvironment(root, env);
   const pinned = pinnedCatalogEnvironment(state, { EXPO_NO_CLIENT_ENV_VARS: '1', KEEP: 'yes',
-    EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW: '1', EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW_TOKEN: 'inherited-token' }, 'test-run');
+    EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW: '1', EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW_TOKEN: 'inherited-token',
+    EXPO_PUBLIC_CATALOG_TEST_SCENARIO: 'pending-choice' }, 'test-run');
   assert.equal(pinned[keyVariable], env[keyVariable]);
   assert.equal(pinned[urlVariable], testUrl);
   assert.equal(pinned.EXPO_NO_DOTENV, '1');
@@ -71,6 +72,7 @@ test('environment precedence and pinned Expo config are explicit without seriali
   assert.equal(pinned.KEEP, 'yes');
   assert.equal(pinned.EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW, undefined);
   assert.equal(pinned.EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW_TOKEN, undefined);
+  assert.equal(pinned.EXPO_PUBLIC_CATALOG_TEST_SCENARIO, undefined);
   assert.equal(catalogProjectRef(state), 'catalog-check-fixture');
   assert.equal(JSON.stringify(state).includes('sb_publishable_'), false);
   assert.match(state.fingerprint, /^[a-f0-9]{64}$/u);

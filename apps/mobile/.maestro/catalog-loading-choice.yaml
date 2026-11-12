@@ -1,0 +1,161 @@
+appId: host.exp.exponent
+name: 상품을 기다리는 중 예시 놀이 선택과 늦은 응답 무시
+# 별도 개발 검사 요청만 대기시킵니다. Wi-Fi·모바일 데이터·앱 데이터는 변경하지 않습니다.
+---
+- stopApp
+- launchApp:
+    appId: host.exp.exponent
+    clearState: false
+    stopApp: false
+    permissions: {}
+- waitForAnimationToEnd:
+    timeout: 10000
+- openLink: "${EXPO_URL}"
+- extendedWaitUntil:
+    visible:
+      id: catalog-test-marker
+      text: "^상품 대기 검사 ${RUN_ID}$"
+    timeout: 90000
+- assertVisible:
+    id: catalog-loading
+    text: "^가게 물건을 가져오고 있어요$"
+- assertVisible:
+    id: catalog-use-samples
+    enabled: true
+- assertNotVisible:
+    id: catalog-retry
+- tapOn:
+    id: catalog-use-samples
+    enabled: true
+# 취소를 무시한 테스트 요청의 늦은 성공까지 도착한 뒤 출처를 확인합니다.
+- extendedWaitUntil:
+    visible:
+      id: catalog-test-late-marker
+      text: "^취소 뒤 늦은 응답 확인$"
+    timeout: 15000
+- assertVisible:
+    id: device-run-marker
+    text: "^자동 검사 ${RUN_ID}$"
+- assertVisible:
+    id: catalog-source-marker
+    text: "^상품 출처 sample$"
+- assertVisible:
+    id: catalog-loaded-count
+    text: "^불러온 상품 6개$"
+- assertNotVisible:
+    id: catalog-loading
+- copyTextFrom:
+    id: catalog-test-request-count
+- assertTrue: ${/^검사 요청 [1-9][0-9]*회$/.test(maestro.copiedText)}
+- evalScript: ${output.catalogRequestsBeforeRound = maestro.copiedText}
+- scrollUntilVisible:
+    element:
+      id: catalog-origin
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: catalog-origin
+    text: '^앱에 준비된 예시 상품으로 놀고 있어요\.$'
+- scrollUntilVisible:
+    element:
+      id: product-sample-apple-add
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: product-sample-apple-add
+    enabled: true
+- assertVisible:
+    id: cart-summary
+    text: '^장바구니 총 1개, 합계 1,500원\. 오늘의 놀이돈 10,000원\. 남을 돈 8,500원\. 이대로 사면 남을 돈이에요\.$'
+- scrollUntilVisible:
+    element:
+      id: payment-option-10000
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: payment-option-10000
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: quiz-answer
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_ANSWER: "8500"
+      CART_QUANTITY: "1"
+      CART_TOTAL: "1,500"
+- scrollUntilVisible:
+    element:
+      id: checkout-complete
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: checkout-complete
+    enabled: true
+- assertVisible:
+    id: receipt-title
+    text: "^계산을 마쳤어요!$"
+- scrollUntilVisible:
+    element:
+      id: receipt-item-sample-apple
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: receipt-item-sample-apple
+    text: '^사과, 1개\. 1,500원 × 1개, 1,500원\.$'
+- scrollUntilVisible:
+    element:
+      id: receipt-total
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: receipt-total
+    text: '^총 1개, 합계 1,500원\.$'
+- scrollUntilVisible:
+    element:
+      id: receipt-payment
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: receipt-payment
+    text: '^낸 놀이돈 10,000원\. 받은 거스름돈 8,500원\. 계산 후 남은 놀이돈 8,500원\.$'
+- takeScreenshot: catalog-sample-receipt
+- scrollUntilVisible:
+    element:
+      id: receipt-new-round
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: receipt-new-round
+    enabled: true
+- assertVisible:
+    id: catalog-source-marker
+    text: "^상품 출처 sample$"
+- assertVisible:
+    id: catalog-loaded-count
+    text: "^불러온 상품 6개$"
+- assertVisible:
+    id: cart-summary
+    text: '^장바구니 총 0개, 합계 0원\. 오늘의 놀이돈 10,000원\. 남을 돈 10,000원\. 놀이돈 안에서 장을 봐요\.$'
+- assertNotVisible:
+    id: receipt-screen
+- assertNotVisible:
+    id: catalog-loading
+- assertVisible:
+    id: catalog-test-late-marker
+    text: "^취소 뒤 늦은 응답 확인$"
+- copyTextFrom:
+    id: catalog-test-request-count
+- assertTrue: ${maestro.copiedText === output.catalogRequestsBeforeRound}
+- takeScreenshot: catalog-sample-new-round

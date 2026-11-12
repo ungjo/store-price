@@ -41,12 +41,13 @@
 - [x] 새 Supabase 프로젝트에 예시 6개 적용, 공개 키 HTTP 조회 확인 (2026-11-12)
 - [x] 앱의 원격 카탈로그 읽기·오류 처리·실기기 검증 (`1f994f3`) — [개발 기록](docs/book/chapters/04a-supabase-catalog.md)
 - [x] 실제 가격 3개의 비공개 관측 적재·DB 검증 — [개발 기록](docs/book/chapters/04b-real-price-intake.md)
-- [x] 실제 가격 개발용 미리보기·USB 전송 구현 — [개발 기록과 검증 범위 확인](docs/book/chapters/04c-real-price-preview.md)
+- [x] 실제 가격 개발용 미리보기·USB 전송 구현 (`f6f4ccb`) — [개발 기록과 검증 범위 확인](docs/book/chapters/04c-real-price-preview.md)
+- [x] 상품 조회 중 내장 예시로 바로 시작 구현 — [코드 검사와 실기기 검증 기록](docs/book/chapters/05-offline-sample-play.md)
 - [ ] 허용된 실제 가격의 앱 공개·자동 갱신
 - [ ] Android·iPhone 실기기 검증
 - [ ] 스토어 제출
 
-개발용 미리보기와 일반 사용자에게 실제 가격을 공개하는 단계는 구분합니다. 현재 코드의 갤럭시 검사 결과는 같은 커밋의 [검증 기록](docs/book/verification/latest-android.md)에서 확인합니다.
+개발용 미리보기와 일반 사용자에게 실제 가격을 공개하는 단계는 구분합니다. 2026-11-13의 즉시 예시 선택 변경은 코드 검사를 통과했고 사용자가 갤럭시 USB 디버깅을 허용했습니다. 전체 실기기 결과는 이 변경과 함께 남기는 [검증 기록](docs/book/verification/latest-android.md)에서 확인하며, 검사 시작 HEAD가 `f6f4ccb`인지 구분합니다. 이전 커밋에 포함된 성공 기록을 이번 변경의 결과로 사용하지 않습니다.
 
 ## 첫 화면 실행
 
@@ -65,5 +66,9 @@ npm start
 실제 가격 미리보기는 컴퓨터와 USB로 연결한 갤럭시에서만 사용하는 별도 개발 기능입니다. DB에서 읽어 둔 자료의 상품명·규격·확인 당시 가격·출처·확인 시각·재고 상태를 표시합니다. 미리보기 상품을 장바구니에 넣지는 않으며, 기존 시장놀이는 예시 6개로 유지합니다.
 
 실제 자료와 원격 조회 결과는 Git에서 제외합니다. 미리보기를 열었다고 DB의 공개 상태나 이용 범위를 승인된 것으로 변경하지 않습니다. [실행 방법](apps/mobile/README.md) · [구현과 검증 기록](docs/book/chapters/04c-real-price-preview.md)
+
+## 연결을 기다리지 않고 예시로 시작하기
+
+상품을 불러오는 화면에서 **예시 상품으로 바로 놀이하기**를 선택하는 흐름을 추가했습니다. 서버 응답이나 연결 오류를 기다리지 않고 앱에 포함된 예시 6개로 시작하며, 뒤늦게 도착한 원격 목록이 진행 중인 놀이를 바꾸지 않도록 했습니다. 실제 가격 저장이나 영구 캐시를 추가하는 단계는 아닙니다. [개발 기록과 검사 상태](docs/book/chapters/05-offline-sample-play.md)
 
 현재 프로젝트는 Expo SDK 58입니다. [Expo Go 호환 오류 해결 기록](docs/book/chapters/01a-expo-go-sdk58.md)에 업데이트와 검증 내용을 남겼습니다.

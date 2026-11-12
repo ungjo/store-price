@@ -75,6 +75,8 @@ export function pinnedCatalogEnvironment(state, baseEnv, runId = '') {
   // 일반 검사·배포·Expo 실행에 개발용 실제 자료 설정이 상속되지 않게 기본값에서 제거합니다.
   delete pinned.EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW;
   delete pinned.EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW_TOKEN;
+  // 대기 요청을 재현하는 실기기 전용 설정도 일반 앱과 배포 검사에는 전달하지 않습니다.
+  delete pinned.EXPO_PUBLIC_CATALOG_TEST_SCENARIO;
   return pinned;
 }
 
