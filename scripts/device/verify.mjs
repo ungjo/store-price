@@ -8,8 +8,11 @@ import { fileURLToPath } from 'node:url';
 import { assertGitStateUnchanged, captureGitState, commitVerifiedChange } from './git-guard.mjs';
 import {
   assertCatalogEnvironmentUnchanged, captureCatalogEnvironment, checkCatalogHttp,
-  createCatalogLogWriter, pinnedCatalogEnvironment, redactCatalogText,
+  createCatalogLogWriter, pinnedCatalogEnvironment, redactCatalogText, catalogProjectRef,
 } from './catalog-http-check.mjs';
+import { PREVIEW_PORT, capturePrivatePreview, assertPrivatePreviewUnchanged,
+  startPrivatePreviewServer, checkPrivatePreviewHttp, previewEnvironment,
+  scanReleaseForPrivateData, writePreviewExpectations } from './private-price-preview.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const mobileRoot = path.join(repoRoot, 'apps/mobile');
@@ -20,16 +23,19 @@ const args = process.argv.slice(2);
 let noCommit = false;
 let receiptOnly = false;
 let doctor = false;
+let previewPath;
 let message = 'test: 갤럭시 자동 검증 결과와 확인한 변경 기록';
 
 for (let index = 0; index < args.length; index += 1) {
   if (args[index] === '--no-commit') noCommit = true;
   else if (args[index] === '--receipt-only') { receiptOnly = true; noCommit = true; }
   else if (args[index] === '--doctor') doctor = true;
+  else if (args[index] === '--private-price-preview' && args[index + 1]) previewPath = args[++index];
   else if (args[index] === '--message' && args[index + 1]) message = args[++index];
-  else throw new Error('지원 옵션: --no-commit, --receipt-only, --doctor, --message "커밋 메시지"');
+  else throw new Error('지원 옵션: --no-commit, --receipt-only, --doctor, --private-price-preview <원본 경로>, --message "커밋 메시지"');
 }
 if (!message.trim() || /[\r\n\0]/u.test(message)) throw new Error('커밋 메시지는 한 줄로 입력해 주세요.');
+if (previewPath && receiptOnly && !doctor) throw new Error('실제 가격 미리보기는 전체 검사와 함께 실행해 주세요.');
 
 const runId = new Date().toISOString().replace(/[-:.]/gu, '') + '-' + randomBytes(4).toString('hex');
 const artifactRoot = path.join(repoRoot, '.artifacts/device');
@@ -47,6 +53,13 @@ let device;
 let tools;
 let expoServer;
 let createdReverse = false;
+let createdPreviewReverse = false;
+let previewState;
+let previewSession;
+let previewBefore;
+let previewAfter;
+let releaseScan;
+let checkPreviewExpectations;
 let interrupted = false;
 let publicReportWritten = false;
 let verificationStarted = false;
@@ -64,7 +77,7 @@ const startedAt = new Date();
 
 function safeError(error) {
   const raw = error instanceof Error ? error.message : String(error);
-  return redactCatalogText(catalogEnvironment, raw).replaceAll(selectedSerial || '\0', '<selected-device>').replace(/\x1b\[[0-9;]*m/gu, '').slice(0, 800);
+  return redactCatalogText(catalogEnvironment, raw).replaceAll(previewSession?.token || '\0', '<preview-session-token>').replaceAll(selectedSerial || '\0', '<selected-device>').replace(/\x1b\[[0-9;]*m/gu, '').slice(0, 800);
 }
 
 function say(text) {
@@ -98,8 +111,9 @@ function invocation(file, commandArgs) {
 function startLogged(label, file, commandArgs, options = {}) {
   const spec = invocation(file, commandArgs);
   const log = fs.createWriteStream(path.join(runDir, label + '.log'), { flags: 'a' });
-  const outLog = createCatalogLogWriter(catalogEnvironment, (text) => log.write(text));
-  const errLog = createCatalogLogWriter(catalogEnvironment, (text) => log.write(text));
+  const writeLog = (text) => log.write(text.replaceAll(previewSession?.token || '\0', '<preview-session-token>'));
+  const outLog = createCatalogLogWriter(catalogEnvironment, writeLog);
+  const errLog = createCatalogLogWriter(catalogEnvironment, writeLog);
   const child = spawn(spec.file, spec.args, {
     cwd: options.cwd || repoRoot,
     env: options.env || tools?.env || process.env,
@@ -189,6 +203,24 @@ async function verifyCatalogHttp(label, previous) {
   }
 }
 
+function assertPreviewUnchanged() {
+  if (previewState) assertPrivatePreviewUnchanged(previewState);
+  checkPreviewExpectations?.();
+}
+
+async function verifyPreviewHttp(label) {
+  const started = Date.now();
+  try {
+    assertPreviewUnchanged();
+    const result = await checkPrivatePreviewHttp(previewSession);
+    checks.push({ label, exitCode: 0, milliseconds: Date.now() - started });
+    return result;
+  } catch (error) {
+    checks.push({ label, exitCode: 1, milliseconds: Date.now() - started });
+    throw error;
+  }
+}
+
 async function ensurePortUnused() {
   await new Promise((resolve, reject) => {
     const probe = net.createServer();
@@ -251,18 +283,20 @@ async function waitForServer() {
   throw new Error('검사용 Expo 서버의 준비 제한 시간을 넘었습니다.');
 }
 
-function reverseTarget(output) {
+function reverseTarget(output, targetPort = port) {
   return output.split(/\r?\n/u).map((line) => line.trim().split(/\s+/u))
-    .find((parts) => parts.at(-2) === 'tcp:' + port)?.at(-1);
+    .find((parts) => parts.at(-2) === 'tcp:' + targetPort)?.at(-1);
 }
 
-async function prepareReverse() {
-  const existing = reverseTarget((await adb('reverse-before', ['reverse', '--list'])).stdout);
-  if (existing && existing !== 'tcp:' + port) throw new Error('휴대전화의 검사 포트에 다른 연결이 있습니다. 기존 연결을 건드리지 않고 중단합니다.');
+async function prepareReverse(targetPort = port) {
+  const label = targetPort === port ? 'reverse' : 'preview-reverse';
+  const existing = reverseTarget((await adb(label + '-before', ['reverse', '--list'])).stdout, targetPort);
+  if (existing && existing !== 'tcp:' + targetPort) throw new Error('휴대전화의 검사 포트에 다른 연결이 있습니다. 기존 연결을 건드리지 않고 중단합니다.');
   if (!existing) {
-    await adb('reverse-create', ['reverse', '--no-rebind', 'tcp:' + port, 'tcp:' + port]);
-    createdReverse = true;
+    await adb(label + '-create', ['reverse', '--no-rebind', 'tcp:' + targetPort, 'tcp:' + targetPort]);
+    return true;
   }
+  return false;
 }
 
 async function prepareScreenAwake() {
@@ -360,6 +394,12 @@ function writeReport(status, reason = '') {
     '- 검사 소스 SHA-256: `' + gitState.sourceHash + '`',
     '- 검사 설정 SHA-256: `' + catalogEnvironment.fingerprint + '` (설정 값은 기록하지 않음)',
     '- 공개 상품 SHA-256: `' + catalogAfter.fingerprint + '` (실행 전후 일치)',
+    ...(previewAfter ? [
+      '- 개발용 실제 가격 미리보기: ' + previewAfter.productCount + '개, DB 조회 시각 `' + previewAfter.fetchedAt + '`',
+      '- 미리보기 원본 SHA-256: `' + previewAfter.sourceFingerprint + '` (실행 전후 일치)',
+      '- 미리보기 응답 SHA-256: `' + previewAfter.fingerprint + '` (이번 실행 세션)',
+      '- 배포 산출물 검사: ' + releaseScan.scannedFiles + '개 파일, 실제 상품 식별자·이름·임시 토큰 없음',
+    ] : []),
     '- 도구: Maestro 2.12.1 / JDK 21 / USB 실기기 / Expo Go',
     '- 커밋 모드: ' + (noCommit ? '검사·기록만 수행 (--no-commit)' : '검사한 소스가 유지된 경우에만 자동 커밋. 실제 커밋 ID는 실행 요약 또는 git log에서 확인.'),
     ...(reason ? ['', '중단 이유: ' + reason.replace(/[\r\n]/gu, ' ')] : []),
@@ -374,6 +414,7 @@ function writeReport(status, reason = '') {
     'maestro check-syntax apps/mobile/.maestro/receipt.yaml',
     'node --test scripts/device/git-guard.test.mjs',
     'node --experimental-strip-types --test scripts/device/catalog-http-check.test.mjs',
+    'node --test scripts/device/private-price-preview.test.mjs',
     'npm --prefix scripts/database test',
     'cd apps/mobile', 'npm test', 'npm run typecheck', 'npm run lint', 'npm run export:check',
     'EXPO_PUBLIC_DEVICE_RUN_ID=<실행 ID> node node_modules/expo/bin/cli start --localhost --port 8091 --clear',
@@ -395,6 +436,11 @@ function writeReport(status, reason = '') {
     '- 공개 키 REST GET으로 예시 상품 6개와 비공개 스키마·승인 메모 읽기 차단을 실행 전후 확인했다. 쓰기·관리자 API는 호출하지 않았다.',
     '- 앱 검사·번들·Expo 서버에는 같은 설정을 전달하고 EXPO_NO_DOTENV=1로 고정했다. 환경 파일과 선택한 프로세스 설정의 변경도 검사했다.',
     '- 실제 앱의 Supabase 출처·상품 6개 로딩을 최초 실행·다시 장보기·재실행에서 확인했다. 외부 상품의 일시적 변경을 연속 감시하는 검사는 아니다.',
+    ...(previewAfter ? [
+      '- 별도 localhost·USB 연결로 비공개 실제 가격을 읽기 전용 표시했다. 상품명·규격·가격·출처·확인 시각·재고 상태를 원본 기대값과 비교했다.',
+      '- 미리보기를 닫거나 Android 뒤로 가기를 눌러도 기존 장바구니가 유지된다. 실제 가격을 놀이 목록에 공개하거나 관리자 키를 앱에 넣지 않았다.',
+      '- 최근 DB 조회와 과거 가격 관측을 구분한다. DB 자료를 다시 읽었다고 상품 가격을 다시 관측한 것으로 기록하지 않는다.',
+    ] : []),
     '- 이 실행만의 화면 표시를 확인해 이전 번들로 검사가 통과하는 것을 차단했다.',
     '- 장바구니 담기·합계·수량 감소·9개 상한·품목 삭제·전체 비우기.',
     '- 놀이돈 예산 안·딱 맞음·초과와 예산 안으로 복귀.',
@@ -409,7 +455,7 @@ function writeReport(status, reason = '') {
     '- 정답 전 계산 완료 차단, 영수증 상품별 가격·수량·합계·지불액·거스름돈·잔액을 확인한다.',
     '- 0원 거스름돈도 완료하며, 다시 장보기와 영수증 상태의 재실행으로 새 놀이를 시작한다.',
     '', '## 결과', '',
-    ...checks.filter((check) => ['maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'git-guard-tests', 'catalog-http-check-tests', 'catalog-http-before', 'catalog-http-after', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-flow'].includes(check.label))
+    ...checks.filter((check) => ['maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-flow'].includes(check.label))
       .map((check) => '- ' + check.label + ': 종료 코드 ' + check.exitCode),
     '- JUnit: ' + (junit ? `${junit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
     '', '원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/' + runId + '/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.',
@@ -422,6 +468,16 @@ function writeReport(status, reason = '') {
 
 async function cleanup() {
   await restoreScreenAwake();
+  if (createdPreviewReverse && tools && selectedSerial) {
+    try {
+      const current = reverseTarget((await adb('preview-reverse-cleanup-check', ['reverse', '--list'], { cleanup: true })).stdout, PREVIEW_PORT);
+      if (current === 'tcp:' + PREVIEW_PORT) await adb('preview-reverse-remove', ['reverse', '--remove', 'tcp:' + PREVIEW_PORT], { cleanup: true });
+    } catch { say('미리보기 USB 연결 정리는 원본 로그를 확인해 주세요.'); }
+  }
+  if (previewSession) {
+    try { await previewSession.close(); }
+    catch { say('미리보기 서버 정리는 원본 로그를 확인해 주세요.'); }
+  }
   if (createdReverse && tools && selectedSerial) {
     try {
       const current = reverseTarget((await adb('reverse-cleanup-check', ['reverse', '--list'], { cleanup: true })).stdout);
@@ -458,20 +514,24 @@ try {
   say('설치 도구·USB 실기기·Git 상태를 확인합니다.');
   gitState = captureGitState(repoRoot);
   if (!doctor) catalogEnvironment = captureCatalogEnvironment(mobileRoot);
+  if (!doctor && previewPath) previewState = capturePrivatePreview(repoRoot, previewPath, catalogProjectRef(catalogEnvironment));
   await preflight();
   if (doctor) {
     overallStatus = 'ready';
     say('준비 확인 완료. 실제 화면 검사와 커밋은 실행하지 않았습니다.');
   } else {
     verificationStarted = true;
+    if (previewState) previewSession = await startPrivatePreviewServer(previewState, { sessionId: runId });
+    checkPreviewExpectations = writePreviewExpectations(path.join(artifactRoot, 'private-preview-expectations.js'), previewSession);
     // 일반 YAML 구문 검사만으로는 명령 형식 오류를 찾을 수 없어, 기기를 조작하기 전에 Maestro로 확인합니다.
-    for (const [label, file] of [['maestro-syntax-main', 'apps/mobile/.maestro/payment.yaml'], ['maestro-syntax-quiz', 'apps/mobile/.maestro/solve-quiz.yaml'], ['maestro-syntax-receipt', 'apps/mobile/.maestro/receipt.yaml']]) {
+    for (const [label, file] of [['maestro-syntax-main', 'apps/mobile/.maestro/payment.yaml'], ['maestro-syntax-quiz', 'apps/mobile/.maestro/solve-quiz.yaml'], ['maestro-syntax-receipt', 'apps/mobile/.maestro/receipt.yaml'], ['maestro-syntax-preview', 'apps/mobile/.maestro/real-price-preview.yaml']]) {
       await run(label, tools.maestro, ['check-syntax', file], { timeout: 60_000 });
     }
     await prepareScreenAwake();
     say('기기: ' + device.model + ' / Android ' + device.android + '. 코드 검사를 시작합니다.');
     await run('git-guard-tests', process.execPath, ['--test', 'scripts/device/git-guard.test.mjs'], { timeout: timeout.check });
     await run('catalog-http-check-tests', process.execPath, ['--experimental-strip-types', '--test', 'scripts/device/catalog-http-check.test.mjs'], { timeout: timeout.check });
+    await run('private-preview-tests', process.execPath, ['--test', 'scripts/device/private-price-preview.test.mjs'], { timeout: timeout.check });
     // 실제 PostgreSQL 엔진에서 DB 권한과 가격 공개 조건을 확인한 뒤 앱·실기기 검사로 넘어갑니다.
     say('database-tests 확인 중');
     await run('database-tests', process.execPath, [tools.npm, '--prefix', 'scripts/database', 'test'], { timeout: timeout.check });
@@ -480,21 +540,30 @@ try {
       await run(label, process.execPath, [tools.npm, 'run', script], { cwd: mobileRoot, timeout: label === 'export' ? timeout.export : timeout.check });
     }
     assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
+    assertPreviewUnchanged();
+    if (previewSession) {
+      const started = Date.now();
+      releaseScan = scanReleaseForPrivateData(path.join(mobileRoot, 'dist'), previewState, previewSession.token);
+      checks.push({ label: 'private-preview-release-scan', exitCode: 0, milliseconds: Date.now() - started });
+      previewBefore = await verifyPreviewHttp('private-preview-http-before');
+    }
     say('공개 상품과 비공개 읽기 차단을 실제 REST GET으로 확인합니다.');
     catalogBefore = await verifyCatalogHttp('catalog-http-before');
     await ensurePortUnused();
     say('전용 Expo 서버와 새 실행 화면을 준비합니다.');
     expoServer = startLogged('expo-server', process.execPath, [tools.expo, 'start', '--localhost', '--port', String(port), '--clear'], {
       cwd: mobileRoot,
-      env: pinnedCatalogEnvironment(catalogEnvironment, tools.env, runId),
+      env: previewEnvironment(pinnedCatalogEnvironment(catalogEnvironment, tools.env, runId), previewSession),
     });
     await waitForServer();
-    await prepareReverse();
+    createdReverse = await prepareReverse();
+    if (previewSession) createdPreviewReverse = await prepareReverse(PREVIEW_PORT);
     await wakeScreenForUi();
     say(receiptOnly ? '휴대전화에서 영수증 구간을 부분 검사합니다.' : '휴대전화에서 장바구니·거스름돈·계산 완료·영수증을 전체 검사합니다.');
     const maestroDir = path.join(runDir, 'maestro');
     await run('maestro-flow', tools.maestro, [
       '--device', selectedSerial, 'test', '-e', 'EXPO_URL=exp://127.0.0.1:' + port, '-e', 'RUN_ID=' + runId,
+      '-e', 'PRIVATE_PREVIEW_ENABLED=' + (previewSession ? '1' : '0'),
       '--format', 'junit', '--output', path.join(runDir, 'result.xml'),
       '--test-output-dir', maestroDir, '--debug-output', maestroDir,
       receiptOnly ? 'apps/mobile/.maestro/receipt.yaml' : 'apps/mobile/.maestro/payment.yaml',
@@ -502,12 +571,18 @@ try {
     junit = readJunit(path.join(runDir, 'result.xml'));
     if (interrupted) throw new Error('사용자가 검사를 중단했습니다.');
     assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
+    assertPreviewUnchanged();
     catalogAfter = await verifyCatalogHttp('catalog-http-after', catalogBefore);
+    if (previewSession) {
+      previewAfter = await verifyPreviewHttp('private-preview-http-after');
+      if (previewAfter.fingerprint !== previewBefore.fingerprint) throw new Error('검사 전후 미리보기 응답이 다릅니다.');
+    }
     assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
     // 부분 검사 성공은 전체 회귀 검증을 대신하지 않으므로 공개 보고서와 커밋을 만들지 않습니다.
     if (!receiptOnly) {
       writeReport('PASS');
       assertCatalogEnvironmentUnchanged(catalogEnvironment);
+      assertPreviewUnchanged();
       if (!noCommit) {
         const result = commitVerifiedChange({ repoRoot, state: gitState, reportPath, message });
         commit = result.commit;
@@ -532,6 +607,7 @@ try {
       runId, scope: receiptOnly ? 'receipt-only' : 'full', status: overallStatus, startedAt: startedAt.toISOString(), finishedAt: new Date().toISOString(),
       device, sourceHash: gitState?.sourceHash, head: gitState?.head, checks, junit, commit, screenAwake,
       catalog: { environmentFingerprint: catalogEnvironment?.fingerprint, before: catalogBefore, after: catalogAfter },
+      privatePreview: { sourceFingerprint: previewState?.fingerprint, before: previewBefore, after: previewAfter, releaseScan },
     }, null, 2) + '\n');
     say('원본 기록: .artifacts/device/' + runId + '/');
   }

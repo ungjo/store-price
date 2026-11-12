@@ -7,7 +7,7 @@ import test from 'node:test';
 import { sampleProducts } from '../../apps/mobile/src/data/sample-products.ts';
 import {
   assertCatalogEnvironmentUnchanged, captureCatalogEnvironment, checkCatalogHttp,
-  createCatalogLogWriter, pinnedCatalogEnvironment, redactCatalogText,
+  createCatalogLogWriter, pinnedCatalogEnvironment, redactCatalogText, catalogProjectRef,
 } from './catalog-http-check.mjs';
 
 const testUrl = 'https://catalog-check-fixture.supabase.co';
@@ -61,13 +61,17 @@ test('environment precedence and pinned Expo config are explicit without seriali
   writeFileSync(path.join(root, '.env.development.local'), envText('sb_publishable_priority'));
   const env = { [keyVariable]: 'sb_publishable_process' };
   const state = captureCatalogEnvironment(root, env);
-  const pinned = pinnedCatalogEnvironment(state, { EXPO_NO_CLIENT_ENV_VARS: '1', KEEP: 'yes' }, 'test-run');
+  const pinned = pinnedCatalogEnvironment(state, { EXPO_NO_CLIENT_ENV_VARS: '1', KEEP: 'yes',
+    EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW: '1', EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW_TOKEN: 'inherited-token' }, 'test-run');
   assert.equal(pinned[keyVariable], env[keyVariable]);
   assert.equal(pinned[urlVariable], testUrl);
   assert.equal(pinned.EXPO_NO_DOTENV, '1');
   assert.equal(pinned.EXPO_PUBLIC_DEVICE_RUN_ID, 'test-run');
   assert.equal(pinned.EXPO_NO_CLIENT_ENV_VARS, undefined);
   assert.equal(pinned.KEEP, 'yes');
+  assert.equal(pinned.EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW, undefined);
+  assert.equal(pinned.EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW_TOKEN, undefined);
+  assert.equal(catalogProjectRef(state), 'catalog-check-fixture');
   assert.equal(JSON.stringify(state).includes('sb_publishable_'), false);
   assert.match(state.fingerprint, /^[a-f0-9]{64}$/u);
   assertCatalogEnvironmentUnchanged(state, env);

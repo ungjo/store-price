@@ -2,7 +2,7 @@
 
 초등학교 1~3학년 아이들이 상품을 고르고 놀이돈으로 계산하며 거스름돈을 배우는 Android·iOS 앱입니다.
 
-실제 가격의 목표 출처는 **SSG.COM 이마트 온라인 상품 가격**입니다. 오프라인 이마트 점포의 현재 가격을 의미하지 않습니다. 데이터 이용 범위가 확인되기 전에는 앱에 직접 만든 **연습용 예시 가격**만 공개합니다. 실제 페이지에서 확인한 가격은 별도의 비공개 관측으로 다룹니다. 이마트·SSG 공식 앱 또는 제휴 앱이 아닙니다.
+실제 가격의 목표 출처는 **SSG.COM 이마트 온라인 상품 가격**입니다. 오프라인 이마트 점포의 현재 가격을 의미하지 않습니다. 데이터 이용 범위가 확인되기 전에는 일반 사용자에게 직접 만든 **연습용 예시 가격**만 공개합니다. 실제 페이지에서 확인한 비공개 관측은 본인 갤럭시의 개발용 읽기 전용 미리보기로 살펴봅니다. 이마트·SSG 공식 앱 또는 제휴 앱이 아닙니다.
 
 ## 개발 방식
 
@@ -41,11 +41,12 @@
 - [x] 새 Supabase 프로젝트에 예시 6개 적용, 공개 키 HTTP 조회 확인 (2026-11-12)
 - [x] 앱의 원격 카탈로그 읽기·오류 처리·실기기 검증 (`1f994f3`) — [개발 기록](docs/book/chapters/04a-supabase-catalog.md)
 - [x] 실제 가격 3개의 비공개 관측 적재·DB 검증 — [개발 기록](docs/book/chapters/04b-real-price-intake.md)
+- [x] 실제 가격 개발용 미리보기·USB 전송 구현 — [개발 기록과 검증 범위 확인](docs/book/chapters/04c-real-price-preview.md)
 - [ ] 허용된 실제 가격의 앱 공개·자동 갱신
 - [ ] Android·iPhone 실기기 검증
 - [ ] 스토어 제출
 
-완료되지 않은 항목은 구현·검증 완료를 의미하지 않습니다.
+개발용 미리보기와 일반 사용자에게 실제 가격을 공개하는 단계는 구분합니다. 현재 코드의 갤럭시 검사 결과는 같은 커밋의 [검증 기록](docs/book/verification/latest-android.md)에서 확인합니다.
 
 ## 첫 화면 실행
 
@@ -58,5 +59,11 @@ npm start
 ```
 
 [1장: 첫 앱과 검증 결과](docs/book/chapters/01-first-app.md) · [2장: 장바구니](docs/book/chapters/02-shopping-cart.md) · [3장: 놀이돈 예산](docs/book/chapters/03-play-money.md) · [3장 보충: 낼 놀이돈 선택](docs/book/chapters/03a-payment-selection.md) · [3장 보충: 거스름돈 계산](docs/book/chapters/03c-change-calculation.md) · [3장 보충: 거스름돈 맞히기](docs/book/chapters/03d-change-quiz.md) · [3장 보충: 계산 완료와 영수증](docs/book/chapters/03e-checkout-receipt.md) · [4장: 상품 DB 구조와 권한](docs/book/chapters/04-catalog-database.md) · [4장 보충: Supabase 상품 읽기](docs/book/chapters/04a-supabase-catalog.md) · [4장 보충: 실제 가격 비공개 관측](docs/book/chapters/04b-real-price-intake.md)
+
+## 실제 가격을 개발 중인 갤럭시에서 보기
+
+실제 가격 미리보기는 컴퓨터와 USB로 연결한 갤럭시에서만 사용하는 별도 개발 기능입니다. DB에서 읽어 둔 자료의 상품명·규격·확인 당시 가격·출처·확인 시각·재고 상태를 표시합니다. 미리보기 상품을 장바구니에 넣지는 않으며, 기존 시장놀이는 예시 6개로 유지합니다.
+
+실제 자료와 원격 조회 결과는 Git에서 제외합니다. 미리보기를 열었다고 DB의 공개 상태나 이용 범위를 승인된 것으로 변경하지 않습니다. [실행 방법](apps/mobile/README.md) · [구현과 검증 기록](docs/book/chapters/04c-real-price-preview.md)
 
 현재 프로젝트는 Expo SDK 58입니다. [Expo Go 호환 오류 해결 기록](docs/book/chapters/01a-expo-go-sdk58.md)에 업데이트와 검증 내용을 남겼습니다.

@@ -38,6 +38,10 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 - assertVisible:
     id: "cart-summary"
     text: "^장바구니 총 0개, 합계 0원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 10,000원\\. 놀이돈 안에서 장을 봐요\\.$"
+- runFlow:
+    when:
+      true: ${typeof PRIVATE_PREVIEW_ENABLED !== 'undefined' && PRIVATE_PREVIEW_ENABLED == '1'}
+    file: real-price-preview.yaml
 - scrollUntilVisible:
     element:
       id: "cart-empty"

@@ -53,5 +53,13 @@
   "supabase/migrations/20261112102641_manual_price_observations.sql",
   "scripts/database/manual-observations.mjs",
   "scripts/database/manual-observations.test.mjs",
-  "docs/book/chapters/04b-real-price-intake.md"
+  "docs/book/chapters/04b-real-price-intake.md",
+  "apps/mobile/src/features/catalog/real-price-preview.ts",
+  "apps/mobile/src/features/catalog/real-price-preview.test.ts",
+  "apps/mobile/src/components/real-price-preview.tsx",
+  "scripts/device/private-price-preview.mjs",
+  "scripts/device/private-price-preview.test.mjs",
+  "scripts/device/start-price-preview.mjs",
+  "apps/mobile/.maestro/real-price-preview.yaml",
+  "docs/book/chapters/04c-real-price-preview.md"
 ]

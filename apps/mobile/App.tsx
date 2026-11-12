@@ -10,6 +10,7 @@ import { getCartSummary } from './src/features/cart/cart';
 import { getBudgetSummary, STARTING_BUDGET_KRW } from './src/features/budget/budget';
 import { createInitialShoppingState, createShoppingReducer, getPaymentSummary } from './src/features/payment/payment';
 import { CatalogLoader, type CatalogSource } from './src/components/catalog-loader';
+import { PrivatePricePreview } from './src/components/real-price-preview';
 import type { CatalogProduct } from './src/features/catalog/catalog';
 
 // 원 단위 정수 가격에 천 단위 구분 기호를 붙입니다. 원래 가격 값은 바꾸지 않습니다.
@@ -74,6 +75,7 @@ function MarketScreen({ products, source, reload }: {
     <SafeAreaProvider>
       <SafeAreaView style={styles.screen}>
         <StatusBar style="dark" />
+        {__DEV__ && <PrivatePricePreview />}
         <KeyboardAvoidingView style={styles.keyboardArea} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           {/* 열 수가 바뀌면 key도 바꿔 FlatList를 새로 만들어 열 변경 오류를 피합니다. */}
           <FlatList

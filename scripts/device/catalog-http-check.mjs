@@ -72,7 +72,14 @@ export function pinnedCatalogEnvironment(state, baseEnv, runId = '') {
   };
   // 호출한 셸의 비활성화 옵션 때문에 앱에 공개 설정이 빠지지 않게 합니다.
   delete pinned.EXPO_NO_CLIENT_ENV_VARS;
+  // 일반 검사·배포·Expo 실행에 개발용 실제 자료 설정이 상속되지 않게 기본값에서 제거합니다.
+  delete pinned.EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW;
+  delete pinned.EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW_TOKEN;
   return pinned;
+}
+
+export function catalogProjectRef(state) {
+  return new URL(details(state).config.url).hostname.split('.')[0];
 }
 
 export function redactCatalogText(state, text) {

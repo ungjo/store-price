@@ -1,0 +1,141 @@
+appId: host.exp.exponent
+name: USB 개발용 실제 가격 읽기 전용 미리보기
+---
+# 기대값은 현재 DB에서 조회한 무시된 파일에만 생성합니다. 실제 자료는 이 YAML에 넣지 않습니다.
+- runScript: ../../../.artifacts/device/private-preview-expectations.js
+- scrollUntilVisible:
+    element:
+      id: product-sample-apple-add
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: product-sample-apple-add
+    enabled: true
+- assertVisible:
+    id: cart-summary
+    text: "^장바구니 총 1개, 합계 1,500원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 8,500원\\. 이대로 사면 남을 돈이에요\\.$"
+- tapOn:
+    id: preview-open
+- extendedWaitUntil:
+    visible:
+      id: preview-ready
+    timeout: 30000
+- assertVisible:
+    id: preview-ready
+    text: "^확인한 가격 ${output.privatePreview.products.length}개$"
+- assertVisible:
+    id: preview-session-marker
+    text: "^미리보기 실행 ${RUN_ID}$"
+- assertVisible:
+    id: preview-fetched
+    text: ${output.privatePreview.fetched}
+- evalScript: ${output.previewIndex = 0}
+- repeat:
+    times: ${output.privatePreview.products.length}
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: ${'preview-product-' + output.previewIndex + '-name'}
+          direction: DOWN
+          timeout: 30000
+          centerElement: false
+      - assertVisible:
+          id: ${'preview-product-' + output.previewIndex + '-name'}
+          text: ${output.privatePreview.products[output.previewIndex].name}
+      - scrollUntilVisible:
+          element:
+            id: ${'preview-product-' + output.previewIndex + '-unit'}
+          direction: DOWN
+          timeout: 30000
+          centerElement: false
+      - assertVisible:
+          id: ${'preview-product-' + output.previewIndex + '-unit'}
+          text: ${output.privatePreview.products[output.previewIndex].unit}
+      - scrollUntilVisible:
+          element:
+            id: ${'preview-product-' + output.previewIndex + '-price'}
+          direction: DOWN
+          timeout: 30000
+          centerElement: false
+      - assertVisible:
+          id: ${'preview-product-' + output.previewIndex + '-price'}
+          text: ${output.privatePreview.products[output.previewIndex].price}
+      - scrollUntilVisible:
+          element:
+            id: ${'preview-product-' + output.previewIndex + '-stock'}
+          direction: DOWN
+          timeout: 30000
+          centerElement: false
+      - assertVisible:
+          id: ${'preview-product-' + output.previewIndex + '-stock'}
+          text: ${output.privatePreview.products[output.previewIndex].stock}
+      - scrollUntilVisible:
+          element:
+            id: ${'preview-product-' + output.previewIndex + '-source'}
+          direction: DOWN
+          timeout: 30000
+          centerElement: false
+      - assertVisible:
+          id: ${'preview-product-' + output.previewIndex + '-source'}
+          text: "^SSG\\.COM 이마트 온라인$"
+      - scrollUntilVisible:
+          element:
+            id: ${'preview-product-' + output.previewIndex + '-observed'}
+          direction: DOWN
+          timeout: 30000
+          centerElement: false
+      - assertVisible:
+          id: ${'preview-product-' + output.previewIndex + '-observed'}
+          text: ${output.privatePreview.products[output.previewIndex].observed}
+      - scrollUntilVisible:
+          element:
+            id: ${'preview-product-' + output.previewIndex + '-expiry'}
+          direction: DOWN
+          timeout: 30000
+          centerElement: false
+      - assertVisible:
+          id: ${'preview-product-' + output.previewIndex + '-expiry'}
+          text: ${output.privatePreview.products[output.previewIndex].expiry}
+      - scrollUntilVisible:
+          element:
+            id: ${'preview-product-' + output.previewIndex + '-url'}
+          direction: DOWN
+          timeout: 30000
+          centerElement: false
+      - assertVisible:
+          id: ${'preview-product-' + output.previewIndex + '-url'}
+          text: ${output.privatePreview.products[output.previewIndex].url}
+      - evalScript: ${output.previewIndex = output.previewIndex + 1}
+- takeScreenshot: private-price-preview
+- tapOn:
+    id: preview-close
+- assertNotVisible:
+    id: preview-modal
+- assertVisible:
+    id: cart-summary
+    text: "^장바구니 총 1개, 합계 1,500원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 8,500원\\. 이대로 사면 남을 돈이에요\\.$"
+# Android 뒤로 가기도 창만 닫고 장바구니를 보존합니다.
+- tapOn:
+    id: preview-open
+- extendedWaitUntil:
+    visible:
+      id: preview-ready
+    timeout: 30000
+- back
+- assertNotVisible:
+    id: preview-modal
+- assertVisible:
+    id: cart-summary
+    text: "^장바구니 총 1개, 합계 1,500원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 8,500원\\. 이대로 사면 남을 돈이에요\\.$"
+- scrollUntilVisible:
+    element:
+      id: cart-clear
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: cart-clear
+- assertVisible:
+    id: cart-summary
+    text: "^장바구니 총 0개, 합계 0원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 10,000원\\. 놀이돈 안에서 장을 봐요\\.$"
