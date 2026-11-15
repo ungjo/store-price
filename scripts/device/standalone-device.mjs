@@ -265,7 +265,8 @@ export async function runStandaloneOffline({ adb, run, tools, runDir, apkState, 
         '--device', tools.selectedSerial, 'test', '-e', 'APP_ID=' + apkState.applicationId,
         '-e', 'RUN_ID=' + apkState.buildNonce, '--format', 'junit', '--output', evidence.junitPath,
         '--test-output-dir', output, '--debug-output', output, flow,
-      ], { cwd: repoRoot, timeout: 300_000, signal: abort.signal });
+      // 12개 상품의 분류·교차 분류 계산까지 검사합니다. 통신 감시는 이 시간 내내 계속됩니다.
+      ], { cwd: repoRoot, timeout: 600_000, signal: abort.signal });
       // 종료 코드만 성공인 경우에도 JUnit이 실패하면 같은 복구·검사 앱 정리 경로로 들어갑니다.
       await validateJunit(evidence.junitPath);
       evidence.firstLaunchOffline = true;

@@ -77,7 +77,7 @@ function harness(t, options = {}) {
   const run = async (label, executable, args, opts) => {
     calls.push({ label, args });
     assert.equal(state.wifi, '0'); assert.equal(state.data, '0'); assert.equal(state.reverses, '');
-    assert.equal(opts.timeout, 300_000); assert.ok(opts.signal instanceof AbortSignal);
+    assert.equal(opts.timeout, 600_000); assert.ok(opts.signal instanceof AbortSignal);
     assert.ok(args.includes('APP_ID=' + apkState.applicationId)); assert.ok(args.includes('RUN_ID=' + buildNonce));
     state.notLaunched = false;
     if (options.airplaneChanged) { state.airplane = '1'; throw new Error('simulated user airplane-mode change'); }

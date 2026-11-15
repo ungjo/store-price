@@ -20,7 +20,8 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
 const mobileRoot = path.join(repoRoot, 'apps/mobile');
 const reportPath = 'docs/book/verification/latest-android.md';
 const port = 8091;
-const timeout = { tool: 30_000, check: 300_000, export: 600_000, server: 180_000, flow: 1_200_000 };
+// 상품 12개로 목록 왕복과 분류 검사가 늘어났으므로 전체 실기기 흐름의 상한을 확보합니다.
+const timeout = { tool: 30_000, check: 300_000, export: 600_000, server: 180_000, flow: 1_500_000 };
 const args = process.argv.slice(2);
 let noCommit = false;
 let receiptOnly = false;
@@ -658,6 +659,7 @@ function writeReport(status, reason = '') {
       '- 검사 전 Wi-Fi: ' + standalone.network.before.wifiEnabled + ', 모바일 데이터: ' + standalone.network.before.mobileDataEnabled + ', 비행기 모드: ' + standalone.network.before.airplaneModeEnabled + '.',
       '- 첫 실행 전과 마지막 확인 모두 Wi-Fi·모바일 데이터 꺼짐, 활성 기본 네트워크 없음, 인터넷 연결 ' + standalone.network.lastOffline.internetNetworkCount + '개, USB reverse ' + standalone.network.lastOffline.reverseMappingCount + '개.',
       '- 오프라인 상태 확인 횟수: ' + standalone.network.offlineChecks + '. 중간 연결 복구가 감지되면 검사를 중단한다.',
+      '- 같은 오프라인 실행에서 내장 예시 12개와 분류별 6·4·2개를 확인했다. 새 상품 세 개의 4,500원 합계·500원 거스름돈·분류 변경 후 장바구니와 정답 유지·영수증·전체 분류 초기화도 검사했다.',
       '- 통신 설정 복구: Wi-Fi ' + standalone.network.restoration.wifi + ', 모바일 데이터 ' + standalone.network.restoration.mobileData + ', 복구 확인 ' + standalone.network.restoration.verified + '.',
       '- 별도 APK 검사와 통신·화면 설정 복구를 모두 확인한 뒤에만 이 기록과 커밋을 만든다.',
     ] : []),

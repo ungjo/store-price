@@ -44,12 +44,13 @@
 - [x] 실제 가격 개발용 미리보기·USB 전송 구현 (`f6f4ccb`) — [개발 기록과 검증 범위 확인](docs/book/chapters/04c-real-price-preview.md)
 - [x] 상품 조회 중 내장 예시로 바로 시작 구현 — [코드 검사와 실기기 검증 기록](docs/book/chapters/05-offline-sample-play.md)
 - [x] 설치형 Android 앱의 인터넷 없는 첫 실행·예시 놀이 검증 (`4fbe035`) — [개발 기록](docs/book/chapters/05a-standalone-offline.md)
-- [x] 상품 분류와 예시 12개 구현 — [이번 변경의 검사 범위와 결과](docs/book/chapters/06-product-categories.md)
+- [x] 상품 분류와 예시 12개 구현·검증 (`479f6f5`) — [개발 기록](docs/book/chapters/06-product-categories.md)
+- [x] 분류와 예시 12개를 포함한 새 APK 빌드 — [빌드 기록과 오프라인 검사 범위](docs/book/chapters/06a-categories-offline-apk.md)
 - [ ] 허용된 실제 가격의 앱 공개·자동 갱신
 - [ ] Android·iPhone 실기기 검증
 - [ ] 스토어 제출
 
-개발용 미리보기와 일반 사용자에게 실제 가격을 공개하는 단계는 구분합니다. 사용자는 `4fbe035`까지 GitHub 업로드를 확인했습니다. 현재 변경은 상품 분류와 예시 12개 확장이며, 전체 실기기 결과는 이 변경과 함께 남기는 [검증 기록](docs/book/verification/latest-android.md)의 검사 시작 HEAD `4fbe035`와 실제 실행 결과로 확인합니다. 이전 커밋의 성공 기록을 이번 변경의 결과로 사용하지 않습니다.
+개발용 미리보기와 일반 사용자에게 실제 가격을 공개하는 단계는 구분합니다. 사용자는 분류와 예시 12개를 포함한 `479f6f5`의 GitHub 업로드를 확인했습니다. 새 설치형 앱 **꼬마 시장 검사 12**의 빌드와 다운로드를 완료했습니다. 기존 **꼬마 시장 검사**는 예시 6개로 검증한 별도 앱이며 그대로 보존합니다. 새 설치·실제 오프라인 검사와 설정 복구의 최종 결과는 [개발 기록](docs/book/chapters/06a-categories-offline-apk.md)과 검사 시작 HEAD `479f6f5`인 [검증 기록](docs/book/verification/latest-android.md)으로 구분합니다.
 
 ## 첫 화면 실행
 

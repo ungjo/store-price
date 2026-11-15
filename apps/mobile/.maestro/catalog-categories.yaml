@@ -1,7 +1,8 @@
-appId: host.exp.exponent
+appId: ${APP_ID || 'host.exp.exponent'}
 name: 상품 분류와 새 예시의 장바구니·영수증 회귀 검사
 # 호출부가 분류 버튼까지 이동한 빈 장바구니에서 시작합니다. CATEGORY_SOURCE로 원격·내장 경로를 구분합니다.
 # 분류는 보이는 목록만 바꾸므로 다른 분류의 상품·낸 돈·맞힌 답이 그대로 남아야 합니다.
+# 독립 APK에서는 호출부의 APP_ID를 사용하고, 기존 Expo Go 검사에서는 기본 앱 ID를 사용합니다.
 ---
 - assertVisible:
     id: category-all
