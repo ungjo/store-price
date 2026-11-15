@@ -18,6 +18,9 @@ const future = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 let db;
 let seed;
 let isolatedSeed;
+let categoryMigration;
+let isolatedCategoryMigration;
+let migrationsBeforeCategories;
 
 before(async () => {
   db = await PGlite.create();
@@ -33,6 +36,13 @@ before(async () => {
   // seed 자체의 BEGIN/COMMIT은 최초 적용에서 실행하고, 재실행 검사에서는 바깥 롤백을 보존하도록 경계만 제외합니다.
   assert.deepEqual(seed.match(/^(?:BEGIN|COMMIT);\r?$/gmu)?.map((line) => line.trim()), ['BEGIN;', 'COMMIT;']);
   isolatedSeed = seed.replace(/^(?:BEGIN|COMMIT);\r?$/gmu, '');
+  const categoryMigrationName = migrationNames.find((name) => name.endsWith('_catalog_categories.sql'));
+  assert.ok(categoryMigrationName, '실제 카테고리 migration을 재실행 검사에 사용해야 합니다.');
+  categoryMigration = await readFile(new URL(categoryMigrationName, migrationsUrl), 'utf8');
+  migrationsBeforeCategories = await Promise.all(migrationNames.filter((name) => name < categoryMigrationName)
+    .map((name) => readFile(new URL(name, migrationsUrl), 'utf8')));
+  assert.deepEqual(categoryMigration.match(/^(?:BEGIN|COMMIT);\r?$/gmu)?.map((line) => line.trim()), ['BEGIN;', 'COMMIT;']);
+  isolatedCategoryMigration = categoryMigration.replace(/^(?:BEGIN|COMMIT);\r?$/gmu, '');
   try {
     // 실제 배포 순서대로 누적 migration을 적용해 이전 제약을 바꾼 후의 최종 구조를 검사합니다.
     for (const name of migrationNames) {
@@ -66,11 +76,11 @@ async function setRole(role) {
   await db.exec('SET LOCAL ROLE ' + role);
 }
 
-async function insert(table, row) {
+async function insert(table, row, target = db) {
   assert.ok(['products', 'price_observations'].includes(table));
   const keys = Object.keys(row);
   assert.ok(keys.every((key) => /^[a-z_]+$/u.test(key)));
-  return db.query(
+  return target.query(
     'INSERT INTO catalog_private.' + table + ' (' + keys.join(', ') + ') VALUES ('
       + keys.map((_, index) => '$' + (index + 1)).join(', ') + ')',
     Object.values(row),
@@ -87,6 +97,7 @@ function product(overrides = {}) {
     emoji: '🧪',
     color: '#E9F0F7',
     sort_order: 100,
+    category_id: 'produce',
     ...overrides,
   };
 }
@@ -188,17 +199,122 @@ async function expectFailure(body, code) {
   });
 }
 
-test('예시 seed는 앱이 실제 사용하는 여섯 상품의 이름·단위·가격·표시 정보와 일치한다', async () => {
+test('예시 seed는 앱이 실제 사용하는 열두 상품의 이름·단위·가격·분류·표시 정보와 일치한다', async () => {
   await rollback(async () => {
     await setRole('anon');
     const { rows } = await db.query(`
-      SELECT id, name, unit_label AS unit, play_price_krw AS "priceKrw", emoji, color, is_sample AS "isSample"
+      SELECT id, name, unit_label AS unit, play_price_krw AS "priceKrw", emoji, color, is_sample AS "isSample", category_id AS "categoryId"
       FROM public.play_catalog ORDER BY sort_order, id
     `);
-    assert.deepEqual(rows, sampleProducts.map(({ id, name, unit, priceKrw, emoji, color, isSample }) => ({
-      id, name, unit, priceKrw, emoji, color, isSample,
+    assert.deepEqual(rows, sampleProducts.map(({ id, name, unit, priceKrw, emoji, color, isSample, categoryId }) => ({
+      id, name, unit, priceKrw, emoji, color, isSample, categoryId,
     })));
   });
+});
+
+test('비어 있는 최종 스키마에도 seed만으로 분류별 6·4·2개와 기존 정렬을 준비한다', async () => {
+  await rollback(async () => {
+    await db.exec('DELETE FROM catalog_private.price_observations; DELETE FROM catalog_private.products;');
+    await db.exec(isolatedSeed);
+    await setRole('anon');
+    const { rows } = await db.query('SELECT id, category_id, sort_order FROM public.play_catalog ORDER BY sort_order, id');
+    assert.deepEqual(rows, sampleProducts.map((item, index) => ({ id: item.id, category_id: item.categoryId, sort_order: index })));
+    assert.deepEqual((await db.query(`
+      SELECT category_id, count(*)::integer AS count FROM public.play_catalog GROUP BY category_id ORDER BY category_id
+    `)).rows, [
+      { category_id: 'bakery-snacks', count: 2 }, { category_id: 'dairy-eggs', count: 4 }, { category_id: 'produce', count: 6 },
+    ]);
+  });
+});
+
+test('기존 여섯 상품에서 확장해도 가격·정렬과 비공개 실제 원본은 바뀌지 않는다', async () => {
+  await rollback(async () => {
+    const addedIds = sampleProducts.slice(6).map((item) => item.id);
+    await db.query('DELETE FROM catalog_private.price_observations WHERE product_id = ANY($1)', [addedIds]);
+    await db.query('DELETE FROM catalog_private.products WHERE id = ANY($1)', [addedIds]);
+    await db.exec('UPDATE catalog_private.products SET category_id = NULL');
+    await insert('products', product({ is_active: false, category_id: null }));
+    await insert('price_observations', manualObservation());
+    const beforeProducts = (await db.query("SELECT to_jsonb(p) - 'category_id' AS value FROM catalog_private.products p ORDER BY id")).rows;
+    const beforePrices = (await db.query('SELECT * FROM catalog_private.price_observations ORDER BY id')).rows;
+    await db.exec(isolatedCategoryMigration);
+    const originalIds = [...sampleProducts.slice(0, 6).map((item) => item.id), 'test-real'];
+    assert.deepEqual((await db.query("SELECT to_jsonb(p) - 'category_id' AS value FROM catalog_private.products p WHERE id = ANY($1) ORDER BY id", [originalIds])).rows, beforeProducts);
+    assert.deepEqual((await db.query('SELECT * FROM catalog_private.price_observations WHERE product_id = ANY($1) ORDER BY id', [originalIds])).rows, beforePrices);
+    assert.deepEqual((await db.query("SELECT category_id FROM catalog_private.products WHERE id = 'test-real'")).rows, [{ category_id: null }]);
+    await setRole('anon');
+    assert.deepEqual((await db.query('SELECT id, category_id FROM public.play_catalog ORDER BY sort_order, id')).rows,
+      sampleProducts.map((item) => ({ id: item.id, category_id: item.categoryId })));
+  });
+});
+
+test('카테고리 migration 재실행은 비활성·철회·재고 변경과 비공개 실제 기록을 보존한다', async () => {
+  await rollback(async () => {
+    await insert('products', product({ is_active: false, category_id: null }));
+    await insert('price_observations', manualObservation());
+    await db.exec("UPDATE catalog_private.products SET is_active = false, color = '#FFFFFF', sort_order = 1000 WHERE id = 'sample-orange'");
+    await db.exec("UPDATE catalog_private.price_observations SET publication_state = 'withdrawn', rights_status = 'revoked', availability = 'out_of_stock' WHERE product_id = 'sample-orange'");
+    const productsBefore = (await db.query('SELECT * FROM catalog_private.products ORDER BY id')).rows;
+    const pricesBefore = (await db.query('SELECT * FROM catalog_private.price_observations ORDER BY id')).rows;
+    await db.exec(isolatedCategoryMigration);
+    await db.exec(isolatedCategoryMigration);
+    assert.deepEqual((await db.query('SELECT * FROM catalog_private.products ORDER BY id')).rows, productsBefore);
+    assert.deepEqual((await db.query('SELECT * FROM catalog_private.price_observations ORDER BY id')).rows, pricesBefore);
+  });
+});
+
+test('분류가 없는 승인 자료는 원본에 보존하되 앱에 공개하지 않고 알려진 분류만 허용한다', async () => {
+  for (const role of [...publicRoles, 'service_role']) {
+    await rollback(async () => {
+      await fixture({ category_id: null });
+      assert.deepEqual((await db.query("SELECT category_id FROM catalog_private.products WHERE id = 'test-real'")).rows, [{ category_id: null }]);
+      await setRole(role);
+      assert.deepEqual(await visible(), []);
+    });
+  }
+  for (const category_id of ['', 'unknown', 'Produce', ' produce']) {
+    await expectFailure(() => insert('products', product({ category_id })), '23514');
+  }
+});
+
+test('상품 분류는 관리자만 바꿀 수 있고 공개된 가격 관측과 상품 정체성은 유지된다', async () => {
+  await rollback(async () => {
+    await fixture();
+    await setRole('service_role');
+    await db.exec("UPDATE catalog_private.products SET category_id = 'dairy-eggs' WHERE id = 'test-real'");
+    assert.equal((await visible())[0].category_id, 'dairy-eggs');
+    assert.equal((await visible())[0].price_observation_id, observationId);
+  });
+  for (const role of publicRoles) {
+    await expectFailure(async () => {
+      await db.exec('GRANT USAGE ON SCHEMA catalog_private TO ' + role);
+      await setRole(role);
+      await db.exec("UPDATE catalog_private.products SET category_id = 'dairy-eggs' WHERE id = 'sample-apple'");
+    }, '42501');
+  }
+});
+
+test('예시 예약 ID 충돌은 실제 migration 트랜잭션의 새 열·앞쪽 상품·가격까지 모두 취소한다', async () => {
+  for (const conflict of ['product', 'observation']) {
+    const isolated = await PGlite.create();
+    try {
+      await isolated.exec('CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;');
+      for (const migration of migrationsBeforeCategories) await isolated.exec(migration);
+      if (conflict === 'product') {
+        await insert('products', { id: 'sample-cracker', name: '보존할 다른 상품', unit_label: '1개', is_sample: false }, isolated);
+      } else {
+        await insert('products', { id: 'test-sample', name: '보존할 기존 예시', unit_label: '1개', is_sample: true }, isolated);
+        await insert('price_observations', sampleObservation({ id: '00000000-0000-4000-8000-000000000012' }), isolated);
+      }
+      const productsBefore = (await isolated.query('SELECT * FROM catalog_private.products ORDER BY id')).rows;
+      const pricesBefore = (await isolated.query('SELECT * FROM catalog_private.price_observations ORDER BY id')).rows;
+      await assert.rejects(isolated.exec(categoryMigration), (error) => error.code === '23514');
+      await isolated.exec('ROLLBACK');
+      assert.deepEqual((await isolated.query('SELECT * FROM catalog_private.products ORDER BY id')).rows, productsBefore);
+      assert.deepEqual((await isolated.query('SELECT * FROM catalog_private.price_observations ORDER BY id')).rows, pricesBefore);
+      assert.deepEqual((await isolated.query("SELECT column_name FROM information_schema.columns WHERE table_schema = 'catalog_private' AND table_name = 'products' AND column_name = 'category_id'")).rows, []);
+    } finally { await isolated.close(); }
+  }
 });
 
 test('seed를 두 번 적용해도 상품과 관측 기록을 중복하거나 변경하지 않는다', async () => {
@@ -260,7 +376,7 @@ test('익명과 로그인 역할 모두 공개 목록을 읽으며 관리자 메
         assert.deepEqual(Object.keys(row).sort(), [
           'id', 'name', 'unit_label', 'source_price_krw', 'play_price_krw', 'play_price_rule',
           'is_sample', 'emoji', 'color', 'sort_order', 'price_observation_id', 'source_kind',
-          'source_url', 'sales_channel', 'store_id', 'observed_at', 'valid_from', 'valid_until', 'display_until',
+          'source_url', 'sales_channel', 'store_id', 'observed_at', 'valid_from', 'valid_until', 'display_until', 'category_id',
         ].sort());
       }
     });
@@ -766,7 +882,7 @@ test('수동 관측의 출처를 허락된 API·파일로 바꾸거나 관측 �
   }
 });
 
-test('수동 관측을 보관해도 예시 seed 재실행과 공개 상품 6개의 내용은 유지된다', async () => {
+test('수동 관측을 보관해도 예시 seed 재실행과 공개 상품 12개의 내용은 유지된다', async () => {
   await rollback(async () => {
     await insert('products', product({ is_active: false }));
     await insert('price_observations', manualObservation());
@@ -775,11 +891,11 @@ test('수동 관측을 보관해도 예시 seed 재실행과 공개 상품 6개�
     assert.deepEqual((await db.query('SELECT * FROM catalog_private.price_observations WHERE id = $1', [observationId])).rows, stored);
     await setRole('anon');
     const { rows } = await db.query(`
-      SELECT id, name, unit_label AS unit, play_price_krw AS "priceKrw", emoji, color, is_sample AS "isSample"
+      SELECT id, name, unit_label AS unit, play_price_krw AS "priceKrw", emoji, color, is_sample AS "isSample", category_id AS "categoryId"
       FROM public.play_catalog ORDER BY sort_order, id
     `);
-    assert.deepEqual(rows, sampleProducts.map(({ id, name, unit, priceKrw, emoji, color, isSample }) => ({
-      id, name, unit, priceKrw, emoji, color, isSample,
+    assert.deepEqual(rows, sampleProducts.map(({ id, name, unit, priceKrw, emoji, color, isSample, categoryId }) => ({
+      id, name, unit, priceKrw, emoji, color, isSample, categoryId,
     })));
   });
 });
@@ -793,7 +909,7 @@ test('생성한 적재 SQL을 실행하면 비활성 상품과 미승인 수동 
     const storedProduct = (await db.query('SELECT * FROM catalog_private.products WHERE id = $1', [prepared.products[0].id])).rows[0];
     const { created_at, ...productFields } = storedProduct;
     assert.ok(created_at);
-    assert.deepEqual(productFields, prepared.products[0]);
+    assert.deepEqual(productFields, { ...prepared.products[0], category_id: null });
     const stored = (await db.query('SELECT * FROM catalog_private.price_observations WHERE id = $1', [prepared.observations[0].id])).rows[0];
     const expected = prepared.observations[0];
     for (const [key, value] of Object.entries(expected)) {

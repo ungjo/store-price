@@ -344,7 +344,8 @@ async function verifyLoadingChoice() {
     '--format', 'junit', '--output', path.join(runDir, 'loading-result.xml'),
     '--test-output-dir', stageDir, '--debug-output', stageDir,
     'apps/mobile/.maestro/catalog-loading-choice.yaml',
-  ], { timeout: 300_000 });
+  // 내장 예시에서도 분류 전환·새 상품 계산·영수증까지 확인하므로 전체 흐름 시간을 확보합니다.
+  ], { timeout: 600_000 });
   loadingJunit = readJunit(path.join(runDir, 'loading-result.xml'));
   assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
   assertCatalogEnvironmentUnchanged(catalogEnvironment);
@@ -602,6 +603,7 @@ function writeReport(status, reason = '') {
     'maestro check-syntax apps/mobile/.maestro/solve-quiz.yaml',
     'maestro check-syntax apps/mobile/.maestro/receipt.yaml',
     'maestro check-syntax apps/mobile/.maestro/catalog-loading-choice.yaml',
+    'maestro check-syntax apps/mobile/.maestro/catalog-categories.yaml',
     'maestro check-syntax apps/mobile/.maestro/standalone-offline.yaml',
     'node --test scripts/device/git-guard.test.mjs',
     'node --experimental-strip-types --test scripts/device/catalog-http-check.test.mjs',
@@ -662,7 +664,7 @@ function writeReport(status, reason = '') {
     '', '## 확인한 항목', '',
     '- PGlite의 메모리 PostgreSQL에서 상품·가격 이력 제약, 예시 데이터, 수동 가격 관측의 비공개 조건, 공개 카탈로그와 역할별 읽기·쓰기 권한을 검사했다.',
     '- 실제 가격 입력 검증과 저장 SQL 생성은 자체 작성한 테스트 자료로 검사했다. 원격 비공개 적재 결과는 이번 개발 장의 별도 조회 기록을 따른다.',
-    '- 공개 키 REST GET으로 예시 상품 6개와 비공개 스키마·승인 메모 읽기 차단을 실행 전후 확인했다. 쓰기·관리자 API는 호출하지 않았다.',
+    '- 공개 키 REST GET으로 예시 상품 12개의 이름·단위·가격·분류와 비공개 스키마·승인 메모 읽기 차단을 실행 전후 확인했다. 이 HTTP 검사는 쓰기·관리자 API를 호출하지 않았다.',
     '- 앱 검사·번들·Expo 서버에는 같은 설정을 전달하고 EXPO_NO_DOTENV=1로 고정했다. 환경 파일과 선택한 프로세스 설정의 변경도 검사했다.',
     '- 별도 개발 검사에서 상품 로딩 중 예시 놀이를 선택하고, 취소를 무시한 늦은 성공이 와도 예시 출처가 유지되는지 확인했다.',
     '- 예시 사과 1개·1,500원으로 10,000원 지불·8,500원 정답·영수증·다시 장보기를 확인했다. 다시 장보기에서 상품 요청 수가 늘지 않는다.',
@@ -670,7 +672,10 @@ function writeReport(status, reason = '') {
       ? '- 개발용 예시 선택 검사는 통신 설정을 바꾸지 않았다. 별도 설치형 APK 단계에서 실제 통신을 끄고 예시 놀이를 검사한 뒤 원래 설정을 복구했다.'
       : '- 휴대전화 Wi-Fi·모바일 데이터는 바꾸지 않았다. 실제 오프라인 연결이나 인터넷 없는 Expo Go 첫 실행을 검증한 결과는 아니다.',
     '- 대기 요청 검사 설정은 일반 검사·배포 환경에서 제거하며, 별도 검사 뒤 Expo를 재시작해 실제 Supabase 연결로 전체 놀이를 검사했다.',
-    '- 실제 앱의 Supabase 출처·상품 6개 로딩을 최초 실행·다시 장보기·재실행에서 확인했다. 외부 상품의 일시적 변경을 연속 감시하는 검사는 아니다.',
+    '- 실제 앱의 Supabase 출처·상품 12개 로딩을 최초 실행·다시 장보기·재실행에서 확인했다. 외부 상품의 일시적 변경을 연속 감시하는 검사는 아니다.',
+    '- 원격 목록과 내장 예시에서 전체 12개·과일/채소 6개·유제품/달걀 4개·빵/간식 2개의 분류와 선택 상태를 확인했다.',
+    '- 분류를 바꿔 화면에서 숨겨진 상품도 장바구니에 남고, 선택한 돈과 퀴즈 정답이 유지되는지 확인했다.',
+    '- 추가 상품의 합계·거스름돈·영수증과 다시 장보기에서 전체 분류로 돌아오는 흐름을 두 출처에서 확인했다.',
     ...(previewAfter ? [
       '- 별도 localhost·USB 연결로 비공개 실제 가격을 읽기 전용 표시했다. 상품명·규격·가격·출처·확인 시각·재고 상태를 원본 기대값과 비교했다.',
       '- 미리보기를 닫거나 Android 뒤로 가기를 눌러도 기존 장바구니가 유지된다. 실제 가격을 놀이 목록에 공개하거나 관리자 키를 앱에 넣지 않았다.',
@@ -690,7 +695,7 @@ function writeReport(status, reason = '') {
     '- 정답 전 계산 완료 차단, 영수증 상품별 가격·수량·합계·지불액·거스름돈·잔액을 확인한다.',
     '- 0원 거스름돈도 완료하며, 다시 장보기와 영수증 상태의 재실행으로 새 놀이를 시작한다.',
     '', '## 결과', '',
-    ...checks.filter((check) => ['maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'maestro-syntax-standalone', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'build-helpers', 'standalone-device-helpers', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow', 'standalone-offline', 'screen-awake-restore', 'screen-awake-restored-check'].includes(check.label))
+    ...checks.filter((check) => ['maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'maestro-syntax-categories', 'maestro-syntax-standalone', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'build-helpers', 'standalone-device-helpers', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow', 'standalone-offline', 'screen-awake-restore', 'screen-awake-restored-check'].includes(check.label))
       .map((check) => '- ' + check.label + ': 종료 코드 ' + check.exitCode),
     '- JUnit: ' + (junit ? `${junit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
     '- 예시 선택 JUnit: ' + (loadingJunit ? `${loadingJunit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
@@ -698,7 +703,7 @@ function writeReport(status, reason = '') {
     '', '원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/' + runId + '/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.',
     '', '이 기록은 해당 Android 실기기·검사 시점의 결과다. '
       + (standaloneJunit ? '설치형 APK는 위에 기록한 빌드만 검증했다. iPhone, 스토어 제출용 AAB/IPA 및 실제 이마트 가격의 앱 공개 표시는 검증하지 않았다.' : 'iPhone, 스토어용 APK/AAB/IPA 및 실제 이마트 가격의 앱 공개 표시는 검증하지 않았다.')
-      + ' 앱은 공개 예시 상품 6개로 검사한다.', '',
+      + ' 앱은 공개 예시 상품 12개로 검사한다.', '',
   ];
   fs.mkdirSync(path.dirname(path.join(repoRoot, reportPath)), { recursive: true });
   fs.writeFileSync(path.join(repoRoot, reportPath), lines.join('\n'));
@@ -779,7 +784,7 @@ try {
       if (previewState) previewSession = await startPrivatePreviewServer(previewState, { sessionId: runId });
       checkPreviewExpectations = writePreviewExpectations(path.join(artifactRoot, 'private-preview-expectations.js'), previewSession);
       // 일반 YAML 구문 검사만으로는 명령 형식 오류를 찾을 수 없어, 기기를 조작하기 전에 Maestro로 확인합니다.
-      for (const [label, file] of [['maestro-syntax-main', 'apps/mobile/.maestro/payment.yaml'], ['maestro-syntax-quiz', 'apps/mobile/.maestro/solve-quiz.yaml'], ['maestro-syntax-receipt', 'apps/mobile/.maestro/receipt.yaml'], ['maestro-syntax-preview', 'apps/mobile/.maestro/real-price-preview.yaml'], ['maestro-syntax-loading', 'apps/mobile/.maestro/catalog-loading-choice.yaml'], ['maestro-syntax-standalone', 'apps/mobile/.maestro/standalone-offline.yaml']]) {
+      for (const [label, file] of [['maestro-syntax-main', 'apps/mobile/.maestro/payment.yaml'], ['maestro-syntax-quiz', 'apps/mobile/.maestro/solve-quiz.yaml'], ['maestro-syntax-receipt', 'apps/mobile/.maestro/receipt.yaml'], ['maestro-syntax-preview', 'apps/mobile/.maestro/real-price-preview.yaml'], ['maestro-syntax-loading', 'apps/mobile/.maestro/catalog-loading-choice.yaml'], ['maestro-syntax-categories', 'apps/mobile/.maestro/catalog-categories.yaml'], ['maestro-syntax-standalone', 'apps/mobile/.maestro/standalone-offline.yaml']]) {
         await run(label, tools.maestro, ['check-syntax', file], { timeout: 60_000 });
       }
       say('기기: ' + device.model + ' / Android ' + device.android + '. 코드 검사를 시작합니다.');

@@ -1,0 +1,501 @@
+appId: host.exp.exponent
+name: 상품 분류와 새 예시의 장바구니·영수증 회귀 검사
+# 호출부가 분류 버튼까지 이동한 빈 장바구니에서 시작합니다. CATEGORY_SOURCE로 원격·내장 경로를 구분합니다.
+# 분류는 보이는 목록만 바꾸므로 다른 분류의 상품·낸 돈·맞힌 답이 그대로 남아야 합니다.
+---
+- assertVisible:
+    id: category-all
+    text: '^전체 상품 12개, 선택됨$'
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: category-visible-count
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: category-visible-count
+    text: '^보이는 상품 12개$'
+- takeScreenshot: categories-selection
+- assertVisible:
+    id: cart-summary
+    text: '^장바구니 총 0개, 합계 0원\. 오늘의 놀이돈 10,000원\. 남을 돈 10,000원\. 놀이돈 안에서 장을 봐요\.$'
+
+# 각 분류의 모든 상품을 직접 찾아 실제 목록 구성과 표시 수를 함께 확인합니다.
+- scrollUntilVisible:
+    element:
+      id: category-produce
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: category-produce
+    enabled: true
+- assertVisible:
+    id: category-produce
+    text: '^과일·채소 상품 6개, 선택됨$'
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: category-visible-count
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: category-visible-count
+    text: '^보이는 상품 6개$'
+- scrollUntilVisible:
+    element:
+      id: product-sample-apple-add
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: product-sample-apple-add
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: product-sample-carrot-add
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: product-sample-carrot-add
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: product-sample-banana-add
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: product-sample-banana-add
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: product-sample-orange-add
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: product-sample-orange-add
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: product-sample-grapes-add
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: product-sample-grapes-add
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: product-sample-cucumber-add
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: product-sample-cucumber-add
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: product-sample-orange-add
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: product-sample-orange-add
+    enabled: true
+- assertVisible:
+    id: cart-summary
+    text: '^장바구니 총 1개, 합계 1,800원\. 오늘의 놀이돈 10,000원\. 남을 돈 8,200원\. 이대로 사면 남을 돈이에요\.$'
+- scrollUntilVisible:
+    element:
+      id: category-dairy-eggs
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: category-dairy-eggs
+    enabled: true
+- assertVisible:
+    id: category-dairy-eggs
+    text: '^유제품·달걀 상품 4개, 선택됨$'
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: category-visible-count
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: category-visible-count
+    text: '^보이는 상품 4개$'
+- scrollUntilVisible:
+    element:
+      id: product-sample-milk-add
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: product-sample-milk-add
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: product-sample-egg-add
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: product-sample-egg-add
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: product-sample-yogurt-add
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: product-sample-yogurt-add
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: product-sample-cheese-add
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: product-sample-cheese-add
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: product-sample-yogurt-add
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: product-sample-yogurt-add
+    enabled: true
+- assertVisible:
+    id: cart-summary
+    text: '^장바구니 총 2개, 합계 3,000원\. 오늘의 놀이돈 10,000원\. 남을 돈 7,000원\. 이대로 사면 남을 돈이에요\.$'
+- scrollUntilVisible:
+    element:
+      id: category-bakery-snacks
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: category-bakery-snacks
+    enabled: true
+- assertVisible:
+    id: category-bakery-snacks
+    text: '^빵·간식 상품 2개, 선택됨$'
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: category-visible-count
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: category-visible-count
+    text: '^보이는 상품 2개$'
+- scrollUntilVisible:
+    element:
+      id: product-sample-bread-add
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: product-sample-bread-add
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: product-sample-cracker-add
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: product-sample-cracker-add
+    enabled: true
+- tapOn:
+    id: product-sample-cracker-add
+    enabled: true
+- assertVisible:
+    id: cart-summary
+    text: '^장바구니 총 3개, 합계 4,500원\. 오늘의 놀이돈 10,000원\. 남을 돈 5,500원\. 이대로 사면 남을 돈이에요\.$'
+
+# 서로 다른 분류의 새 상품 3개를 계산하고, 정답을 맞힌 상태에서 분류를 바꿉니다.
+- scrollUntilVisible:
+    element:
+      id: payment-option-5000
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: payment-option-5000
+    enabled: true
+- assertVisible:
+    id: payment-option-5000
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: quiz-answer
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_ANSWER: "500"
+      CART_QUANTITY: "3"
+      CART_TOTAL: "4,500"
+- scrollUntilVisible:
+    element:
+      id: category-produce
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: category-produce
+    enabled: true
+- assertVisible:
+    id: category-produce
+    text: '^과일·채소 상품 6개, 선택됨$'
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: category-visible-count
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: category-visible-count
+    text: '^보이는 상품 6개$'
+- assertVisible:
+    id: cart-summary
+    text: '^장바구니 총 3개, 합계 4,500원\. 오늘의 놀이돈 10,000원\. 남을 돈 5,500원\. 이대로 사면 남을 돈이에요\.$'
+- scrollUntilVisible:
+    element:
+      id: payment-option-5000
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: payment-option-5000
+    selected: true
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: payment-result
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: payment-result
+    text: '^선택한 돈 5,000원\. 이 돈으로 계산할 수 있어요!$'
+- scrollUntilVisible:
+    element:
+      id: quiz-feedback
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: quiz-feedback
+    text: '^정답이에요! 거스름돈을 잘 계산했어요\.$'
+- scrollUntilVisible:
+    element:
+      id: quiz-answer
+    direction: UP
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: quiz-answer
+    enabled: false
+- scrollUntilVisible:
+    element:
+      id: payment-change
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: payment-change
+    text: '^받을 거스름돈 500원\. 낼 돈 5,000원 빼기 물건값 4,500원은 500원\.$'
+- takeScreenshot: categories-retained-answer
+
+# 현재 과일·채소 목록에 보이지 않는 요구르트·크래커도 영수증에 포함돼야 합니다.
+- scrollUntilVisible:
+    element:
+      id: checkout-complete
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: checkout-complete
+    enabled: true
+- assertVisible:
+    id: receipt-title
+    text: '^계산을 마쳤어요!$'
+- assertNotVisible:
+    id: market-list
+- scrollUntilVisible:
+    element:
+      id: receipt-item-sample-orange
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: receipt-item-sample-orange
+    text: '^오렌지, 1개\. 1,800원 × 1개, 1,800원\.$'
+- scrollUntilVisible:
+    element:
+      id: receipt-item-sample-yogurt
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: receipt-item-sample-yogurt
+    text: '^요구르트, 1병 · 150mL\. 1,200원 × 1개, 1,200원\.$'
+- scrollUntilVisible:
+    element:
+      id: receipt-item-sample-cracker
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: receipt-item-sample-cracker
+    text: '^크래커, 1봉\. 1,500원 × 1개, 1,500원\.$'
+- scrollUntilVisible:
+    element:
+      id: receipt-total
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: receipt-total
+    text: '^총 3개, 합계 4,500원\.$'
+- scrollUntilVisible:
+    element:
+      id: receipt-payment
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: receipt-payment
+    text: '^낸 놀이돈 5,000원\. 받은 거스름돈 500원\. 계산 후 남은 놀이돈 5,500원\.$'
+- takeScreenshot: categories-receipt
+- scrollUntilVisible:
+    element:
+      id: receipt-new-round
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: receipt-new-round
+    enabled: true
+
+# 새 놀이에서는 출처는 유지하면서 분류·장바구니·돈 선택·정답이 처음 상태로 돌아옵니다.
+- extendedWaitUntil:
+    visible:
+      id: catalog-source-marker
+      text: "^상품 출처 ${CATEGORY_SOURCE}$"
+    timeout: 30000
+- assertVisible:
+    id: catalog-loaded-count
+    text: '^불러온 상품 12개$'
+- assertVisible:
+    id: cart-summary
+    text: '^장바구니 총 0개, 합계 0원\. 오늘의 놀이돈 10,000원\. 남을 돈 10,000원\. 놀이돈 안에서 장을 봐요\.$'
+- assertNotVisible:
+    id: receipt-screen
+- scrollUntilVisible:
+    element:
+      id: category-all
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: category-all
+    text: '^전체 상품 12개, 선택됨$'
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: category-produce
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: category-produce
+    selected: false
+- scrollUntilVisible:
+    element:
+      id: category-dairy-eggs
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: category-dairy-eggs
+    selected: false
+- scrollUntilVisible:
+    element:
+      id: category-bakery-snacks
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: category-bakery-snacks
+    selected: false
+- scrollUntilVisible:
+    element:
+      id: category-visible-count
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: category-visible-count
+    text: '^보이는 상품 12개$'
+- scrollUntilVisible:
+    element:
+      id: cart-empty
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: cart-empty
+    text: '^아직 장바구니가 비어 있어요$'
+- scrollUntilVisible:
+    element:
+      id: payment-option-5000
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: payment-option-5000
+    selected: false
+    enabled: false
+- scrollUntilVisible:
+    element:
+      id: payment-result
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: payment-result
+    text: '^선택한 돈 없음\. 먼저 물건을 담아 주세요\.$'
+- scrollUntilVisible:
+    element:
+      id: checkout-complete
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: checkout-complete
+    enabled: false
+- assertNotVisible:
+    id: payment-quiz
+- assertNotVisible:
+    id: payment-change
+- takeScreenshot: categories-new-round
+

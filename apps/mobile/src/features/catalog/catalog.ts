@@ -1,7 +1,10 @@
+import { isProductCategoryId, type ProductCategoryId } from './categories.ts';
+
 export type CatalogProduct = Readonly<{
   id: string;
   name: string;
   unit: string;
+  categoryId: ProductCategoryId;
   priceKrw: number;
   emoji: string;
   color: string;
@@ -18,7 +21,7 @@ export const MAX_CATALOG_PRODUCTS = 1000;
 export const CATALOG_TIMEOUT_MS = 12000;
 
 const selectedColumns = [
-  'id', 'name', 'unit_label', 'source_price_krw', 'play_price_krw',
+  'id', 'name', 'unit_label', 'category_id', 'source_price_krw', 'play_price_krw',
   'play_price_rule', 'is_sample', 'emoji', 'color', 'price_observation_id',
 ].join(',');
 
@@ -93,6 +96,7 @@ export function parseCatalogRows(value: unknown): readonly CatalogProduct[] {
       || !/^[a-z0-9][a-z0-9-]{0,127}$/u.test(row.id)
       || !isDisplayText(row.name, 120)
       || !isDisplayText(row.unit_label, 120)
+      || !isProductCategoryId(row.category_id)
       || !isDisplayText(row.emoji, 16)
       || typeof row.color !== 'string'
       || !/^#[0-9a-fA-F]{6}$/u.test(row.color)
@@ -118,6 +122,7 @@ export function parseCatalogRows(value: unknown): readonly CatalogProduct[] {
       id: row.id,
       name: row.name,
       unit: row.unit_label,
+      categoryId: row.category_id,
       priceKrw: row.play_price_krw,
       emoji: row.emoji,
       color: row.color,

@@ -21,6 +21,7 @@ function row(overrides: Record<string, unknown> = {}) {
     id: 'sample-apple',
     name: '사과',
     unit_label: '1개',
+    category_id: 'produce',
     source_price_krw: 1500,
     play_price_krw: 1500,
     play_price_rule: 'exact',
@@ -110,7 +111,7 @@ test('loader를 직접 호출해도 잘못된 설정은 요청 전에 다시 거
 test('정상 DB 행을 앱 상품으로 복사하고 예시 여부와 관측 ID를 보존한다', () => {
   const input = Object.freeze(row({ is_sample: false, approval_notes: 'PRIVATE_RESPONSE' }));
   assert.deepEqual(parseCatalogRows([input]), [{
-    id: 'sample-apple', name: '사과', unit: '1개', priceKrw: 1500, emoji: '🍎', color: '#FBECE6',
+    id: 'sample-apple', name: '사과', unit: '1개', categoryId: 'produce', priceKrw: 1500, emoji: '🍎', color: '#FBECE6',
     isSample: false, priceObservationId: '00000000-0000-4000-8000-000000000001',
   }]);
   assert.deepEqual(input, row({ is_sample: false, approval_notes: 'PRIVATE_RESPONSE' }));
@@ -184,7 +185,7 @@ test('공개 뷰에 GET으로 필요한 열·정렬·전체 개수를 요청하�
     assert.equal(url.pathname, '/rest/v1/play_catalog');
     assert.equal(url.searchParams.get('order'), 'sort_order.asc,id.asc');
     assert.equal(url.searchParams.get('limit'), '1000');
-    assert.equal(url.searchParams.get('select'), 'id,name,unit_label,source_price_krw,play_price_krw,play_price_rule,is_sample,emoji,color,price_observation_id');
+    assert.equal(url.searchParams.get('select'), 'id,name,unit_label,category_id,source_price_krw,play_price_krw,play_price_rule,is_sample,emoji,color,price_observation_id');
     assert.equal(init?.method, 'GET');
     const headers = new Headers(init?.headers);
     assert.equal(headers.get('apikey'), config.publishableKey);
@@ -335,4 +336,19 @@ test('실패 후에도 타이머와 외부 취소 연결을 정리한다', async
   }), assertSanitized);
   assert.equal(getEventListeners(controller.signal, 'abort').length, 0);
   context.mock.timers.tick(CATALOG_TIMEOUT_MS);
+});
+
+test('공개된 세 분류를 필수 필드로 읽으며 예시 여부와 독립적으로 유지한다', () => {
+  for (const category of ['produce', 'dairy-eggs', 'bakery-snacks']) {
+    assert.equal(parseCatalogRows([row({ category_id: category, is_sample: false })])[0].categoryId, category);
+  }
+});
+
+test('분류가 빠졌거나 알 수 없는 행은 목록 일부만 보여 주지 않고 전체를 거부한다', () => {
+  for (const category of [undefined, null, '', 'other', 'Produce', 'produce ', 1]) {
+    assert.throws(() => parseCatalogRows([
+      row(),
+      row({ id: 'sample-milk', category_id: category, price_observation_id: '00000000-0000-4000-8000-000000000002' }),
+    ]), assertSanitized);
+  }
 });

@@ -34,7 +34,7 @@ function rows() {
     id: product.id, name: product.name, unit_label: product.unit,
     source_price_krw: product.priceKrw, play_price_krw: product.priceKrw,
     play_price_rule: 'exact', is_sample: product.isSample,
-    emoji: product.emoji, color: product.color,
+    emoji: product.emoji, color: product.color, category_id: product.categoryId,
     price_observation_id: `00000000-0000-0000-0000-${String(index + 1).padStart(12, '0')}`,
   }));
 }
@@ -115,11 +115,11 @@ test('key redaction survives split output chunks and preserves Korean text', (t)
   assert.equal(redactCatalogText(state, testKey).includes(testKey), false);
 });
 
-test('HTTP verification uses only anonymous GET and returns safe evidence for six exact examples', async (t) => {
+test('HTTP verification uses only anonymous GET and returns safe evidence for twelve categorized examples', async (t) => {
   const state = captureCatalogEnvironment(fixture(t), {});
   const seen = [];
   const result = await checkCatalogHttp(state, { fetch: responder({ seen }) });
-  assert.equal(result.productCount, 6);
+  assert.equal(result.productCount, 12);
   assert.equal(result.projectHost, new URL(testUrl).host);
   assert.equal(result.privateSchemaBlocked, true);
   assert.equal(result.approvalNotesBlocked, true);
@@ -159,11 +159,17 @@ test('only recognized authorization errors count as access denial', async (t) =>
   assert.equal(allowed.privateSchemaBlocked, true);
 });
 
-test('changed product, order, and count fail the deterministic native fixture requirement', async (t) => {
+test('changed product, category, order, and count fail the deterministic native fixture requirement', async (t) => {
   const state = captureCatalogEnvironment(fixture(t), {});
   const changed = rows();
   changed[0] = { ...changed[0], name: 'changed product' };
-  for (const products of [changed, rows().reverse(), rows().slice(1)]) {
+  const changedCategory = rows();
+  changedCategory[0] = { ...changedCategory[0], category_id: 'dairy-eggs' };
+  const unknownCategory = rows();
+  unknownCategory[0] = { ...unknownCategory[0], category_id: 'unknown' };
+  const missingCategory = rows();
+  delete missingCategory[0].category_id;
+  for (const products of [changed, changedCategory, unknownCategory, missingCategory, rows().reverse(), rows().slice(1)]) {
     await assert.rejects(checkCatalogHttp(state, { fetch: responder({ products }) }));
   }
 });

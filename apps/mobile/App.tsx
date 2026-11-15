@@ -1,8 +1,10 @@
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, useReducer } from 'react';
+import { useMemo, useReducer, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
+import { CategorySelector } from './src/components/category-selector';
+import { filterProductsByCategory, getCategoryCounts, type CatalogFilter } from './src/features/catalog/categories';
 import { PaymentSelector } from './src/components/payment-selector';
 import { ShoppingReceipt } from './src/components/shopping-receipt';
 import { QuantityControl } from './src/components/quantity-control';
@@ -37,6 +39,10 @@ function MarketScreen({ products, source, reload }: {
   const allSamples = products.every((product) => product.isSample);
   // 물건이 바뀐 뒤 예전 돈 선택이 남지 않도록 장바구니와 선택 금액을 함께 관리합니다.
   const [shopping, dispatch] = useReducer(shoppingReducer, undefined, createInitialShoppingState);
+  // 분류는 화면의 선택 상태로만 보관해 장바구니·돈 선택·퀴즈를 다시 만들지 않습니다.
+  const [category, setCategory] = useState<CatalogFilter>('all');
+  const visibleProducts = useMemo(() => filterProductsByCategory(products, category), [products, category]);
+  const categoryCounts = useMemo(() => getCategoryCounts(products), [products]);
   const { cart, selectedPaymentKrw, quiz } = shopping;
   const summary = getCartSummary(cart, products);
   // 잔액도 장바구니 합계에서 매번 계산해 담기·빼기·비우기 뒤 금액이 항상 함께 바뀝니다.
@@ -59,13 +65,20 @@ function MarketScreen({ products, source, reload }: {
   // 좁은 화면이나 큰 글자 설정에서는 상품을 한 줄에 하나씩 보여 읽기 쉽게 합니다.
   const columns = width >= 380 && fontScale <= 1.2 ? 2 : 1;
 
+  function startNewRound() {
+    // 내장 예시는 같은 화면을 재사용하므로 새 놀이에서 분류도 명시적으로 처음으로 되돌립니다.
+    setCategory('all');
+    if (source === 'supabase') reload();
+    else dispatch({ type: 'start-new-round' });
+  }
+
   // 계산을 마친 동안에는 구매 조작을 화면에서 빼고, 확정된 영수증만 같은 화면의 완료 상태로 보여 줍니다.
   if (shopping.receipt !== null) {
     return (
       <SafeAreaProvider>
         <SafeAreaView style={styles.screen}>
           <StatusBar style="dark" />
-          <ShoppingReceipt receipt={shopping.receipt} onNewRound={() => source === 'supabase' ? reload() : dispatch({ type: 'start-new-round' })} />
+          <ShoppingReceipt receipt={shopping.receipt} onNewRound={startNewRound} />
         </SafeAreaView>
       </SafeAreaProvider>
     );
@@ -83,7 +96,7 @@ function MarketScreen({ products, source, reload }: {
             testID="market-list"
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
-            data={products}
+            data={visibleProducts}
             extraData={shopping}
             numColumns={columns}
             keyExtractor={(item) => item.id}
@@ -158,9 +171,11 @@ function MarketScreen({ products, source, reload }: {
                   <Text style={styles.playMoneyHint}>이 돈 안에서 물건을 골라 봐요.</Text>
                 </View>
 
+                <CategorySelector selected={category} counts={categoryCounts} onSelect={setCategory} />
+
                 <View style={styles.sectionHeading}>
                   <Text style={styles.sectionTitle} accessibilityRole="header">우리 가게 물건</Text>
-                  <Text style={styles.count}>{products.length}가지</Text>
+                  <Text testID="category-visible-count" accessible accessibilityLiveRegion="polite" accessibilityLabel={'보이는 상품 ' + visibleProducts.length + '개'} style={styles.count}>{visibleProducts.length}가지</Text>
                 </View>
               </View>
             }
@@ -188,6 +203,7 @@ function MarketScreen({ products, source, reload }: {
                 />
               </View>
             )}
+            ListEmptyComponent={<Text testID="category-empty" style={styles.footerText}>이 분류에는 아직 물건이 없어요.</Text>}
             ListFooterComponent={
               <View>
                 <View style={styles.cart}>

@@ -41,7 +41,7 @@ name: 상품을 기다리는 중 예시 놀이 선택과 늦은 응답 무시
     text: "^상품 출처 sample$"
 - assertVisible:
     id: catalog-loaded-count
-    text: "^불러온 상품 6개$"
+    text: "^불러온 상품 12개$"
 - assertNotVisible:
     id: catalog-loading
 - copyTextFrom:
@@ -144,7 +144,7 @@ name: 상품을 기다리는 중 예시 놀이 선택과 늦은 응답 무시
     text: "^상품 출처 sample$"
 - assertVisible:
     id: catalog-loaded-count
-    text: "^불러온 상품 6개$"
+    text: "^불러온 상품 12개$"
 - assertVisible:
     id: cart-summary
     text: '^장바구니 총 0개, 합계 0원\. 오늘의 놀이돈 10,000원\. 남을 돈 10,000원\. 놀이돈 안에서 장을 봐요\.$'
@@ -159,3 +159,18 @@ name: 상품을 기다리는 중 예시 놀이 선택과 늦은 응답 무시
     id: catalog-test-request-count
 - assertTrue: ${maestro.copiedText === output.catalogRequestsBeforeRound}
 - takeScreenshot: catalog-sample-new-round
+
+# 새 놀이 화면의 위쪽에서 시작하므로 아래에 있는 분류 버튼을 찾아 같은 검사를 내장 예시에도 적용합니다.
+- scrollUntilVisible:
+    element:
+      id: category-all
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    file: catalog-categories.yaml
+    env:
+      CATEGORY_SOURCE: "sample"
+- copyTextFrom:
+    id: catalog-test-request-count
+- assertTrue: ${maestro.copiedText === output.catalogRequestsBeforeRound}

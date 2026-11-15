@@ -104,8 +104,8 @@ export function createCatalogLogWriter(state, write) {
 }
 
 function fixtureFields(product) {
-  const { id, name, unit, priceKrw, emoji, color, isSample } = product;
-  return { id, name, unit, priceKrw, emoji, color, isSample };
+  const { id, name, unit, priceKrw, emoji, color, isSample, categoryId } = product;
+  return { id, name, unit, priceKrw, emoji, color, isSample, categoryId };
 }
 
 async function assertReadDenied(config, fetchImpl, endpoint, profile, allowed) {
@@ -131,7 +131,7 @@ export async function checkCatalogHttp(state, { fetch: fetchImpl = globalThis.fe
   try { products = await loadCatalog(config, { fetch: fetchImpl }); }
   catch { throw new Error('Supabase 공개 상품 GET을 확인하지 못했습니다. 연결과 공개 읽기 설정을 확인해 주세요.'); }
   if (JSON.stringify(products.map(fixtureFields)) !== JSON.stringify(sampleProducts.map(fixtureFields))) {
-    throw new Error('공개 상품이 실기기 회귀 검사에 필요한 예시 6개의 이름·단위·가격·표시 정보와 다릅니다.');
+    throw new Error('공개 상품이 실기기 회귀 검사에 필요한 예시 12개의 이름·단위·가격·분류·표시 정보와 다릅니다.');
   }
   await assertReadDenied(config, fetchImpl, '/rest/v1/price_observations?select=id&limit=1', 'catalog_private', [
     [406, 'PGRST106'], [401, '42501'], [403, '42501'],

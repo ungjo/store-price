@@ -28,7 +28,7 @@ name: 새로 설치한 독립 APK의 실제 오프라인 첫 실행
     text: '^상품 출처 sample$'
 - assertVisible:
     id: catalog-loaded-count
-    text: '^불러온 상품 6개$'
+    text: '^불러온 상품 12개$'
 - assertVisible:
     id: cart-summary
     text: '^장바구니 총 0개, 합계 0원\. 오늘의 놀이돈 10,000원\. 남을 돈 10,000원\. 놀이돈 안에서 장을 봐요\.$'
@@ -197,7 +197,7 @@ name: 새로 설치한 독립 APK의 실제 오프라인 첫 실행
     text: '^상품 출처 sample$'
 - assertVisible:
     id: catalog-loaded-count
-    text: '^불러온 상품 6개$'
+    text: '^불러온 상품 12개$'
 - assertVisible:
     id: cart-summary
     text: '^장바구니 총 0개, 합계 0원\. 오늘의 놀이돈 10,000원\. 남을 돈 10,000원\. 놀이돈 안에서 장을 봐요\.$'

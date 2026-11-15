@@ -77,5 +77,11 @@
   "scripts/device/standalone-device.mjs",
   "scripts/device/standalone-device.test.mjs",
   "apps/mobile/.maestro/standalone-offline.yaml",
-  "docs/book/chapters/05a-standalone-offline.md"
+  "docs/book/chapters/05a-standalone-offline.md",
+  "apps/mobile/src/components/category-selector.tsx",
+  "apps/mobile/src/features/catalog/categories.ts",
+  "apps/mobile/src/features/catalog/categories.test.ts",
+  "apps/mobile/.maestro/catalog-categories.yaml",
+  "docs/book/chapters/06-product-categories.md",
+  "supabase/migrations/20261115133406_catalog_categories.sql"
 ]
