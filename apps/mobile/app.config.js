@@ -13,8 +13,8 @@ module.exports = ({ config }) => {
 
   return {
     ...config,
-    // 이전 6개 상품 검사 앱과 나란히 설치해도 새 버전을 찾을 수 있도록 이름을 구분합니다.
-    name: '꼬마 시장 검사 12',
+    // 이전 검사 앱과 나란히 설치해도 큰 글자·좁은 화면 개선 APK를 찾을 수 있도록 이름을 구분합니다.
+    name: '꼬마 시장 화면 검사',
     slug: 'store-price',
     android: {
       ...config.android,

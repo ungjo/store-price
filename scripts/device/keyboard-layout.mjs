@@ -1,5 +1,15 @@
 const fail = (message) => new Error('키보드 화면 검사: ' + message);
 
+function validatedAppId(value) {
+  if (typeof value !== 'string' || value.length > 255
+    || !/^[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+$/u.test(value)) {
+    throw fail('검사할 Android 앱의 패키지를 정확히 지정해 주세요.');
+  }
+  return value;
+}
+
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+
 export function parseBounds(value) {
   const match = typeof value === 'string' && value.match(/^\[(-?\d+),(-?\d+)\]\[(-?\d+),(-?\d+)\]$/u);
   if (!match) throw fail('화면 요소의 실제 영역을 읽지 못했습니다.');
@@ -10,11 +20,15 @@ export function parseBounds(value) {
   return { left, top, right, bottom, width: right - left, height: bottom - top };
 }
 
-export function visibleKeyboardFrame(windowDump, inputMethodDump) {
+export function visibleKeyboardFrame(windowDump, inputMethodDump, expectedAppId = 'host.exp.exponent') {
+  const appId = validatedAppId(expectedAppId);
   if (typeof inputMethodDump !== 'string' || !/\bmInputShown=true\b/u.test(inputMethodDump)) {
     throw fail('실제 Android 키보드가 열린 상태를 확인하지 못했습니다.');
   }
-  if (typeof windowDump !== 'string' || !/mCurrentFocus=Window\{[^\r\n]*\bhost\.exp\.exponent\//u.test(windowDump)) {
+  // 비슷한 이름의 다른 앱을 통과시키지 않도록 package/activity 전체 토큰의 경계를 확인합니다.
+  const focus = new RegExp('(?:^|\\r?\\n)[\\t ]*mCurrentFocus=Window\\{[^{}\\r\\n]*[\\t ]'
+    + escapeRegExp(appId) + '/[^{}\\s]+\\}', 'u');
+  if (typeof windowDump !== 'string' || !focus.test(windowDump)) {
     throw fail('검사 앱이 현재 화면에 있는지 확인하지 못했습니다.');
   }
   // 앱의 포커스 표시만으로 키보드 노출을 판단하지 않습니다. Android가 보고하는 실제 IME 영역을 사용합니다.
@@ -31,11 +45,12 @@ function nodesIn(tree) {
   return [...(tree.attributes ? [tree] : []), ...nodesIn(tree.children ?? [])];
 }
 
-export function assertKeyboardLayout({ hierarchy, windowDump, inputMethodDump, expectedAnswer, screenSize }) {
+export function assertKeyboardLayout({ hierarchy, windowDump, inputMethodDump, expectedAnswer, screenSize, expectedAppId = 'host.exp.exponent' }) {
+  const appId = validatedAppId(expectedAppId);
   if (!/^\d{1,5}$/u.test(expectedAnswer || '')) throw fail('확인할 입력값을 지정해 주세요.');
   if (!Number.isSafeInteger(screenSize?.width) || !Number.isSafeInteger(screenSize?.height)
     || screenSize.width <= 0 || screenSize.height <= 0) throw fail('화면 크기를 확인하지 못했습니다.');
-  const keyboard = visibleKeyboardFrame(windowDump, inputMethodDump);
+  const keyboard = visibleKeyboardFrame(windowDump, inputMethodDump, appId);
   if (keyboard.left < 0 || keyboard.right > screenSize.width || keyboard.top <= 0 || keyboard.bottom > screenSize.height) {
     throw fail('키보드 영역이 화면 범위와 맞지 않습니다.');
   }
@@ -46,7 +61,8 @@ export function assertKeyboardLayout({ hierarchy, windowDump, inputMethodDump, e
   const find = (id) => {
     const found = nodes.filter((node) => {
       const value = node.attributes['resource-id'];
-      return value === id || value === 'host.exp.exponent:id/' + id;
+      // React Native의 bare testID와 이번 검사 앱이 붙인 접두사만 같은 컨트롤로 인정합니다.
+      return value === id || value === appId + ':id/' + id;
     });
     if (found.length !== 1) throw fail(id + '가 하나만 보이는지 확인하지 못했습니다.');
     const node = found[0];

@@ -91,15 +91,15 @@ node scripts/device/verify.mjs --readability --message "feat: 큰 글자와 좁�
 
 검사 도구 설치와 첫 전체 검증은 `8309377`, 예시 6개가 포함된 설치형 APK의 인터넷 없는 첫 실행 검증은 `4fbe035`, 상품 분류와 예시 12개의 Expo Go 검증은 `479f6f5`에 기록했다. **꼬마 시장 검사 12** APK의 빌드·실제 오프라인 첫 실행·분류 검사와 설정 복구는 `125d852`에 포함했으며 사용자가 GitHub 업로드를 확인했다. 이전 단계의 결과는 해당 커밋에 포함된 보고서로 확인한다.
 
-큰 글자·작은 화면·키보드 대응은 앱 135개·DB 69개·기존 검사 도구 70개·화면 설정 19개·키보드 영역 6개로 총 299개의 단위·모의 검사와 타입·ESLint·Android/iOS/웹 번들 생성을 통과했다. 전체 실행 `20261115T155535716Z-f7d95a90`에서 예시 선택과 세 화면 조건 모두의 세 시나리오·각 두 번의 IME 실측·설정 복구가 통과했다. 이어 기존 퀴즈 검사에서 숨겨진 합계를 찾으려다 실패해 공통 `hideKeyboard`를 추가했으나, 다음 실행 `20261115T161427287Z-cbc8b4e2`에서는 닫힌 키보드에도 호출돼 Expo Go 홈으로 이동했다. 공통 검사는 복원하고 `payment.yaml` 두 곳·`receipt.yaml` 한 곳의 답 지우기 직후에만 닫기를 적용했다. 두 전체 실행은 실패·커밋 없음으로 종료했고 화면 유지값 0 복구를 확인했다. 두 번째 실행은 화면 사용성 단계 전이라 글자 배율·밀도를 변경하지 않았다. 열린 키보드의 첫 터치·영역 검사는 별도 화면 시나리오로 유지하며 최종 상태로 전체 재검사한다.
+큰 글자·작은 화면·키보드 개선과 Expo Go 전체 검증은 `e15dac6`으로 완료했고 사용자가 GitHub 업로드를 확인했다. 실행 `20261115T161955875Z-724b31ea`에서 기존 놀이·세 화면 조건·각 두 번의 열린 키보드 실측·설정 복구가 모두 통과했다. [당시 개발 기록](book/chapters/06b-readable-layout.md)과 `e15dac6`에 포함된 자동 보고서로 확인한다.
 
-세 실행 모두 글자 배율 원문 `1.0`·밀도 override `560`·화면 유지값 `0` 복구를 확인했다. [이번 개발 기록](book/chapters/06b-readable-layout.md)에 실행 ID와 실패·수정 근거를 보존한다. 최종 전체 통과와 커밋 여부는 검사 시작 HEAD `125d852`인 자동 보고서로 확인하며, 앞 단계 APK 보고서나 부분 진단 성공 구간을 전체 통과로 사용하지 않는다.
+이번 단계는 같은 화면을 포함한 **꼬마 시장 화면 검사** APK를 빌드하고 검사한다. 빌드와 다운로드를 완료했으며 실제 오프라인 첫 실행 뒤 통신을 복구하고 같은 APK에서 공개 상품으로 화면 사용성을 검사한다. [새 APK 기록](book/chapters/06c-readable-offline-apk.md) 및 검사 시작 HEAD `e15dac6`인 자동 보고서로 이번 결과를 구분한다. 이전 Expo Go나 이전 APK의 성공을 새 APK의 성공으로 사용하지 않는다.
 
 사전 연결 확인인 device:doctor는 실기기 시나리오를 실행하거나 커밋하지 않는다. 실제 화면 조건을 적용한 검사와 설정 복구가 완료돼야 그 범위의 성공으로 기록한다.
 
 ## 설치형 APK의 실제 오프라인 첫 실행
 
-Expo 계정으로 EAS 클라우드에서 release APK를 만든 뒤 아래처럼 기존 전체 검사에 독립 APK 단계를 추가할 수 있다. 최초 준비 과정은 [설치형 앱 개발 기록](book/chapters/05a-standalone-offline.md), 분류와 예시 12개를 포함하는 새 빌드는 [이번 APK 기록](book/chapters/06a-categories-offline-apk.md)에 남긴다.
+Expo 계정으로 EAS 클라우드에서 release APK를 만든 뒤 아래처럼 기존 전체 검사에 독립 APK 단계를 추가할 수 있다. 최초 준비는 [설치형 앱 기록](book/chapters/05a-standalone-offline.md), 예시 12개 빌드는 [분류 APK 기록](book/chapters/06a-categories-offline-apk.md), 화면 개선을 담는 현재 작업은 [화면 개선 APK 기록](book/chapters/06c-readable-offline-apk.md)에 남긴다.
 
 ```bash
 node scripts/device/verify.mjs --standalone-apk .artifacts/build/<빌드 번호>/provenance.json --message "test: 설치형 앱의 오프라인 첫 실행 검증"
@@ -120,6 +120,26 @@ node scripts/device/verify.mjs --standalone-only --standalone-apk .artifacts/bui
 ```
 
 이 모드는 APK 출처와 해당 실기기 시나리오만 확인한다. 코드 검사와 기존 온라인 놀이 전체를 대신하지 않으며, 공개 성공 보고서와 커밋을 만들지 않는다. 성공한 경우에도 이번 실행에서 새로 만든 검사 앱만 정리하므로 이후 전체 검사에서 다시 새로 설치할 수 있다. 통신·화면 설정 복구와 실패 차단 조건은 전체 검사와 같다.
+
+## 같은 APK에서 오프라인과 화면 사용성까지 검사
+
+새 APK의 오프라인 첫 실행 뒤 큰 글자·좁은 화면·키보드 검사까지 연결하려면 두 옵션을 함께 사용한다.
+
+```bash
+node scripts/device/verify.mjs --standalone-apk .artifacts/build/standalone-cf5eaac5f72fa3f0/provenance.json --readability --message "test: 화면 개선 APK의 오프라인·키보드 검증"
+```
+
+코드 검사·내장 예시 선택·Expo Go 기존 전체 놀이를 먼저 실행한다. 이번 서버와 USB 전달 연결을 정리한 뒤 새 APK의 실제 오프라인 첫 실행과 내장 예시를 검사한다. 오프라인 JUnit과 통신 복구가 모두 성공해야 후속 화면 검사를 호출한다. 후속 검사는 같은 APK가 Supabase에서 읽어 온 공개 상품으로 기본·글자 배율 1.5·320dp와 배율 1.5 조건을 실행한다. 보고서에 APK 패키지와 실행 표시를 남겨 Expo Go 화면 검사와 구분한다.
+
+후속 검사 전후 APK 지문을 다시 확인한다. 실패하면 이번에 새로 설치했고 현재 지문이 같은 앱만 정리한다. 성공 앱을 남기거나 진단 앱을 제거하는 결정은 후속 검사와 화면 설정 복구까지 확인한 뒤에 한다. 오프라인·통신 복구 실패 시 후속 검사를 실행하지 않는다.
+
+전체 검사 전 APK 구간만 살피려면 다음 부분 진단을 사용한다.
+
+```bash
+node scripts/device/verify.mjs --standalone-only --readability --standalone-apk .artifacts/build/standalone-cf5eaac5f72fa3f0/provenance.json
+```
+
+이 진단은 오프라인 첫 실행·통신 복구·같은 APK 화면 검사 순서를 실행한다. 성공하더라도 이번 진단 앱을 정리하며 전체 보고서나 자동 커밋을 만들지 않는다. 최종 전체 결과를 대신하지 않는다.
 
 ## 공식 자료
 

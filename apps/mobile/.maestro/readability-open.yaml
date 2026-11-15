@@ -1,17 +1,22 @@
-appId: host.exp.exponent
+appId: ${APP_ID || 'host.exp.exponent'}
 name: 큰 글자와 좁은 화면에서 거스름돈 입력 준비
 # EXPO_URL·RUN_ID는 현재 서버를, LAYOUT_PRESET은 화면 설정별 증거 파일을 구분합니다.
 # 마지막에 키보드를 닫지 않아 실행기가 실제 IME 상태와 입력·채점 버튼의 위치를 측정합니다.
 ---
 - stopApp
 - launchApp:
-    appId: host.exp.exponent
+    appId: ${APP_ID || 'host.exp.exponent'}
     clearState: false
     stopApp: false
     permissions: {}
 - waitForAnimationToEnd:
     timeout: 10000
-- openLink: "${EXPO_URL}"
+# 설치형 APK는 직접 실행하며 Expo Go에서만 개발 서버 주소를 엽니다.
+- runFlow:
+    when:
+      true: ${typeof APP_ID === 'undefined' || !APP_ID || APP_ID === 'host.exp.exponent'}
+    commands:
+      - openLink: "${EXPO_URL}"
 - extendedWaitUntil:
     visible:
       id: device-run-marker
@@ -23,7 +28,7 @@ name: 큰 글자와 좁은 화면에서 거스름돈 입력 준비
 - extendedWaitUntil:
     visible:
       id: catalog-source-marker
-      text: '^상품 출처 supabase$'
+      text: "^상품 출처 ${CATALOG_SOURCE || 'supabase'}$"
     timeout: 30000
 - assertVisible:
     id: catalog-loaded-count

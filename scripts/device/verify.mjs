@@ -52,8 +52,8 @@ if (previewPath && receiptOnly && !doctor) throw new Error('실제 가격 미리
 if (standalonePath && receiptOnly) throw new Error('설치형 APK 오프라인 검사는 전체 검사와 함께 실행해 주세요.');
 if (standaloneOnly && !standalonePath) throw new Error('설치형 APK 부분 진단에는 --standalone-apk 빌드 검증 파일이 필요합니다.');
 if (standaloneOnly && (receiptOnly || previewPath)) throw new Error('설치형 APK 부분 진단은 영수증·개인 가격 미리보기 검사와 함께 실행할 수 없습니다.');
-if (readabilityRequested && (receiptOnly || standaloneOnly || previewPath || (readabilityOnly && standalonePath))) {
-  throw new Error('화면 사용성 검사는 영수증·설치형 부분 검사나 개인 미리보기와 함께 실행하지 않습니다.');
+if (readabilityRequested && (receiptOnly || previewPath || (readabilityOnly && standalonePath))) {
+  throw new Error('화면 사용성 검사는 영수증 부분 검사나 개인 미리보기와 함께 실행하지 않습니다. APK 부분 진단은 --standalone-only --readability를 사용해 주세요.');
 }
 
 const runId = new Date().toISOString().replace(/[-:.]/gu, '') + '-' + randomBytes(4).toString('hex');
@@ -417,6 +417,13 @@ async function verifyStandaloneOffline() {
     standaloneResult = await runStandaloneOffline({
       adb, run, tools: { ...tools, selectedSerial }, runDir, apkState,
       discardSuccessfulInstall: standaloneOnly,
+      // 설치형 화면 검사는 오프라인 첫 실행과 통신 복구가 끝난 뒤 같은 APK에서 실행합니다.
+      verifyInstalled: readabilityRequested ? async () => {
+        await verifyReadability();
+        assertStandaloneApkUnchanged(apkState);
+        assertCatalogEnvironmentUnchanged(catalogEnvironment);
+        assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
+      } : undefined,
       validateJunit: (file) => {
         // JUnit 오류도 기기 검사의 실패로 처리해 통신 복구 뒤 이번에 설치한 실패 앱만 정리합니다.
         if (typeof file !== 'string') throw new Error('설치형 APK 검사 결과 파일이 없습니다.');
@@ -443,6 +450,7 @@ async function verifyStandaloneOffline() {
       || standaloneResult.installedFresh !== true
       || standaloneResult.installationScope !== 'current-android-user'
       || standaloneResult.firstLaunchOffline !== true
+      || (readabilityRequested && standaloneResult.verifyInstalledStatus !== 'passed')
       || standaloneResult.installationCleanup !== (standaloneOnly ? 'removed-own-probe-install' : 'not-needed')
       || !offline(standaloneResult.network?.firstOffline)
       || !offline(standaloneResult.network?.lastOffline)
@@ -464,14 +472,16 @@ async function verifyStandaloneOffline() {
 }
 
 async function verifyReadability() {
-  say('일반·큰 글자·좁은 화면에서 입력과 열린 키보드, 영수증을 검사합니다. 원래 화면 설정은 종료 전에 복구합니다.');
+  say((apkState ? '새로 설치한 APK' : 'Expo Go') + '에서 일반·큰 글자·좁은 화면과 열린 키보드를 검사합니다. 원래 화면 설정은 종료 전에 복구합니다.');
   displayState = await captureDisplaySettings({
     adb,
     onChange: (value) => fs.writeFileSync(path.join(runDir, 'display-settings.json'), JSON.stringify(value, null, 2) + '\n'),
   });
   try {
     readabilityResult = await runReadability({
-      adb, run, tools: { ...tools, selectedSerial }, runDir, runId,
+      adb, run, tools: { ...tools, selectedSerial }, runDir,
+      runId: apkState ? apkState.buildNonce : runId,
+      applicationId: apkState?.applicationId ?? 'host.exp.exponent', catalogSource: 'supabase',
       expoUrl: 'exp://127.0.0.1:' + port, displayState,
       validateJunit: (filename) => readJunit(filename),
     });
@@ -507,6 +517,7 @@ function standaloneEvidence() {
     installationScope: standaloneResult?.installationScope,
     installationCleanup: standaloneResult?.installationCleanup,
     firstLaunchOffline: standaloneResult?.firstLaunchOffline,
+    verifyInstalledStatus: standaloneResult?.verifyInstalledStatus,
     junit: standaloneJunit,
     network: network && {
       before: networkState(network.before), firstOffline: networkState(network.firstOffline),
@@ -671,13 +682,13 @@ function writeReport(status, reason = '') {
       ...display.history.filter((entry) => entry.status === 'verified').map((entry) => entry.field === 'fontScale'
         ? 'adb -s <선택한 실기기> shell settings --user <현재 프로필> put system font_scale ' + entry.target
         : 'adb -s <선택한 실기기> shell wm density ' + (entry.target ?? display.original.density.physical) + ' -d 0'),
-      'maestro --device <선택한 실기기> test -e EXPO_URL=exp://127.0.0.1:8091 -e RUN_ID=<실행 번호> -e LAYOUT_PRESET=<화면 조건> apps/mobile/.maestro/readability-open.yaml',
+      'maestro --device <선택한 실기기> test -e APP_ID=' + readabilityResult.applicationId + ' -e RUN_ID=' + readabilityResult.runId + ' -e CATALOG_SOURCE=' + readabilityResult.catalogSource + ' -e EXPO_URL=exp://127.0.0.1:8091 -e LAYOUT_PRESET=<화면 조건> apps/mobile/.maestro/readability-open.yaml',
       'maestro --device <선택한 실기기> hierarchy --no-reinstall-driver',
       'adb -s <선택한 실기기> shell dumpsys input_method',
       'adb -s <선택한 실기기> shell dumpsys window',
-      'maestro --device <선택한 실기기> test -e LAYOUT_PRESET=<화면 조건> apps/mobile/.maestro/readability-correct.yaml',
+      'maestro --device <선택한 실기기> test -e APP_ID=' + readabilityResult.applicationId + ' -e RUN_ID=' + readabilityResult.runId + ' -e CATALOG_SOURCE=' + readabilityResult.catalogSource + ' -e EXPO_URL=exp://127.0.0.1:8091 -e LAYOUT_PRESET=<화면 조건> apps/mobile/.maestro/readability-correct.yaml',
       '# 3500 답 입력 뒤에도 같은 IME·화면 영역 측정 반복',
-      'maestro --device <선택한 실기기> test -e LAYOUT_PRESET=<화면 조건> apps/mobile/.maestro/readability-finish.yaml',
+      'maestro --device <선택한 실기기> test -e APP_ID=' + readabilityResult.applicationId + ' -e RUN_ID=' + readabilityResult.runId + ' -e CATALOG_SOURCE=' + readabilityResult.catalogSource + ' -e EXPO_URL=exp://127.0.0.1:8091 -e LAYOUT_PRESET=<화면 조건> apps/mobile/.maestro/readability-finish.yaml',
       '# 마지막에는 원래 값과 override 유무까지 복구 후 재조회',
       'adb -s <선택한 실기기> ' + display.recoveryCommands.density.join(' '),
       'adb -s <선택한 실기기> ' + display.recoveryCommands.fontScale.join(' '),
@@ -698,6 +709,7 @@ function writeReport(status, reason = '') {
     '- 임시 설정의 복구를 확인하지 못하면 성공 보고서와 자동 커밋을 만들지 않는다. 원본 summary.json에 실제 복구 결과와 실행한 명령의 종료 코드를 남긴다.',
     ...(readabilityResult ? [
       '', '## 큰 글자·좁은 화면·열린 키보드 검사', '',
+      '- 검사 대상: ' + (apkState ? '새로 설치한 release APK. 오프라인 첫 실행과 통신 복구 뒤 공개 상품으로 검사했다.' : 'Expo Go 개발 화면.') + ' 앱 ID: `' + readabilityResult.applicationId + '`, 실행 표시: `' + readabilityResult.runId + '`.',
       '- Android의 실제 font_scale과 화면 밀도를 적용했다. 원래 글자 배율: ' + display.original.fontScale.value + ', 화면 밀도: ' + display.original.density.effective + '.',
       ...readabilityResult.presets.map((preset) => '- ' + preset.name + ': 글자 배율 ' + preset.fontScale + ', 화면 밀도 ' + preset.density + ', 화면 폭 약 ' + preset.widthDp + 'dp. JUnit ' + preset.phases.length + '개 통과, 열린 키보드 실측 ' + preset.keyboards.length + '회.'),
       '- 각 조건에서 분류·상품·장바구니·5자리 답 12345 입력·오답 확인·3500 정답·영수증·다시 장보기를 검사했다.',
@@ -845,6 +857,13 @@ try {
       await run('maestro-syntax-standalone', tools.maestro, ['check-syntax', 'apps/mobile/.maestro/standalone-offline.yaml'], { timeout: 60_000 });
       await run('build-helpers', process.execPath, ['--test', 'scripts/build/standalone.test.mjs'], { timeout: timeout.check });
       await run('standalone-device-helpers', process.execPath, ['--test', 'scripts/device/standalone-device.test.mjs'], { timeout: timeout.check });
+      if (readabilityRequested) {
+        for (const phase of ['open', 'correct', 'finish']) {
+          await run('maestro-syntax-readability-' + phase, tools.maestro, ['check-syntax', 'apps/mobile/.maestro/readability-' + phase + '.yaml'], { timeout: 60_000 });
+        }
+        await run('display-settings-helpers', process.execPath, ['--test', 'scripts/device/display-settings.test.mjs'], { timeout: timeout.check });
+        await run('keyboard-layout-helpers', process.execPath, ['--test', 'scripts/device/keyboard-layout.test.mjs'], { timeout: timeout.check });
+      }
       assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
       assertCatalogEnvironmentUnchanged(catalogEnvironment);
       assertStandaloneApkUnchanged(apkState);
@@ -896,7 +915,7 @@ try {
       await waitForServer();
       if (previewSession) createdPreviewReverse = await prepareReverse(PREVIEW_PORT);
       await wakeScreenForUi();
-      if (readabilityRequested) {
+      if (readabilityRequested && !apkState) {
         await verifyReadability();
         assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
         assertCatalogEnvironmentUnchanged(catalogEnvironment);
@@ -942,7 +961,9 @@ try {
     if (!receiptOnly && !standaloneOnly && !readabilityOnly) {
       if (!loadingJunit) throw new Error('예시 선택 실기기 검사를 완료하지 않아 기록과 커밋을 만들지 않습니다.');
       if (apkState && !standaloneJunit) throw new Error('설치형 APK의 오프라인 검사를 완료하지 않아 기록과 커밋을 만들지 않습니다.');
-      if (readabilityRequested && (!readabilityResult || !serializeDisplaySettings(displayState).restoration.verified)) {
+      if (readabilityRequested && (!readabilityResult || !serializeDisplaySettings(displayState).restoration.verified
+        || readabilityResult.applicationId !== (apkState?.applicationId ?? 'host.exp.exponent')
+        || readabilityResult.runId !== (apkState?.buildNonce ?? runId))) {
         throw new Error('큰 글자·좁은 화면 검사와 설정 복구를 완료하지 않아 기록과 커밋을 만들지 않습니다.');
       }
       if (apkState) assertStandaloneApkUnchanged(apkState);

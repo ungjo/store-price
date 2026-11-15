@@ -1,15 +1,15 @@
 # Android 실기기 자동 검증 기록
 
-- 실행 시각: 2026-11-16 01:51:10 (Asia/Seoul)
+- 실행 시각: 2026-11-16 03:30:43 (Asia/Seoul)
 - 결과: **PASS**
-- 실행 ID: `20261115T161955875Z-724b31ea`
+- 실행 ID: `20261115T175407705Z-9039575e`
 - 기기: SM-S948N / Android 17
-- 검사 시작 HEAD: `125d8521a6450a79c3380bc8ea0db037499f4700`
-- 검사 소스 SHA-256: `02dd2dc11b8980583bb06a01724e2f96d1295682e38aedc68eb893385922d032`
+- 검사 시작 HEAD: `e15dac6498647b469b0bf1d4e01a0da93f3c04de`
+- 검사 소스 SHA-256: `8cb068a60da0b0fb530d5af61d955eb4bc5324432b540ec7b2ac5f66ca7bc397`
 - 검사 설정 SHA-256: `f6e2d09f0fd1ba3294a79f473219297affc5854057c2da6a87abdd4318a6ea94` (설정 값은 기록하지 않음)
 - 공개 상품 SHA-256: `d8c79583dff9fc97e15e342b9834c7627c73020d07c54418e31af7a25f16536b` (실행 전후 일치)
-- 예시 선택 별도 실행 ID: `20261115T161955875Z-724b31ea-loading` (개발 검사 요청, 실제 통신 장애를 발생시키지 않음)
-- 도구: Maestro 2.12.1 / JDK 21 / USB 실기기 / Expo Go
+- 예시 선택 별도 실행 ID: `20261115T175407705Z-9039575e-loading` (개발 검사 요청, 실제 통신 장애를 발생시키지 않음)
+- 도구: Maestro 2.12.1 / JDK 21 / USB 실기기 / Expo Go / 설치형 APK
 - 커밋 모드: 검사한 소스가 유지된 경우에만 자동 커밋. 실제 커밋 ID는 실행 요약 또는 git log에서 확인.
 
 ## 실행한 명령
@@ -49,17 +49,22 @@ adb -s <선택한 실기기> reverse --no-rebind tcp:8091 tcp:8091
 adb -s <선택한 실기기> shell input keyevent 224
 maestro --device <선택한 실기기> test -e EXPO_URL=exp://127.0.0.1:8091 -e RUN_ID=<실행 ID>-loading --format junit --output <검사폴더>/loading-result.xml --test-output-dir <검사폴더>/maestro-loading --debug-output <검사폴더>/maestro-loading apps/mobile/.maestro/catalog-loading-choice.yaml
 maestro --device <선택한 실기기> test -e EXPO_URL=exp://127.0.0.1:8091 -e RUN_ID=<실행 ID> --format junit --output <검사폴더>/result.xml --test-output-dir <검사폴더>/maestro --debug-output <검사폴더>/maestro apps/mobile/.maestro/payment.yaml
+# 직접 시작한 개발 서버·USB 연결을 정리한 후 현재 Android 프로필에 검증한 APK를 새로 설치
+adb -s <선택한 실기기> install -R --user <현재 Android 사용자> <검증한 APK>
+# Wi-Fi·모바일 데이터와 활성 인터넷 경로·USB reverse가 없는지 첫 실행 전부터 확인
+maestro --device <선택한 실기기> test -e APP_ID=<검증한 앱 ID> -e RUN_ID=<빌드 확인 번호> --format junit --output <검사폴더>/standalone-result.xml --test-output-dir <검사폴더>/maestro-standalone --debug-output <검사폴더>/maestro-standalone apps/mobile/.maestro/standalone-offline.yaml
+# 검사 종료 뒤 휴대전화의 통신 설정을 원래 값으로 복구하고 확인
 # 일반·큰 글자·좁은 화면 조건마다 아래 화면 검사를 실행
 adb -s <선택한 실기기> shell settings --user <현재 프로필> put system font_scale 1
 adb -s <선택한 실기기> shell settings --user <현재 프로필> put system font_scale 1.5
 adb -s <선택한 실기기> shell wm density 720 -d 0
-maestro --device <선택한 실기기> test -e EXPO_URL=exp://127.0.0.1:8091 -e RUN_ID=<실행 번호> -e LAYOUT_PRESET=<화면 조건> apps/mobile/.maestro/readability-open.yaml
+maestro --device <선택한 실기기> test -e APP_ID=com.ungjo.storeprice.offline.bcf5eaac5f72fa3f0 -e RUN_ID=standalone-cf5eaac5f72fa3f0 -e CATALOG_SOURCE=supabase -e EXPO_URL=exp://127.0.0.1:8091 -e LAYOUT_PRESET=<화면 조건> apps/mobile/.maestro/readability-open.yaml
 maestro --device <선택한 실기기> hierarchy --no-reinstall-driver
 adb -s <선택한 실기기> shell dumpsys input_method
 adb -s <선택한 실기기> shell dumpsys window
-maestro --device <선택한 실기기> test -e LAYOUT_PRESET=<화면 조건> apps/mobile/.maestro/readability-correct.yaml
+maestro --device <선택한 실기기> test -e APP_ID=com.ungjo.storeprice.offline.bcf5eaac5f72fa3f0 -e RUN_ID=standalone-cf5eaac5f72fa3f0 -e CATALOG_SOURCE=supabase -e EXPO_URL=exp://127.0.0.1:8091 -e LAYOUT_PRESET=<화면 조건> apps/mobile/.maestro/readability-correct.yaml
 # 3500 답 입력 뒤에도 같은 IME·화면 영역 측정 반복
-maestro --device <선택한 실기기> test -e LAYOUT_PRESET=<화면 조건> apps/mobile/.maestro/readability-finish.yaml
+maestro --device <선택한 실기기> test -e APP_ID=com.ungjo.storeprice.offline.bcf5eaac5f72fa3f0 -e RUN_ID=standalone-cf5eaac5f72fa3f0 -e CATALOG_SOURCE=supabase -e EXPO_URL=exp://127.0.0.1:8091 -e LAYOUT_PRESET=<화면 조건> apps/mobile/.maestro/readability-finish.yaml
 # 마지막에는 원래 값과 override 유무까지 복구 후 재조회
 adb -s <선택한 실기기> shell wm density 560 -d 0
 adb -s <선택한 실기기> shell settings --user 0 put system font_scale 1.0
@@ -79,6 +84,7 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 
 ## 큰 글자·좁은 화면·열린 키보드 검사
 
+- 검사 대상: 새로 설치한 release APK. 오프라인 첫 실행과 통신 복구 뒤 공개 상품으로 검사했다. 앱 ID: `com.ungjo.storeprice.offline.bcf5eaac5f72fa3f0`, 실행 표시: `standalone-cf5eaac5f72fa3f0`.
 - Android의 실제 font_scale과 화면 밀도를 적용했다. 원래 글자 배율: 1, 화면 밀도: 560.
 - standard: 글자 배율 1, 화면 밀도 560, 화면 폭 약 411.43dp. JUnit 3개 통과, 열린 키보드 실측 2회.
 - large-font: 글자 배율 1.5, 화면 밀도 560, 화면 폭 약 411.43dp. JUnit 3개 통과, 열린 키보드 실측 2회.
@@ -89,6 +95,26 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 - 글자·화면 설정 복구 확인: true. 원래 override 밀도와 font_scale의 저장 상태까지 비교했다.
 - 픽셀 해상도는 바꾸지 않았다. 좁은 화면은 이 갤럭시의 논리적 화면 폭을 바꾼 검사이며 다른 기종이나 iPhone 검증을 뜻하지 않는다.
 
+## 설치형 APK 오프라인 검사
+
+- 앱 ID: `com.ungjo.storeprice.offline.bcf5eaac5f72fa3f0`
+- 버전: `0.1.0` / 코드 `1`
+- 빌드 ID: `e5076f0b-a8ec-437a-9559-a13f3c764b14` / 빌드 확인 번호: `standalone-cf5eaac5f72fa3f0`
+- APK SHA-256: `3b0abb51a07b752b19326edb6165be526650b015a41372cae3d9f5982bd5bb08` (검사 전후 일치)
+- 빌드 소스 SHA-256: `bbf8c20d3aa30b41c6e9056c0e599447de5f038d64070823376fbecac42b5044`
+- APK 서명 인증서 SHA-256: `5cad8a79340d20ac68c56567074d619789e99e472e306d4ab93505b01bd886cd`
+- APK manifest 검사: 디버그 모드 비활성 확인.
+- APK 내부 앱 실행 번들과 이번 빌드 확인 번호 포함 확인.
+- APK manifest 검사: 백업 복원 비활성 확인.
+- 현재 Android 프로필에서 이번 APK의 새 설치·미실행 상태를 확인하고 인터넷과 개발 서버 연결이 없는 상태에서 첫 실행했다. 다른 프로필의 설치 여부는 조사하지 않았다.
+- 설치 시 -R로 기존 패키지 교체를 금지하고 --user로 현재 프로필을 지정했다. Expo Go 실행 기록과 별도로 검사했다.
+- 검사 전 Wi-Fi: true, 모바일 데이터: true, 비행기 모드: false.
+- 첫 실행 전과 마지막 확인 모두 Wi-Fi·모바일 데이터 꺼짐, 활성 기본 네트워크 없음, 인터넷 연결 0개, USB reverse 0개.
+- 오프라인 상태 확인 횟수: 83. 중간 연결 복구가 감지되면 검사를 중단한다.
+- 같은 오프라인 실행에서 내장 예시 12개와 분류별 6·4·2개를 확인했다. 새 상품 세 개의 4,500원 합계·500원 거스름돈·분류 변경 후 장바구니와 정답 유지·영수증·전체 분류 초기화도 검사했다.
+- 통신 설정 복구: Wi-Fi restored, 모바일 데이터 restored, 복구 확인 true.
+- 별도 APK 검사와 통신·화면 설정 복구를 모두 확인한 뒤에만 이 기록과 커밋을 만든다.
+
 ## 확인한 항목
 
 - PGlite의 메모리 PostgreSQL에서 상품·가격 이력 제약, 예시 데이터, 수동 가격 관측의 비공개 조건, 공개 카탈로그와 역할별 읽기·쓰기 권한을 검사했다.
@@ -97,7 +123,7 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 - 앱 검사·번들·Expo 서버에는 같은 설정을 전달하고 EXPO_NO_DOTENV=1로 고정했다. 환경 파일과 선택한 프로세스 설정의 변경도 검사했다.
 - 별도 개발 검사에서 상품 로딩 중 예시 놀이를 선택하고, 취소를 무시한 늦은 성공이 와도 예시 출처가 유지되는지 확인했다.
 - 예시 사과 1개·1,500원으로 10,000원 지불·8,500원 정답·영수증·다시 장보기를 확인했다. 다시 장보기에서 상품 요청 수가 늘지 않는다.
-- 휴대전화 Wi-Fi·모바일 데이터는 바꾸지 않았다. 실제 오프라인 연결이나 인터넷 없는 Expo Go 첫 실행을 검증한 결과는 아니다.
+- 개발용 예시 선택 검사는 통신 설정을 바꾸지 않았다. 별도 설치형 APK 단계에서 실제 통신을 끄고 예시 놀이를 검사한 뒤 원래 설정을 복구했다.
 - 대기 요청 검사 설정은 일반 검사·배포 환경에서 제거하며, 별도 검사 뒤 Expo를 재시작해 실제 Supabase 연결로 전체 놀이를 검사했다.
 - 실제 앱의 Supabase 출처·상품 12개 로딩을 최초 실행·다시 장보기·재실행에서 확인했다. 외부 상품의 일시적 변경을 연속 감시하는 검사는 아니다.
 - 원격 목록과 내장 예시에서 전체 12개·과일/채소 6개·유제품/달걀 4개·빵/간식 2개의 분류와 선택 상태를 확인했다.
@@ -143,6 +169,8 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 - export: 종료 코드 0
 - catalog-http-before: 종료 코드 0
 - maestro-loading-choice: 종료 코드 0
+- maestro-flow: 종료 코드 0
+- catalog-http-after: 종료 코드 0
 - readability-standard-open: 종료 코드 0
 - readability-standard-correct: 종료 코드 0
 - readability-standard-finish: 종료 코드 0
@@ -152,13 +180,13 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 - readability-narrow-large-font-open: 종료 코드 0
 - readability-narrow-large-font-correct: 종료 코드 0
 - readability-narrow-large-font-finish: 종료 코드 0
-- maestro-flow: 종료 코드 0
-- catalog-http-after: 종료 코드 0
+- standalone-offline: 종료 코드 0
 - screen-awake-restore: 종료 코드 0
 - screen-awake-restored-check: 종료 코드 0
 - JUnit: 1 testcase, 실패 0, 오류 0, 건너뜀 0
 - 예시 선택 JUnit: 1 testcase, 실패 0, 오류 0, 건너뜀 0
+- 설치형 APK JUnit: 1 testcase, 실패 0, 오류 0, 건너뜀 0
 
-원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/20261115T161955875Z-724b31ea/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.
+원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/20261115T175407705Z-9039575e/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.
 
-이 기록은 해당 Android 실기기·검사 시점의 결과다. iPhone, 스토어용 APK/AAB/IPA 및 실제 이마트 가격의 앱 공개 표시는 검증하지 않았다. 앱은 공개 예시 상품 12개로 검사한다.
+이 기록은 해당 Android 실기기·검사 시점의 결과다. 설치형 APK는 위에 기록한 빌드만 검증했다. iPhone, 스토어 제출용 AAB/IPA 및 실제 이마트 가격의 앱 공개 표시는 검증하지 않았다. 앱은 공개 예시 상품 12개로 검사한다.

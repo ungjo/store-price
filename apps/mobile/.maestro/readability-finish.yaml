@@ -1,4 +1,4 @@
-appId: host.exp.exponent
+appId: ${APP_ID || 'host.exp.exponent'}
 name: 키보드를 연 채 정답 채점하고 영수증과 새 놀이 확인
 # readability-correct의 3500 입력과 열린 키보드에서 시작합니다.
 # 첫 채점 탭을 자동 반복하지 않아 키보드만 닫힌 경우를 성공으로 넘기지 않습니다.
@@ -80,7 +80,7 @@ name: 키보드를 연 채 정답 채점하고 영수증과 새 놀이 확인
 - extendedWaitUntil:
     visible:
       id: catalog-source-marker
-      text: '^상품 출처 supabase$'
+      text: "^상품 출처 ${CATALOG_SOURCE || 'supabase'}$"
     timeout: 30000
 - assertVisible:
     id: device-run-marker

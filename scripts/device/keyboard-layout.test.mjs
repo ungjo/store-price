@@ -52,3 +52,49 @@ test('wrong answer, lost focus and malformed native evidence cannot produce a su
   const malformed = fixture(); malformed.hierarchy = '{'; assert.throws(() => assertKeyboardLayout(malformed));
   assert.throws(() => parseBounds('[0,0][0,100]')); assert.throws(() => parseBounds('unknown'));
 });
+
+test('an explicit APK package accepts its exact focus and bare or matching prefixed test IDs', () => {
+  const f = fixture();
+  f.expectedAppId = 'com.ungjo.storeprice.offline.b123abc';
+  f.windowDump = f.windowDump.replace('host.exp.exponent', f.expectedAppId);
+  assert.equal(assertKeyboardLayout(f).focused, true);
+  for (const element of f.hierarchy.children) {
+    element.attributes['resource-id'] = f.expectedAppId + ':id/' + element.attributes['resource-id'];
+  }
+  assert.equal(assertKeyboardLayout(f).answerLength, 5);
+  assert.equal(visibleKeyboardFrame(f.windowDump, f.inputMethodDump, f.expectedAppId).top, 1700);
+  // 앱 패키지를 생략한 기존 호출은 계속 Expo Go만 검사합니다.
+  assert.throws(() => visibleKeyboardFrame(f.windowDump, f.inputMethodDump));
+});
+
+test('wrong app, package suffix or prefix matches and unescaped dots cannot pass the focus check', () => {
+  for (const expectedAppId of ['host.exp.exponent', 'com.ungjo.storeprice.offline.b123abc']) {
+    for (const wrongApp of ['other.app', 'other.' + expectedAppId, expectedAppId + '.debug',
+      'x' + expectedAppId, expectedAppId + 'x', expectedAppId.replaceAll('.', 'x')]) {
+      const f = fixture();
+      f.windowDump = f.windowDump.replace('host.exp.exponent', wrongApp);
+      assert.throws(() => visibleKeyboardFrame(f.windowDump, f.inputMethodDump, expectedAppId));
+    }
+  }
+  const f = fixture();
+  assert.throws(() => visibleKeyboardFrame(f.windowDump.replace('mCurrentFocus=', 'not_mCurrentFocus='), f.inputMethodDump));
+});
+
+test('matching APK focus does not accept Expo or another app resource ID prefixes', () => {
+  const f = fixture();
+  f.expectedAppId = 'com.ungjo.storeprice.offline.b123abc';
+  f.windowDump = f.windowDump.replace('host.exp.exponent', f.expectedAppId);
+  for (const prefix of ['host.exp.exponent', 'other.app', 'other.' + f.expectedAppId, f.expectedAppId + '.debug']) {
+    f.hierarchy.children[0].attributes['resource-id'] = prefix + ':id/quiz-answer';
+    assert.throws(() => assertKeyboardLayout(f));
+  }
+});
+
+test('malformed package input is rejected before constructing a focus pattern', () => {
+  const f = fixture();
+  for (const expectedAppId of ['', null, 7, {}, 'app', 'com..app', 'com.1app', 'com.app/Activity',
+    'com.app|other.app', 'com.app.*', 'com.app\n', ' com.app', 'com.' + 'a'.repeat(252)]) {
+    assert.throws(() => visibleKeyboardFrame(f.windowDump, f.inputMethodDump, expectedAppId));
+    assert.throws(() => assertKeyboardLayout({ ...f, expectedAppId }));
+  }
+});

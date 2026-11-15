@@ -46,13 +46,13 @@
 - [x] 설치형 Android 앱의 인터넷 없는 첫 실행·예시 놀이 검증 (`4fbe035`) — [개발 기록](docs/book/chapters/05a-standalone-offline.md)
 - [x] 상품 분류와 예시 12개 구현·검증 (`479f6f5`) — [개발 기록](docs/book/chapters/06-product-categories.md)
 - [x] 분류와 예시 12개 APK의 빌드·실제 오프라인 첫 실행 검증 (`125d852`) — [개발 기록](docs/book/chapters/06a-categories-offline-apk.md)
-- [x] 큰 글자·작은 화면·키보드 대응 구현·PC 검사 — [개발 기록](docs/book/chapters/06b-readable-layout.md)
-- 화면 사용성의 부분 진단·수정 기록과 최종 실기기 결과는 [개발 기록](docs/book/chapters/06b-readable-layout.md)·[자동 보고서](docs/book/verification/latest-android.md)에서 구분
+- [x] 큰 글자·작은 화면·키보드 대응과 Expo Go 전체 검증 (`e15dac6`) — [개발 기록](docs/book/chapters/06b-readable-layout.md)
+- 화면 개선 APK의 빌드·검사 방식은 [개발 기록](docs/book/chapters/06c-readable-offline-apk.md), 최종 성공 여부는 [자동 보고서](docs/book/verification/latest-android.md) 참조
 - [ ] 허용된 실제 가격의 앱 공개·자동 갱신
 - [ ] Android·iPhone 실기기 검증
 - [ ] 스토어 제출
 
-개발용 미리보기와 일반 사용자에게 실제 가격을 공개하는 단계는 구분합니다. 사용자는 **꼬마 시장 검사 12**의 빌드·오프라인 검증을 담은 `125d852`의 GitHub 업로드를 확인했습니다. 큰 글자·작은 화면·키보드 대응은 구현과 PC 검사 299개를 통과했고, 첫 전체 실행에서 세 화면 조건·새 놀이·설정 복구까지 확인했습니다. 이후 기존 퀴즈 검사에서 답을 지운 세 구간에 키보드 닫기를 적용해 전체 재검사를 준비했습니다. 구간별 결과는 [화면 사용성 기록](docs/book/chapters/06b-readable-layout.md)에 남겼으며, 최종 전체 통과 여부는 검사 시작 HEAD `125d852`인 [검증 기록](docs/book/verification/latest-android.md)으로 확인합니다. 이번에는 DB·가격 변경이나 새 APK 빌드를 진행하지 않습니다.
+큰 글자·작은 화면·키보드 개선과 Expo Go 전체 검증은 `e15dac6`으로 완료했고 사용자가 GitHub 업로드를 확인했습니다. 이번 단계는 같은 화면을 포함한 **꼬마 시장 화면 검사** APK를 빌드하고 검사합니다. 빌드와 다운로드를 완료했으며, 실제 오프라인 첫 실행 뒤 통신을 복구하고 같은 APK에서 세 화면 조건과 열린 키보드를 확인합니다. 준비·빌드와 실제 성공은 [새 APK 기록](docs/book/chapters/06c-readable-offline-apk.md) 및 검사 시작 HEAD `e15dac6`인 [자동 보고서](docs/book/verification/latest-android.md)로 구분합니다. 상품 DB·가격·공개 권한은 이번에 변경하지 않습니다.
 
 ## 첫 화면 실행
 

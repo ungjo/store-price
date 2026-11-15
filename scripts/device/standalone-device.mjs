@@ -192,14 +192,16 @@ async function restoreNetwork({ adb, before, changed, evidence }) {
   if (failure) throw bad('휴대전화 연결 설정의 원상 복구를 확인하지 못해 커밋하지 않습니다.');
 }
 
-export async function runStandaloneOffline({ adb, run, tools, runDir, apkState, validateJunit, discardSuccessfulInstall = false }) {
+export async function runStandaloneOffline({ adb, run, tools, runDir, apkState, validateJunit, verifyInstalled, discardSuccessfulInstall = false }) {
   validateApkState(apkState);
   if (typeof validateJunit !== 'function') throw bad('실제 JUnit 통과 여부를 확인할 검증 함수가 필요합니다.');
+  if (verifyInstalled !== undefined && typeof verifyInstalled !== 'function') throw bad('설치한 앱의 후속 검사는 함수로 지정해 주세요.');
   if (typeof discardSuccessfulInstall !== 'boolean') throw bad('진단용 검사 앱 정리 옵션이 올바르지 않습니다.');
   if (!/^[A-Za-z0-9._:-]+$/u.test(tools.selectedSerial || '')) throw bad('검사할 USB 기기가 지정되지 않았습니다.');
   const evidence = {
     applicationId: apkState.applicationId, buildNonce: apkState.buildNonce, apkSha256: apkState.sha256,
     installedFresh: false, installationScope: 'current-android-user', firstLaunchOffline: false, installationCleanup: 'not-needed',
+    verifyInstalledStatus: verifyInstalled === undefined ? 'not-requested' : 'not-run',
     junitPath: path.join(runDir, 'standalone-result.xml'),
     network: { before: null, firstOffline: null, lastOffline: null, offlineChecks: 0,
       restoration: { wifi: 'not-needed', mobileData: 'not-needed', verified: false } },
@@ -286,6 +288,20 @@ export async function runStandaloneOffline({ adb, run, tools, runDir, apkState, 
     if (before) {
       try { await restoreNetwork({ adb, before, changed, evidence: evidence.network }); }
       catch (error) { primaryError = error; }
+    }
+  }
+  // 오프라인 첫 실행과 연결 복구가 모두 성공한 뒤에만 설치한 앱의 후속 검사를 이어갑니다.
+  // 후속 검사도 같은 APK를 대상으로 해야 하며, 실패하면 기존의 신규 앱 정리 경로를 사용합니다.
+  if (!primaryError && verifyInstalled !== undefined) {
+    try {
+      validateApkState(apkState);
+      await verifyInstalled();
+      validateApkState(apkState);
+      evidence.verifyInstalledStatus = 'passed';
+    } catch (error) {
+      evidence.verifyInstalledStatus = 'failed';
+      // Promise.reject()처럼 오류 값이 없어도 실패를 성공으로 취급하거나 앱 정리를 건너뛰지 않습니다.
+      primaryError = error instanceof Error ? error : bad('설치한 앱의 후속 검사에 실패했습니다.');
     }
   }
   if ((primaryError || discardSuccessfulInstall) && evidence.installedFresh) {

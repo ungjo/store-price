@@ -86,6 +86,7 @@
   "supabase/migrations/20261115133406_catalog_categories.sql",
   "docs/book/chapters/06a-categories-offline-apk.md",
   "docs/book/chapters/06b-readable-layout.md",
+  "docs/book/chapters/06c-readable-offline-apk.md",
   "apps/mobile/.maestro/readability-open.yaml",
   "apps/mobile/.maestro/readability-correct.yaml",
   "apps/mobile/.maestro/readability-finish.yaml",

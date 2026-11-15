@@ -35,6 +35,7 @@ function harness(t, options = {}) {
   const adb = async (label, args, opts = {}) => {
     calls.push({ label, args, cleanup: opts.cleanup === true });
     if (options.prematureLaunch && label === 'standalone-before-change-wifi') state.notLaunched = false;
+    if (options.changeApkAfterRestore && label === 'standalone-restored-reverse') fs.appendFileSync(apkPath, 'changed after restoration');
     const command = args.join(' ');
     let stdout;
     if (command === 'shell am get-current-user') stdout = options.invalidUser ?? '0';
@@ -96,6 +97,7 @@ function harness(t, options = {}) {
   return { root, state, calls, adb, apkState,
     execute: () => runStandaloneOffline({ adb, run, tools: { maestro: 'test-maestro', selectedSerial: 'test-usb' }, runDir: root, apkState,
       discardSuccessfulInstall: options.discardSuccessfulInstall ?? false,
+      verifyInstalled: options.verifyInstalled,
       validateJunit: (file) => {
         assert.equal(file, path.join(root, 'standalone-result.xml'));
         if (options.invalidJunit) throw new Error('simulated strict JUnit validation failure');
@@ -142,6 +144,7 @@ test('새 APK를 오프라인에서 검사하고 설정 복구를 검증한 뒤 
   const h = harness(t); const result = await h.execute();
   assert.equal(result.installedFresh, true); assert.equal(result.firstLaunchOffline, true);
   assert.equal(result.installationScope, 'current-android-user');
+  assert.equal(result.verifyInstalledStatus, 'not-requested');
   assert.equal(result.network.restoration.verified, true); assert.ok(result.network.offlineChecks >= 2);
   assert.equal(h.state.wifi, '1'); assert.equal(h.state.data, '1'); assert.equal(h.state.installed, true);
   const install = h.calls.find((call) => call.args[0] === 'install');
@@ -267,4 +270,126 @@ test('다른 프로필은 조회하지 않으며 같은 전역 패키지가 있�
 test('정리 후 목록 조회가 비정상인 경우 앱 제거 완료로 기록하지 않는다', async (t) => {
   const h = harness(t, { discardSuccessfulInstall: true, removalCheckMalformed: true });
   await assert.rejects(h.execute(), (error) => error.standalone.installationCleanup === 'failed-preserved');
+});
+
+test('후속 검사는 연결 복구 확인 뒤 한 번 실행하고 비동기 완료 후 성공 앱을 남긴다', async (t) => {
+  const h = harness(t, { verifyInstalled: async () => {
+    assert.equal(h.state.wifi, '1'); assert.equal(h.state.data, '1'); assert.equal(h.state.installed, true);
+    assert.equal(h.state.notLaunched, false);
+    assert.equal(h.calls.at(-1).label, 'standalone-restored-reverse');
+    h.calls.push({ label: 'verify-installed-start', args: [] });
+    await new Promise((resolve) => setImmediate(resolve));
+    h.calls.push({ label: 'verify-installed-finished', args: [] });
+  } });
+  const result = await h.execute();
+  assert.equal(result.firstLaunchOffline, true);
+  assert.equal(result.network.restoration.verified, true);
+  assert.equal(result.verifyInstalledStatus, 'passed');
+  assert.equal(result.installationCleanup, 'not-needed');
+  assert.equal(h.state.installed, true);
+  assert.equal(h.calls.filter((call) => call.label === 'verify-installed-start').length, 1);
+  assert.equal(h.calls.at(-1).label, 'verify-installed-finished');
+});
+
+test('후속 검사 실패도 복구된 연결을 유지하며 이번에 설치한 정확한 앱만 제거한다', async (t) => {
+  const h = harness(t, { verifyInstalled: async () => {
+    h.calls.push({ label: 'verify-installed-failed', args: [] });
+    throw new Error('simulated installed verification failure');
+  } });
+  await assert.rejects(h.execute(), (error) => {
+    assert.match(error.message, /installed verification failure/u);
+    assert.equal(error.standalone.firstLaunchOffline, true);
+    assert.equal(error.standalone.network.restoration.verified, true);
+    assert.equal(error.standalone.verifyInstalledStatus, 'failed');
+    assert.equal(error.standalone.installationCleanup, 'removed-own-failed-install'); return true;
+  });
+  assert.equal(h.state.wifi, '1'); assert.equal(h.state.data, '1'); assert.equal(h.state.installed, false);
+  assert.ok(h.calls.findIndex((call) => call.args.includes('uninstall')) > h.calls.findIndex((call) => call.label === 'verify-installed-failed'));
+});
+
+test('오프라인 실행이나 JUnit 검증에 실패하면 후속 검사를 호출하지 않는다', async (t) => {
+  for (const option of [{ runError: true }, { invalidJunit: true }]) {
+    let calls = 0;
+    const h = harness(t, { ...option, verifyInstalled: async () => { calls += 1; } });
+    await assert.rejects(h.execute(), (error) => {
+      assert.equal(error.standalone.firstLaunchOffline, false);
+      assert.equal(error.standalone.network.restoration.verified, true);
+      assert.equal(error.standalone.verifyInstalledStatus, 'not-run'); return true;
+    });
+    assert.equal(calls, 0); assert.equal(h.state.installed, false);
+  }
+});
+
+test('후속 검사가 오류 값 없이 거절돼도 실패를 반환하고 이번 검사 앱을 제거한다', async (t) => {
+  const h = harness(t, { verifyInstalled: () => Promise.reject() });
+  await assert.rejects(h.execute(), (error) => {
+    assert.match(error.message, /후속 검사에 실패/u);
+    assert.equal(error.standalone.verifyInstalledStatus, 'failed');
+    assert.equal(error.standalone.network.restoration.verified, true);
+    assert.equal(error.standalone.installationCleanup, 'removed-own-failed-install'); return true;
+  });
+  assert.equal(h.state.installed, false);
+});
+
+test('연결 복구가 실패하면 오프라인 검사가 통과했어도 후속 검사를 호출하지 않는다', async (t) => {
+  let calls = 0;
+  const h = harness(t, { restoreFailure: true, verifyInstalled: async () => { calls += 1; } });
+  await assert.rejects(h.execute(), (error) => {
+    assert.equal(error.standalone.firstLaunchOffline, true);
+    assert.equal(error.standalone.network.restoration.verified, false);
+    assert.equal(error.standalone.verifyInstalledStatus, 'not-run'); return true;
+  });
+  assert.equal(calls, 0);
+});
+
+test('진단 모드도 후속 검사 완료를 기다린 뒤 이번에 설치한 앱을 제거한다', async (t) => {
+  const h = harness(t, { discardSuccessfulInstall: true, verifyInstalled: async () => {
+    assert.equal(h.state.installed, true);
+    assert.equal(h.state.wifi, '1'); assert.equal(h.state.data, '1');
+    await new Promise((resolve) => setImmediate(resolve));
+    h.calls.push({ label: 'verify-installed-finished', args: [] });
+  } });
+  const result = await h.execute();
+  assert.equal(result.verifyInstalledStatus, 'passed');
+  assert.equal(result.installationCleanup, 'removed-own-probe-install');
+  assert.equal(h.state.installed, false);
+  assert.ok(h.calls.findIndex((call) => call.args.includes('uninstall')) > h.calls.findIndex((call) => call.label === 'verify-installed-finished'));
+});
+
+test('후속 검사 옵션이 함수가 아니면 기기를 조회하거나 설치하기 전에 거절한다', async (t) => {
+  for (const verifyInstalled of [null, false, {}, 'verify']) {
+    const h = harness(t, { verifyInstalled });
+    await assert.rejects(h.execute(), /후속 검사는 함수/u);
+    assert.equal(h.calls.length, 0); assert.equal(h.state.installed, false);
+  }
+});
+
+test('후속 검사 직전이나 직후 APK 파일이 바뀌면 성공으로 반환하지 않는다', async (t) => {
+  for (const beforeCallback of [true, false]) {
+    let calls = 0;
+    const h = harness(t, { changeApkAfterRestore: beforeCallback, verifyInstalled: async () => {
+      calls += 1;
+      fs.appendFileSync(h.apkState.apkPath, 'changed during installed verification');
+    } });
+    await assert.rejects(h.execute(), (error) => {
+      assert.match(error.message, /일치하지/u);
+      assert.equal(error.standalone.verifyInstalledStatus, 'failed');
+      assert.equal(error.standalone.network.restoration.verified, true);
+      assert.equal(error.standalone.installationCleanup, 'removed-own-failed-install'); return true;
+    });
+    assert.equal(calls, beforeCallback ? 0 : 1); assert.equal(h.state.installed, false);
+  }
+});
+
+test('후속 검사 중 설치된 앱 해시가 바뀌면 실패하더라도 다른 앱을 제거하지 않는다', async (t) => {
+  const h = harness(t, { verifyInstalled: async () => {
+    h.state.installedSha = '0'.repeat(64);
+    throw new Error('simulated replaced installed app');
+  } });
+  await assert.rejects(h.execute(), (error) => {
+    assert.equal(error.standalone.verifyInstalledStatus, 'failed');
+    assert.equal(error.standalone.installationCleanup, 'failed-preserved'); return true;
+  });
+  assert.equal(h.state.installed, true);
+  assert.equal(h.calls.some((call) => call.args.includes('uninstall')), false);
 });
