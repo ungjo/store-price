@@ -72,6 +72,28 @@ npm run verify:receipt
 
 도구 설치와 실행 버전, 앱 계산 테스트 32개·타입·ESLint·세 플랫폼 번들, 자동 커밋 보호 테스트 9개를 확인했다. 설치 직후 ADB 목록은 비어 있었고, 이어 실행한 device:doctor에서는 기기를 감지했지만 USB 디버깅 연결 승인이 없어 중단했다. 사용자가 연결을 허용한 뒤 재실행한 device:doctor는 준비 완료와 종료 코드 0을 반환했다. 사전 검사는 실기기 시나리오를 실행하거나 커밋하지 않는다. 실제 기기 검사 성공은 실행 후 생성되는 docs/book/verification/latest-android.md로 확인한다.
 
+## 설치형 APK의 실제 오프라인 첫 실행
+
+Expo 계정으로 EAS 클라우드에서 release APK를 만든 뒤 아래처럼 기존 전체 검사에 독립 APK 단계를 추가할 수 있다. 준비 과정은 [설치형 앱 개발 기록](book/chapters/05a-standalone-offline.md)에 남긴다.
+
+```bash
+node scripts/device/verify.mjs --standalone-apk .artifacts/build/<빌드 번호>/provenance.json --message "test: 설치형 앱의 오프라인 첫 실행 검증"
+```
+
+이 옵션은 영수증 부분 검사와 함께 사용할 수 없다. 현재 소스·공개 설정·EAS 기록·APK 지문이 맞아야 시작한다. Android 공식 APK Analyzer와 apksigner가 추가로 필요하며, 기본 설치 위치는 `%LOCALAPPDATA%/store-price-tools/android-inspection`이다. 다른 경로는 `STORE_PRICE_APKANALYZER`, `STORE_PRICE_APKSIGNER`로 지정한다.
+
+검사 APK는 빌드별로 별도 앱 식별자를 사용한다. 현재 Android 프로필에 해당 앱이 이미 있으면 덮어쓰거나 자료를 지우지 않고 멈춘다. 설치에도 `-R`로 기존 앱 교체를 명시적으로 금지하며 다른 보호된 프로필을 조회하지 않는다. 새로 설치한 앱이 아직 실행되지 않았음을 확인한 뒤, 복구 가능한 단일 데이터 회선의 Wi-Fi·모바일 데이터를 잠시 끈다. 실제 인터넷 경로와 USB 역방향 전달이 없는 상태를 첫 실행 전과 검사 중에 확인한다.
+
+별도 `standalone-result.xml`에 첫 실행·예시 상품·장바구니·거스름돈·영수증·재실행 결과를 남긴다. 통신과 화면 유지 설정을 복구한 뒤에만 성공 보고서와 자동 커밋을 허용한다. 실패하면 이번 실행에서 직접 새로 설치했고 APK 지문이 같은 검사 앱만 정리하며 기존 앱은 보존한다.
+
+오프라인 구간의 문제만 먼저 살필 때는 다음 부분 검사를 사용한다.
+
+```bash
+node scripts/device/verify.mjs --standalone-only --standalone-apk .artifacts/build/<빌드 번호>/provenance.json
+```
+
+이 모드는 APK 출처와 해당 실기기 시나리오만 확인한다. 코드 검사와 기존 온라인 놀이 전체를 대신하지 않으며, 공개 성공 보고서와 커밋을 만들지 않는다. 성공한 경우에도 이번 실행에서 새로 만든 검사 앱만 정리하므로 이후 전체 검사에서 다시 새로 설치할 수 있다. 통신·화면 설정 복구와 실패 차단 조건은 전체 검사와 같다.
+
 ## 공식 자료
 
 - [Maestro Windows 설치](https://docs.maestro.dev/maestro-cli/how-to-install-maestro-cli)

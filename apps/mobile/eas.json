@@ -1,0 +1,22 @@
+{
+  "cli": {
+    "appVersionSource": "local"
+  },
+  "build": {
+    "preview": {
+      "environment": "preview",
+      "developmentClient": false,
+      "distribution": "internal",
+      "env": {
+        "STORE_PRICE_STANDALONE_BUILD": "1",
+        "EXPO_NO_DOTENV": "1",
+        "EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW": "disabled",
+        "EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW_TOKEN": "disabled",
+        "EXPO_PUBLIC_CATALOG_TEST_SCENARIO": "disabled"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    }
+  }
+}

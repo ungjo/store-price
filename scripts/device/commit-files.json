@@ -67,5 +67,15 @@
   "apps/mobile/src/features/catalog/catalog-device-fixture.ts",
   "apps/mobile/src/features/catalog/catalog-device-fixture.test.ts",
   "apps/mobile/.maestro/catalog-loading-choice.yaml",
-  "docs/book/chapters/05-offline-sample-play.md"
+  "docs/book/chapters/05-offline-sample-play.md",
+  ".easignore",
+  "apps/mobile/app.json",
+  "apps/mobile/app.config.js",
+  "apps/mobile/eas.json",
+  "scripts/build/standalone.mjs",
+  "scripts/build/standalone.test.mjs",
+  "scripts/device/standalone-device.mjs",
+  "scripts/device/standalone-device.test.mjs",
+  "apps/mobile/.maestro/standalone-offline.yaml",
+  "docs/book/chapters/05a-standalone-offline.md"
 ]

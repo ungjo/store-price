@@ -3,6 +3,8 @@ node_modules/
 .expo/
 dist/
 build/
+!scripts/build/
+!scripts/build/*.mjs
 coverage/
 *.tsbuildinfo
 npm-debug.log*

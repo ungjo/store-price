@@ -23,6 +23,12 @@
     },
     "plugins": [
       "expo-status-bar"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "f216e8cc-25c4-4c1b-9a6a-8e5826bb4f1f"
+      }
+    },
+    "owner": "juj_chroma"
   }
 }
