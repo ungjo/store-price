@@ -1,0 +1,40 @@
+appId: host.exp.exponent
+name: 키보드를 연 채 첫 탭으로 오답 채점하고 답 고치기
+# readability-open의 12345 입력과 열린 키보드를 그대로 이어받습니다.
+# 채점 전에 스크롤·키보드 닫기·재시도를 넣으면 첫 탭이 실제로 채점했는지 검증할 수 없습니다.
+---
+- tapOn:
+    id: quiz-check
+    enabled: true
+    retryTapIfNoChange: false
+- scrollUntilVisible:
+    element:
+      id: quiz-feedback
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: quiz-feedback
+    text: '^다시 생각해 볼까요\? 낼 돈에서 물건값을 빼 보세요\.$'
+- scrollUntilVisible:
+    element:
+      id: quiz-answer
+    direction: UP
+    timeout: 30000
+    centerElement: false
+# 입력칸 안의 오른쪽을 눌러 커서를 기존 다섯 자리 뒤에 두고 모두 지웁니다.
+- tapOn:
+    id: quiz-answer
+    enabled: true
+    point: '90%,50%'
+- eraseText: 5
+- inputText: '3500'
+- assertVisible:
+    id: quiz-answer
+    text: '^3500$'
+    enabled: true
+- assertVisible:
+    id: quiz-check
+    text: '^정답 확인$'
+    enabled: true
+- takeScreenshot: readability-${LAYOUT_PRESET}-keyboard-corrected

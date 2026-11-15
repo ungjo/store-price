@@ -84,5 +84,14 @@
   "apps/mobile/.maestro/catalog-categories.yaml",
   "docs/book/chapters/06-product-categories.md",
   "supabase/migrations/20261115133406_catalog_categories.sql",
-  "docs/book/chapters/06a-categories-offline-apk.md"
+  "docs/book/chapters/06a-categories-offline-apk.md",
+  "docs/book/chapters/06b-readable-layout.md",
+  "apps/mobile/.maestro/readability-open.yaml",
+  "apps/mobile/.maestro/readability-correct.yaml",
+  "apps/mobile/.maestro/readability-finish.yaml",
+  "scripts/device/display-settings.mjs",
+  "scripts/device/display-settings.test.mjs",
+  "scripts/device/keyboard-layout.mjs",
+  "scripts/device/keyboard-layout.test.mjs",
+  "scripts/device/readability-device.mjs"
 ]

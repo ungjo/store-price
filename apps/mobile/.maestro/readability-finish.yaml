@@ -1,0 +1,134 @@
+appId: host.exp.exponent
+name: 키보드를 연 채 정답 채점하고 영수증과 새 놀이 확인
+# readability-correct의 3500 입력과 열린 키보드에서 시작합니다.
+# 첫 채점 탭을 자동 반복하지 않아 키보드만 닫힌 경우를 성공으로 넘기지 않습니다.
+---
+- tapOn:
+    id: quiz-check
+    enabled: true
+    retryTapIfNoChange: false
+- scrollUntilVisible:
+    element:
+      id: quiz-feedback
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: quiz-feedback
+    text: '^정답이에요! 거스름돈을 잘 계산했어요\.$'
+- scrollUntilVisible:
+    element:
+      id: payment-change
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: payment-change
+    text: '^받을 거스름돈 3,500원\. 낼 돈 5,000원 빼기 물건값 1,500원은 3,500원\.$'
+- takeScreenshot: readability-${LAYOUT_PRESET}-answer
+- scrollUntilVisible:
+    element:
+      id: checkout-complete
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: checkout-complete
+    enabled: true
+- assertVisible:
+    id: receipt-title
+    text: '^계산을 마쳤어요!$'
+- assertNotVisible:
+    id: market-list
+- scrollUntilVisible:
+    element:
+      id: receipt-item-sample-cracker
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: receipt-item-sample-cracker
+    text: '^크래커, 1봉\. 1,500원 × 1개, 1,500원\.$'
+- scrollUntilVisible:
+    element:
+      id: receipt-total
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: receipt-total
+    text: '^총 1개, 합계 1,500원\.$'
+- scrollUntilVisible:
+    element:
+      id: receipt-payment
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: receipt-payment
+    text: '^낸 놀이돈 5,000원\. 받은 거스름돈 3,500원\. 계산 후 남은 놀이돈 8,500원\.$'
+- takeScreenshot: readability-${LAYOUT_PRESET}-receipt
+- scrollUntilVisible:
+    element:
+      id: receipt-new-round
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: receipt-new-round
+    enabled: true
+- extendedWaitUntil:
+    visible:
+      id: catalog-source-marker
+      text: '^상품 출처 supabase$'
+    timeout: 30000
+- assertVisible:
+    id: device-run-marker
+    text: '^자동 검사 ${RUN_ID}$'
+- assertVisible:
+    id: catalog-loaded-count
+    text: '^불러온 상품 12개$'
+- assertNotVisible:
+    id: receipt-screen
+- scrollUntilVisible:
+    element:
+      id: category-all
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: category-all
+    text: '^전체 상품 12개, 선택됨$'
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: cart-empty
+    direction: DOWN
+    # 320dp·큰 글자에서는 상품 12개를 모두 지나야 하므로 스크롤 시간을 확보합니다.
+    timeout: 90000
+    centerElement: false
+- assertVisible:
+    id: cart-empty
+    text: '^아직 장바구니가 비어 있어요$'
+- scrollUntilVisible:
+    element:
+      id: cart-summary
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: cart-summary
+    text: '^장바구니 총 0개, 합계 0원\. 오늘의 놀이돈 10,000원\. 남을 돈 10,000원\. 놀이돈 안에서 장을 봐요\.$'
+- scrollUntilVisible:
+    element:
+      id: payment-option-5000
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: payment-option-5000
+    enabled: false
+    selected: false
+- assertNotVisible:
+    id: quiz-answer
+- takeScreenshot: readability-${LAYOUT_PRESET}-new-round

@@ -1,0 +1,130 @@
+appId: host.exp.exponent
+name: 큰 글자와 좁은 화면에서 거스름돈 입력 준비
+# EXPO_URL·RUN_ID는 현재 서버를, LAYOUT_PRESET은 화면 설정별 증거 파일을 구분합니다.
+# 마지막에 키보드를 닫지 않아 실행기가 실제 IME 상태와 입력·채점 버튼의 위치를 측정합니다.
+---
+- stopApp
+- launchApp:
+    appId: host.exp.exponent
+    clearState: false
+    stopApp: false
+    permissions: {}
+- waitForAnimationToEnd:
+    timeout: 10000
+- openLink: "${EXPO_URL}"
+- extendedWaitUntil:
+    visible:
+      id: device-run-marker
+      text: '^자동 검사 ${RUN_ID}$'
+    timeout: 90000
+- assertVisible:
+    id: device-run-marker
+    text: '^자동 검사 ${RUN_ID}$'
+- extendedWaitUntil:
+    visible:
+      id: catalog-source-marker
+      text: '^상품 출처 supabase$'
+    timeout: 30000
+- assertVisible:
+    id: catalog-loaded-count
+    text: '^불러온 상품 12개$'
+- scrollUntilVisible:
+    element:
+      id: category-all
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: category-all
+    text: '^전체 상품 12개, 선택됨$'
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: category-bakery-snacks
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: category-bakery-snacks
+    text: '^빵·간식 상품 2개$'
+    selected: false
+- takeScreenshot: readability-${LAYOUT_PRESET}-categories
+- tapOn:
+    id: category-bakery-snacks
+- assertVisible:
+    id: category-bakery-snacks
+    text: '^빵·간식 상품 2개, 선택됨$'
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: category-visible-count
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: category-visible-count
+    text: '^보이는 상품 2개$'
+- scrollUntilVisible:
+    element:
+      id: product-sample-cracker-add
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: product-sample-cracker-add
+    enabled: true
+- assertVisible:
+    id: product-sample-cracker-quantity
+    text: '^크래커 1개 담김$'
+- takeScreenshot: readability-${LAYOUT_PRESET}-product
+- scrollUntilVisible:
+    element:
+      id: cart-sample-cracker-remove
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: cart-sample-cracker-remove
+    text: '^크래커 모두 빼기$'
+# 큰 글자·좁은 화면의 합계는 고정 하단 대신 장바구니 다음에 있으므로 직접 찾아 확인합니다.
+- scrollUntilVisible:
+    element:
+      id: cart-summary
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- assertVisible:
+    id: cart-summary
+    text: '^장바구니 총 1개, 합계 1,500원\. 오늘의 놀이돈 10,000원\. 남을 돈 8,500원\. 이대로 사면 남을 돈이에요\.$'
+- takeScreenshot: readability-${LAYOUT_PRESET}-cart
+- scrollUntilVisible:
+    element:
+      id: payment-option-5000
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: payment-option-5000
+    enabled: true
+- assertVisible:
+    id: payment-option-5000
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: quiz-answer
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- tapOn:
+    id: quiz-answer
+    enabled: true
+- inputText: '12345'
+- assertVisible:
+    id: quiz-answer
+    text: '^12345$'
+    enabled: true
+- assertVisible:
+    id: quiz-check
+    text: '^정답 확인$'
+    enabled: true
+- takeScreenshot: readability-${LAYOUT_PRESET}-keyboard-five-digits

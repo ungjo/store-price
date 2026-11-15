@@ -1,3 +1,4 @@
+import type { ComponentRef } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getPaymentSummary, PAYMENT_OPTIONS_KRW } from '../features/payment/payment';
@@ -12,6 +13,7 @@ type PaymentSelectorProps = {
   onClear: () => void;
   quiz: ChangeQuizState;
   onAnswer: (answer: string) => void;
+  onAnswerFocus?: (region: ComponentRef<typeof View> | null) => void;
   onCheck: () => void;
   onRetry: () => void;
   onComplete: () => void;
@@ -26,6 +28,7 @@ export function PaymentSelector({
   onClear,
   quiz,
   onAnswer,
+  onAnswerFocus,
   onCheck,
   onRetry,
   onComplete,
@@ -103,6 +106,7 @@ export function PaymentSelector({
           selectedPaymentKrw={selectedPaymentKrw}
           quiz={quiz}
           onAnswer={onAnswer}
+          onAnswerFocus={onAnswerFocus}
           onCheck={onCheck}
           onRetry={onRetry}
         />

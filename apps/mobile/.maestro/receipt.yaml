@@ -223,6 +223,8 @@ name: 계산 완료와 영수증 실기기 회귀 검사
     id: "quiz-answer"
     enabled: true
 - eraseText: 5
+# 답을 지운 직후 열린 키보드를 닫아 공통 풀이의 합계 가림 상태를 확인합니다.
+- hideKeyboard
 - runFlow:
     file: solve-quiz.yaml
     env:

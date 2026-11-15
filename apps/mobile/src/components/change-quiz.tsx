@@ -1,4 +1,5 @@
-import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { type ComponentRef, useRef } from 'react';
+import { Keyboard, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 
 import { MAX_CHANGE_ANSWER_LENGTH, type ChangeQuizState } from '../features/payment/change-quiz';
 
@@ -7,6 +8,7 @@ type ChangeQuizProps = {
   selectedPaymentKrw: number;
   quiz: ChangeQuizState;
   onAnswer: (answer: string) => void;
+  onAnswerFocus?: (region: ComponentRef<typeof View> | null) => void;
   onCheck: () => void;
   onRetry: () => void;
 };
@@ -19,7 +21,12 @@ const feedback = {
   correct: '정답이에요! 거스름돈을 잘 계산했어요.',
 };
 
-export function ChangeQuiz({ totalPriceKrw, selectedPaymentKrw, quiz, onAnswer, onCheck, onRetry }: ChangeQuizProps) {
+export function ChangeQuiz({ totalPriceKrw, selectedPaymentKrw, quiz, onAnswer, onAnswerFocus, onCheck, onRetry }: ChangeQuizProps) {
+  const { width, fontScale } = useWindowDimensions();
+  // 입력칸뿐 아니라 채점 버튼까지 키보드 위로 올릴 수 있게 전체 영역을 부모에게 전달합니다.
+  const rowRef = useRef<ComponentRef<typeof View>>(null);
+  // 큰 글자를 줄이지 않고 답 입력 폭을 확보하도록 좁은 화면에서는 채점 버튼을 아래로 옮깁니다.
+  const stacked = width < 380 || fontScale > 1.2;
   const solved = quiz.status === 'correct';
   const canRetry = quiz.answer !== '' || quiz.status !== 'unanswered';
   const checkAnswer = () => {
@@ -40,35 +47,38 @@ export function ChangeQuiz({ totalPriceKrw, selectedPaymentKrw, quiz, onAnswer, 
         물건값 {won.format(totalPriceKrw)}원{ '\n' }
         거스름돈은 얼마일까요?
       </Text>
-      <View style={styles.inputRow}>
-        <TextInput
-          testID="quiz-answer"
-          accessibilityLabel="거스름돈 답 입력"
-          accessibilityState={{ disabled: solved }}
-          value={quiz.answer}
-          onChangeText={onAnswer}
-          onSubmitEditing={checkAnswer}
-          editable={!solved}
-          keyboardType="number-pad"
-          returnKeyType="done"
-          maxLength={MAX_CHANGE_ANSWER_LENGTH}
-          autoCorrect={false}
-          autoCapitalize="none"
-          placeholder="답 입력"
-          placeholderTextColor="#657365"
-          style={[styles.input, solved && styles.solvedInput]}
-        />
-        <Text style={styles.unit}>원</Text>
-        {/* 키보드와 하단 요약이 화면을 줄여도 입력칸과 채점 버튼을 함께 볼 수 있게 나란히 둡니다. */}
+      <View ref={rowRef} collapsable={false} style={[styles.inputRow, stacked && styles.stackedInputRow]}>
+        <View style={[styles.answerFields, stacked && styles.stackedAnswerFields]}>
+          <TextInput
+            testID="quiz-answer"
+            accessibilityLabel="거스름돈 답 입력"
+            accessibilityState={{ disabled: solved }}
+            value={quiz.answer}
+            onChangeText={onAnswer}
+            onFocus={() => onAnswerFocus?.(rowRef.current)}
+            onBlur={() => onAnswerFocus?.(null)}
+            onSubmitEditing={checkAnswer}
+            editable={!solved}
+            keyboardType="number-pad"
+            returnKeyType="done"
+            maxLength={MAX_CHANGE_ANSWER_LENGTH}
+            autoCorrect={false}
+            autoCapitalize="none"
+            placeholder="답 입력"
+            placeholderTextColor="#657365"
+            style={[styles.input, stacked && styles.stackedInput, solved && styles.solvedInput]}
+          />
+          <Text style={styles.unit}>원</Text>
+        </View>
         {!solved && (
           <Pressable
             testID="quiz-check"
             accessibilityRole="button"
             accessibilityLabel="정답 확인"
             onPress={checkAnswer}
-            style={({ pressed }) => [styles.checkButton, pressed && styles.pressed]}
+            style={({ pressed }) => [styles.checkButton, stacked && styles.stackedCheckButton, pressed && styles.pressed]}
           >
-            <Text style={styles.checkText}>정답{'\n'}확인</Text>
+            <Text style={styles.checkText}>정답 확인</Text>
           </Pressable>
         )}
       </View>
@@ -99,10 +109,15 @@ const styles = StyleSheet.create({
   title: { fontSize: 21, fontWeight: '800', color: '#293D31' },
   question: { fontSize: 18, lineHeight: 28, color: '#315239', marginTop: 10 },
   inputRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 14 },
-  input: { flex: 1, minWidth: 100, minHeight: 64, borderWidth: 2, borderColor: '#73936A', borderRadius: 12, backgroundColor: '#FFFFFF', paddingHorizontal: 12, paddingVertical: 10, fontSize: 25, color: '#234F40', fontWeight: '700' },
+  stackedInputRow: { flexDirection: 'column', alignItems: 'stretch' },
+  answerFields: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  stackedAnswerFields: { flex: 0, width: '100%' },
+  input: { flex: 1, minWidth: 0, minHeight: 64, borderWidth: 2, borderColor: '#73936A', borderRadius: 12, backgroundColor: '#FFFFFF', paddingHorizontal: 12, paddingVertical: 10, fontSize: 25, color: '#234F40', fontWeight: '700' },
+  stackedInput: { paddingHorizontal: 8 },
   solvedInput: { borderColor: '#C8D5BF', backgroundColor: '#EAF0E5' },
   unit: { fontSize: 20, color: '#315239', fontWeight: '700' },
-  checkButton: { width: 72, minHeight: 64, borderRadius: 12, backgroundColor: '#295C43', alignItems: 'center', justifyContent: 'center', padding: 8 },
+  checkButton: { minWidth: 72, minHeight: 64, borderRadius: 12, backgroundColor: '#295C43', alignItems: 'center', justifyContent: 'center', padding: 8 },
+  stackedCheckButton: { width: '100%' },
   checkText: { fontSize: 16, lineHeight: 22, textAlign: 'center', fontWeight: '700', color: '#FFFFFF' },
   feedback: { fontSize: 16, lineHeight: 26, color: '#4E6653', marginTop: 12 },
   correctFeedback: { color: '#255B42', fontWeight: '700' },
