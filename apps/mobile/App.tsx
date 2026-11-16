@@ -8,6 +8,7 @@ import { filterProductsByCategory, getCategoryCounts, type CatalogFilter } from 
 import { PaymentSelector } from './src/components/payment-selector';
 import { ShoppingReceipt } from './src/components/shopping-receipt';
 import { QuantityControl } from './src/components/quantity-control';
+import { useAccessibilityFocus } from './src/features/accessibility/use-accessibility-focus';
 import { getCartSummary } from './src/features/cart/cart';
 import { getBudgetSummary, STARTING_BUDGET_KRW } from './src/features/budget/budget';
 import { createInitialShoppingState, createShoppingReducer, getPaymentSummary } from './src/features/payment/payment';
@@ -39,6 +40,13 @@ function MarketScreen({ products, source, reload }: {
   const allSamples = products.every((product) => product.isSample);
   // 물건이 바뀐 뒤 예전 돈 선택이 남지 않도록 장바구니와 선택 금액을 함께 관리합니다.
   const [shopping, dispatch] = useReducer(shoppingReducer, undefined, createInitialShoppingState);
+  const marketTitleRef = useRef<ComponentRef<typeof Text>>(null);
+  const [titleLayoutReady, setTitleLayoutReady] = useState(false);
+  const focusMarketTitle = useAccessibilityFocus(marketTitleRef);
+  useEffect(() => {
+    // 목록 머리글이 실제로 배치된 뒤에만 안내합니다. 반복 레이아웃·수량·분류 변경에는 초점을 옮기지 않습니다.
+    if (shopping.receipt === null && titleLayoutReady) return focusMarketTitle();
+  }, [shopping.receipt, titleLayoutReady, focusMarketTitle]);
   // 분류는 화면의 선택 상태로만 보관해 장바구니·돈 선택·퀴즈를 다시 만들지 않습니다.
   const [category, setCategory] = useState<CatalogFilter>('all');
   const visibleProducts = useMemo(() => filterProductsByCategory(products, category), [products, category]);
@@ -131,7 +139,8 @@ function MarketScreen({ products, source, reload }: {
   );
 
   function startNewRound() {
-    // 내장 예시는 같은 화면을 재사용하므로 새 놀이에서 분류도 명시적으로 처음으로 되돌립니다.
+    // 내장 예시는 같은 화면을 재사용하므로 새 제목의 배치와 분류를 새 놀이 기준으로 다시 확인합니다.
+    setTitleLayoutReady(false);
     setCategory('all');
     if (source === 'supabase') reload();
     else dispatch({ type: 'start-new-round' });
@@ -202,7 +211,16 @@ function MarketScreen({ products, source, reload }: {
 
                   <View style={styles.welcome}>
                     <Text style={styles.eyebrow}>어서 오세요!</Text>
-                    <Text style={styles.title} accessibilityRole="header">
+                    <Text
+                      ref={marketTitleRef}
+                      testID="market-title"
+                      accessible
+                      style={styles.title}
+                      accessibilityRole="header"
+                      onLayout={({ nativeEvent }) => {
+                        if (nativeEvent.layout.width > 0 && nativeEvent.layout.height > 0) setTitleLayoutReady(true);
+                      }}
+                    >
                       오늘은 무엇을{'\n'}사 볼까요?
                     </Text>
                     <Text style={styles.description}>

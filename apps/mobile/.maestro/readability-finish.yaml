@@ -98,7 +98,7 @@ name: 키보드를 연 채 정답 채점하고 영수증과 새 놀이 확인
     centerElement: false
 - assertVisible:
     id: category-all
-    text: '^전체 상품 12개, 선택됨$'
+    text: '^전체 상품 12개$'
     selected: true
 - scrollUntilVisible:
     element:

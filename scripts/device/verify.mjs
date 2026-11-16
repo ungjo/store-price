@@ -17,6 +17,7 @@ import { captureStandaloneApk, assertStandaloneApkUnchanged } from '../build/sta
 import { requireOffline, runStandaloneOffline } from './standalone-device.mjs';
 import { captureDisplaySettings, restoreDisplaySettings, serializeDisplaySettings } from './display-settings.mjs';
 import { runReadability } from './readability-device.mjs';
+import { runTalkBack } from './talkback-device.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const mobileRoot = path.join(repoRoot, 'apps/mobile');
@@ -30,6 +31,8 @@ let receiptOnly = false;
 let standaloneOnly = false;
 let readabilityRequested = false;
 let readabilityOnly = false;
+let talkbackRequested = false;
+let talkbackOnly = false;
 let doctor = false;
 let previewPath;
 let standalonePath;
@@ -41,11 +44,13 @@ for (let index = 0; index < args.length; index += 1) {
   else if (args[index] === '--standalone-only') { standaloneOnly = true; noCommit = true; }
   else if (args[index] === '--readability') readabilityRequested = true;
   else if (args[index] === '--readability-only') { readabilityRequested = true; readabilityOnly = true; noCommit = true; }
+  else if (args[index] === '--talkback') talkbackRequested = true;
+  else if (args[index] === '--talkback-only') { talkbackRequested = true; talkbackOnly = true; noCommit = true; }
   else if (args[index] === '--doctor') doctor = true;
   else if (args[index] === '--private-price-preview' && args[index + 1]) previewPath = args[++index];
   else if (args[index] === '--standalone-apk' && args[index + 1]) standalonePath = args[++index];
   else if (args[index] === '--message' && args[index + 1]) message = args[++index];
-  else throw new Error('지원 옵션: --no-commit, --receipt-only, --standalone-only, --readability, --readability-only, --doctor, --private-price-preview <원본 경로>, --standalone-apk <빌드 검증 파일>, --message "커밋 메시지"');
+  else throw new Error('지원 옵션: --no-commit, --receipt-only, --standalone-only, --readability, --readability-only, --talkback, --talkback-only, --doctor, --private-price-preview <원본 경로>, --standalone-apk <빌드 검증 파일>, --message "커밋 메시지"');
 }
 if (!message.trim() || /[\r\n\0]/u.test(message)) throw new Error('커밋 메시지는 한 줄로 입력해 주세요.');
 if (previewPath && receiptOnly && !doctor) throw new Error('실제 가격 미리보기는 전체 검사와 함께 실행해 주세요.');
@@ -54,6 +59,10 @@ if (standaloneOnly && !standalonePath) throw new Error('설치형 APK 부분 진
 if (standaloneOnly && (receiptOnly || previewPath)) throw new Error('설치형 APK 부분 진단은 영수증·개인 가격 미리보기 검사와 함께 실행할 수 없습니다.');
 if (readabilityRequested && (receiptOnly || previewPath || (readabilityOnly && standalonePath))) {
   throw new Error('화면 사용성 검사는 영수증 부분 검사나 개인 미리보기와 함께 실행하지 않습니다. APK 부분 진단은 --standalone-only --readability를 사용해 주세요.');
+}
+
+if (talkbackRequested && (receiptOnly || previewPath || standalonePath || readabilityRequested)) {
+  throw new Error('TalkBack 검사는 현재 Expo Go에서 단독으로 확인합니다. 영수증 부분 검사·실제 가격 미리보기·설치형 APK·화면 배율 검사와 함께 실행하지 마세요.');
 }
 
 const runId = new Date().toISOString().replace(/[-:.]/gu, '') + '-' + randomBytes(4).toString('hex');
@@ -93,6 +102,7 @@ let standaloneResult;
 let standaloneJunit;
 let displayState;
 let readabilityResult;
+let talkbackResult;
 let commit = null;
 let overallStatus = 'blocked';
 const screenAwake = {
@@ -499,6 +509,36 @@ async function verifyReadability() {
   }
 }
 
+function assertTalkBackEvidence() {
+  if (!talkbackResult || talkbackResult.status !== 'passed'
+    || talkbackResult.applicationId !== 'host.exp.exponent' || talkbackResult.runId !== runId
+    || talkbackResult.inputMode !== 'uinput-touch'
+    || typeof talkbackResult.talkBackVersion !== 'string' || !talkbackResult.talkBackVersion.trim()
+    || !Array.isArray(talkbackResult.checkpoints) || talkbackResult.checkpoints.length === 0
+    || !talkbackResult.checkpoints.some((entry) => entry.speech?.matched === true)
+    || talkbackResult.checkpoints.some((entry) => entry.expectation?.speechIncludes && entry.speech?.matched !== true)
+    || talkbackResult.restoration?.verified !== true) {
+    throw new Error('TalkBack의 검사 대상·실제 입력·발화 근거·설정 복구를 확인하지 못해 기록과 커밋을 만들지 않습니다.');
+  }
+}
+
+async function verifyTalkBack() {
+  say('TalkBack을 켠 실제 읽기 초점·버튼 조작·생성된 안내 문구를 확인합니다. 종료 전에 접근성 설정을 복구합니다.');
+  const started = Date.now();
+  try {
+    // Maestro 이후에만 호출합니다. 뒤이어 Maestro를 시작하면 활성 접근성 서비스가 억제될 수 있습니다.
+    talkbackResult = await runTalkBack({
+      repoRoot, runDir, run, adb, tools, selectedSerial, runId,
+      applicationId: 'host.exp.exponent', expoUrl: 'exp://127.0.0.1:' + port, say,
+    });
+    assertTalkBackEvidence();
+    checks.push({ label: 'talkback-flow', exitCode: 0, milliseconds: Date.now() - started });
+  } catch (error) {
+    checks.push({ label: 'talkback-flow', exitCode: 1, milliseconds: Date.now() - started });
+    throw error;
+  }
+}
+
 function standaloneEvidence() {
   const networkState = (value) => value && ({
     networkMode: value.networkMode,
@@ -641,7 +681,7 @@ function writeReport(status, reason = '') {
       '- 미리보기 응답 SHA-256: `' + previewAfter.fingerprint + '` (이번 실행 세션)',
       '- 배포 산출물 검사: ' + releaseScan.scannedFiles + '개 파일, 실제 상품 식별자·이름·임시 토큰 없음',
     ] : []),
-    '- 도구: Maestro 2.12.1 / JDK 21 / USB 실기기 / Expo Go' + (standaloneJunit ? ' / 설치형 APK' : ''),
+    '- 도구: Maestro 2.12.1 / JDK 21 / USB 실기기 / Expo Go' + (standaloneJunit ? ' / 설치형 APK' : '') + (talkbackResult ? ' / TalkBack' : ''),
     '- 커밋 모드: ' + (noCommit ? '검사·기록만 수행 (--no-commit)' : '검사한 소스가 유지된 경우에만 자동 커밋. 실제 커밋 ID는 실행 요약 또는 git log에서 확인.'),
     ...(reason ? ['', '중단 이유: ' + reason.replace(/[\r\n]/gu, ' ')] : []),
     '', '## 실행한 명령', '', '```bash',
@@ -663,6 +703,9 @@ function writeReport(status, reason = '') {
     'node --test scripts/device/standalone-device.test.mjs',
     'node --test scripts/device/display-settings.test.mjs',
     'node --test scripts/device/keyboard-layout.test.mjs',
+    'node --test scripts/device/talkback-observer.test.mjs',
+    'node --test scripts/device/talkback-device.test.mjs',
+    'node --test scripts/device/talkback-speech-ocr.test.mjs',
     'maestro check-syntax apps/mobile/.maestro/readability-open.yaml',
     'maestro check-syntax apps/mobile/.maestro/readability-correct.yaml',
     'maestro check-syntax apps/mobile/.maestro/readability-finish.yaml',
@@ -702,6 +745,10 @@ function writeReport(status, reason = '') {
       'adb -s <선택한 실기기> ' + display.recoveryCommands.density.join(' '),
       'adb -s <선택한 실기기> ' + display.recoveryCommands.fontScale.join(' '),
     ] : []),
+    ...(talkbackResult ? [
+      '# 앞선 Maestro 검사 종료 후 --talkback 옵션으로 동일 Expo Go 번들의 읽기 흐름 검사',
+      '# runTalkBack이 실제 읽기 초점·생성된 발화 텍스트·uinput 터치와 설정 복구를 확인',
+    ] : []),
     ...(screenAwake.restoreStatus === 'restored' ? [
       screenAwake.originalValue === 'null'
         ? 'adb -s <선택한 실기기> shell settings delete global stay_on_while_plugged_in'
@@ -716,6 +763,15 @@ function writeReport(status, reason = '') {
     '- 성공 기록 전에 현재 값이 여전히 7일 때만 원래 값을 복구한다. 중간에 바뀐 값은 보존한다.',
     '- 복구 상태: ' + screenAwake.restoreStatus + '. 복구 뒤 값: ' + (screenAwake.valueAfterRestore ?? screenAwake.valueBeforeRestore ?? screenAwake.originalValue ?? '확인하지 않음') + '.',
     '- 임시 설정의 복구를 확인하지 못하면 성공 보고서와 자동 커밋을 만들지 않는다. 원본 summary.json에 실제 복구 결과와 실행한 명령의 종료 코드를 남긴다.',
+    ...(talkbackResult ? [
+      '', '## TalkBack 접근성 검사', '',
+      '- 검사 대상: Expo Go / 앱 ID `' + talkbackResult.applicationId + '`, 실행 표시 `' + talkbackResult.runId + '`.',
+      '- TalkBack 버전: ' + talkbackResult.talkBackVersion.replace(/[\r\n]/gu, ' ') + '. 입력 방식: `' + talkbackResult.inputMode + '`.',
+      '- 읽기 초점·상품 선택·수량·지불·퀴즈·영수증 흐름에서 확인 지점 ' + talkbackResult.checkpoints.length + '개를 통과했다.',
+      '- 접근성 서비스와 관련 설정 복구 확인: ' + talkbackResult.restoration.verified + '.',
+      '- 실제 읽기 초점과 화면에 표시된 TalkBack 발화 문구를 확인했다. 실제 스피커·이어폰 음성을 사람이 청취한 평가와는 구분한다.',
+      '- 원본 화면·발화·입력 로그는 이번 실행의 비공개 .artifacts 폴더에만 보관한다.',
+    ] : []),
     ...(readabilityResult ? [
       '', '## 큰 글자·좁은 화면·열린 키보드 검사', '',
       '- 검사 대상: ' + (apkState ? '새로 설치한 release APK. 오프라인 첫 실행과 통신 복구 뒤 공개 상품으로 검사했다.' : 'Expo Go 개발 화면.') + ' 앱 ID: `' + readabilityResult.applicationId + '`, 실행 표시: `' + readabilityResult.runId + '`.',
@@ -785,7 +841,7 @@ function writeReport(status, reason = '') {
     '- 정답 전 계산 완료 차단, 영수증 상품별 가격·수량·합계·지불액·거스름돈·잔액을 확인한다.',
     '- 0원 거스름돈도 완료하며, 다시 장보기와 영수증 상태의 재실행으로 새 놀이를 시작한다.',
     '', '## 결과', '',
-    ...checks.filter((check) => check.label.startsWith('maestro-syntax-readability-') || /^readability-(?:standard|large-font|narrow-large-font)-(?:open|correct|finish)$/u.test(check.label) || ['display-settings-helpers', 'keyboard-layout-helpers', 'maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'maestro-syntax-categories', 'maestro-syntax-standalone', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'build-helpers', 'standalone-device-helpers', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow', 'standalone-offline', 'screen-awake-restore', 'screen-awake-restored-check'].includes(check.label))
+    ...checks.filter((check) => check.label.startsWith('maestro-syntax-readability-') || /^readability-(?:standard|large-font|narrow-large-font)-(?:open|correct|finish)$/u.test(check.label) || ['display-settings-helpers', 'keyboard-layout-helpers', 'talkback-observer-tests', 'talkback-device-helpers', 'talkback-speech-ocr-tests', 'talkback-flow', 'maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'maestro-syntax-categories', 'maestro-syntax-standalone', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'build-helpers', 'standalone-device-helpers', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow', 'standalone-offline', 'screen-awake-restore', 'screen-awake-restored-check'].includes(check.label))
       .map((check) => '- ' + check.label + ': 종료 코드 ' + check.exitCode),
     '- JUnit: ' + (junit ? `${junit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
     '- 예시 선택 JUnit: ' + (loadingJunit ? `${loadingJunit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
@@ -899,6 +955,9 @@ try {
       await run('standalone-device-helpers', process.execPath, ['--test', 'scripts/device/standalone-device.test.mjs'], { timeout: timeout.check });
       await run('display-settings-helpers', process.execPath, ['--test', 'scripts/device/display-settings.test.mjs'], { timeout: timeout.check });
       await run('keyboard-layout-helpers', process.execPath, ['--test', 'scripts/device/keyboard-layout.test.mjs'], { timeout: timeout.check });
+      await run('talkback-observer-tests', process.execPath, ['--test', 'scripts/device/talkback-observer.test.mjs'], { timeout: timeout.check });
+      await run('talkback-speech-ocr-tests', process.execPath, ['--test', 'scripts/device/talkback-speech-ocr.test.mjs'], { timeout: timeout.check });
+      await run('talkback-device-helpers', process.execPath, ['--test', 'scripts/device/talkback-device.test.mjs'], { timeout: timeout.check });
       // 실제 PostgreSQL 엔진에서 DB 권한과 가격 공개 조건을 확인한 뒤 앱·실기기 검사로 넘어갑니다.
       say('database-tests 확인 중');
       await run('database-tests', process.execPath, [tools.npm, '--prefix', 'scripts/database', 'test'], { timeout: timeout.check });
@@ -919,7 +978,7 @@ try {
       catalogBefore = await verifyCatalogHttp('catalog-http-before');
       await ensurePortUnused();
       createdReverse = await prepareReverse();
-      if (!receiptOnly && !readabilityOnly) await verifyLoadingChoice();
+      if (!receiptOnly && !readabilityOnly && !talkbackOnly) await verifyLoadingChoice();
       say('전용 Expo 서버와 새 실행 화면을 준비합니다.');
       expoServer = startLogged('expo-server', process.execPath, [tools.expo, 'start', '--localhost', '--port', String(port), '--clear'], {
         cwd: mobileRoot,
@@ -933,7 +992,7 @@ try {
         assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
         assertCatalogEnvironmentUnchanged(catalogEnvironment);
       }
-      if (!readabilityOnly) {
+      if (!readabilityOnly && !talkbackOnly) {
         say(receiptOnly ? '휴대전화에서 영수증 구간을 부분 검사합니다.' : '휴대전화에서 장바구니·거스름돈·계산 완료·영수증을 전체 검사합니다.');
         const maestroDir = path.join(runDir, 'maestro');
         await run('maestro-flow', tools.maestro, [
@@ -944,6 +1003,11 @@ try {
           receiptOnly ? 'apps/mobile/.maestro/receipt.yaml' : 'apps/mobile/.maestro/payment.yaml',
         ], { timeout: timeout.flow });
         junit = readJunit(path.join(runDir, 'result.xml'));
+      }
+      if (talkbackRequested) {
+        await verifyTalkBack();
+        assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
+        assertCatalogEnvironmentUnchanged(catalogEnvironment);
       }
       if (interrupted) throw new Error('사용자가 검사를 중단했습니다.');
       assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
@@ -971,7 +1035,7 @@ try {
     assertCatalogEnvironmentUnchanged(catalogEnvironment);
     if (apkState) assertStandaloneApkUnchanged(apkState);
     // 부분 검사 성공은 전체 회귀 검증을 대신하지 않으므로 공개 보고서와 커밋을 만들지 않습니다.
-    if (!receiptOnly && !standaloneOnly && !readabilityOnly) {
+    if (!receiptOnly && !standaloneOnly && !readabilityOnly && !talkbackOnly) {
       if (!loadingJunit) throw new Error('예시 선택 실기기 검사를 완료하지 않아 기록과 커밋을 만들지 않습니다.');
       if (apkState && !standaloneJunit) throw new Error('설치형 APK의 오프라인 검사를 완료하지 않아 기록과 커밋을 만들지 않습니다.');
       if (readabilityRequested && (!readabilityResult || !serializeDisplaySettings(displayState).restoration.verified
@@ -979,6 +1043,7 @@ try {
         || readabilityResult.runId !== (apkState?.buildNonce ?? runId))) {
         throw new Error('큰 글자·좁은 화면 검사와 설정 복구를 완료하지 않아 기록과 커밋을 만들지 않습니다.');
       }
+      if (talkbackRequested) assertTalkBackEvidence();
       if (apkState) assertStandaloneApkUnchanged(apkState);
       writeReport('PASS');
       assertCatalogEnvironmentUnchanged(catalogEnvironment);
@@ -992,7 +1057,8 @@ try {
       }
     }
     overallStatus = 'passed';
-    say(readabilityOnly ? '큰 글자·좁은 화면 부분 검사를 마쳤습니다. 전체 검증 기록과 커밋은 생성하지 않았습니다.'
+    say(talkbackOnly ? 'TalkBack 부분 검사를 마쳤습니다. 전체 검증 기록과 커밋은 생성하지 않았습니다.'
+      : readabilityOnly ? '큰 글자·좁은 화면 부분 검사를 마쳤습니다. 전체 검증 기록과 커밋은 생성하지 않았습니다.'
       : standaloneOnly ? '설치형 APK 부분 진단을 마치고 이번 진단 앱을 정리했습니다. 전체 검증 기록과 커밋은 생성하지 않았습니다.'
       : receiptOnly ? '영수증 부분 검사를 마쳤습니다. 전체 검증 기록과 커밋은 생성하지 않았습니다.' : '실기기 자동 검사와 기록을 마쳤습니다.' + (commit ? ' 로컬 커밋: ' + commit.slice(0, 12) : ' 새 커밋은 만들지 않았습니다.'));
   }
@@ -1007,13 +1073,14 @@ try {
   await cleanup();
   if (fs.existsSync(runDir)) {
     fs.writeFileSync(path.join(runDir, 'summary.json'), JSON.stringify({
-      runId, scope: readabilityOnly ? 'readability-only' : standaloneOnly ? 'standalone-only' : receiptOnly ? 'receipt-only' : 'full', status: overallStatus, startedAt: startedAt.toISOString(), finishedAt: new Date().toISOString(),
+      runId, scope: talkbackOnly ? 'talkback-only' : readabilityOnly ? 'readability-only' : standaloneOnly ? 'standalone-only' : receiptOnly ? 'receipt-only' : 'full', status: overallStatus, startedAt: startedAt.toISOString(), finishedAt: new Date().toISOString(),
       device, sourceHash: gitState?.sourceHash, head: gitState?.head, checks, junit, commit, screenAwake,
-      loadingChoice: standaloneOnly ? undefined : { runId: loadingRunId, junit: loadingJunit, scenario: 'pending-choice', networkSettingsChanged: false },
+      loadingChoice: (standaloneOnly || readabilityOnly || talkbackOnly) ? undefined : { runId: loadingRunId, junit: loadingJunit, scenario: 'pending-choice', networkSettingsChanged: false },
       catalog: { environmentFingerprint: catalogEnvironment?.fingerprint, before: catalogBefore, after: catalogAfter },
       privatePreview: { sourceFingerprint: previewState?.fingerprint, before: previewBefore, after: previewAfter, releaseScan },
       standalone: standaloneEvidence(),
       readability: { requested: readabilityRequested, result: readabilityResult, display: displayState ? serializeDisplaySettings(displayState) : undefined },
+      talkback: { requested: talkbackRequested, result: talkbackResult },
     }, null, 2) + '\n');
     say('원본 기록: .artifacts/device/' + runId + '/');
   }

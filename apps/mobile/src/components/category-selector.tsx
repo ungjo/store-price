@@ -26,7 +26,8 @@ export function CategorySelector({ selected, counts, onSelect }: CategorySelecto
               key={category.id}
               testID={'category-' + category.id}
               accessibilityRole="button"
-              accessibilityLabel={category.label + ' 상품 ' + counts[category.id] + '개' + (active ? ', 선택됨' : '')}
+              // 선택 상태는 별도 속성으로 전달해 TalkBack이 같은 안내를 두 번 읽지 않게 합니다.
+              accessibilityLabel={category.label + ' 상품 ' + counts[category.id] + '개'}
               accessibilityState={{ selected: active }}
               accessibilityHint="보이는 상품만 바꿔요."
               onPress={() => onSelect(category.id)}

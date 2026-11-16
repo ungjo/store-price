@@ -41,7 +41,7 @@ name: 큰 글자와 좁은 화면에서 거스름돈 입력 준비
     centerElement: false
 - assertVisible:
     id: category-all
-    text: '^전체 상품 12개, 선택됨$'
+    text: '^전체 상품 12개$'
     selected: true
 - scrollUntilVisible:
     element:
@@ -58,7 +58,7 @@ name: 큰 글자와 좁은 화면에서 거스름돈 입력 준비
     id: category-bakery-snacks
 - assertVisible:
     id: category-bakery-snacks
-    text: '^빵·간식 상품 2개, 선택됨$'
+    text: '^빵·간식 상품 2개$'
     selected: true
 - scrollUntilVisible:
     element:

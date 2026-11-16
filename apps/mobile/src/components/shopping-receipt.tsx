@@ -1,6 +1,8 @@
+import { type ComponentRef, useEffect, useRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { STARTING_BUDGET_KRW } from '../features/budget/budget';
+import { useAccessibilityFocus } from '../features/accessibility/use-accessibility-focus';
 import { type Receipt } from '../features/payment/receipt';
 
 type ShoppingReceiptProps = {
@@ -11,12 +13,16 @@ type ShoppingReceiptProps = {
 const won = new Intl.NumberFormat('ko-KR');
 
 export function ShoppingReceipt({ receipt, onNewRound }: ShoppingReceiptProps) {
+  const titleRef = useRef<ComponentRef<typeof Text>>(null);
+  const focusTitle = useAccessibilityFocus(titleRef);
+  // 영수증은 새 화면이므로 제목부터 한 번 읽게 하고, 같은 제목의 live 알림을 겹쳐 보내지 않습니다.
+  useEffect(() => focusTitle(), [focusTitle]);
   return (
     <ScrollView testID="receipt-screen" style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.heading}>
         <Text style={styles.icon} accessible={false}>🧾</Text>
         <Text style={styles.brand}>꼬마 시장 · 놀이 영수증</Text>
-        <Text testID="receipt-title" style={styles.title} accessibilityRole="header" accessibilityLiveRegion="polite">
+        <Text ref={titleRef} testID="receipt-title" accessible style={styles.title} accessibilityRole="header">
           계산을 마쳤어요!
         </Text>
         <Text style={styles.description}>고른 물건과 돌려받은 돈을 살펴봐요.</Text>

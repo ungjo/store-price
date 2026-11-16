@@ -95,5 +95,19 @@
   "scripts/device/display-settings.test.mjs",
   "scripts/device/keyboard-layout.mjs",
   "scripts/device/keyboard-layout.test.mjs",
-  "scripts/device/readability-device.mjs"
+  "scripts/device/readability-device.mjs",
+  "apps/mobile/src/features/accessibility/focus-request.ts",
+  "apps/mobile/src/features/accessibility/focus-request.test.ts",
+  "apps/mobile/src/features/accessibility/use-accessibility-focus.ts",
+  "scripts/device/android/TalkBackSnapshot.java",
+  "scripts/device/talkback-observer.mjs",
+  "scripts/device/talkback-observer.test.mjs",
+  "scripts/device/talkback-input.mjs",
+  "scripts/device/talkback-device.mjs",
+  "scripts/device/talkback-device.test.mjs",
+  "docs/book/chapters/06e-talkback-accessibility.md",
+  "scripts/device/talkback-journey.mjs",
+  "scripts/device/talkback-speech-ocr.ps1",
+  "scripts/device/talkback-speech-ocr.mjs",
+  "scripts/device/talkback-speech-ocr.test.mjs"
 ]

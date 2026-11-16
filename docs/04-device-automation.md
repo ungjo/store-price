@@ -64,6 +64,21 @@ node scripts/device/verify.mjs --readability --message "feat: 큰 글자와 좁�
 
 글자 배율과 밀도는 현재 Android 프로필의 원래 값을 기록한 뒤 임시로 바꾼다. 정상 종료와 오류 종료 모두 복구를 시도하고 원래 값으로 돌아왔는지 다시 확인한다. 사용자 변경을 발견하면 덮어쓰지 않는다. 복구가 확인되지 않으면 통과·자동 커밋하지 않는다. 검사 중에는 설정을 직접 바꾸거나 휴대전화를 조작하지 않고 연결을 유지한다. [화면 개선과 검사 설계](book/chapters/06b-readable-layout.md)에서 구현 이유와 검사 범위를 확인한다.
 
+## TalkBack 실제 제스처와 읽기 정보 검사
+
+저장소 루트에서 부분 진단과 전체 검사를 구분해 실행한다.
+
+```bash
+node scripts/device/verify.mjs --talkback-only
+node scripts/device/verify.mjs --talkback --message "feat: TalkBack 장보기와 영수증 접근성 개선"
+```
+
+`--talkback-only`는 전체 성공 보고서나 커밋을 만들지 않는다. 전체 명령은 기존 놀이 회귀와 TalkBack 동선을 함께 확인하고 설정 복구·파일 지문 조건까지 통과해야 기록·커밋한다. 이번 대상은 SM-X710 / Android 14의 Samsung TalkBack 14.5.00.14와 Expo Go 최신 코드다. 기존 APK는 수정 전 비교용이며 새 APK를 빌드하지 않는다.
+
+임시 터치 장치로 실제 스와이프·탭을 전달하고 접근성 서비스를 억제하지 않는 조회 도구로 포커스·이름·역할·상태를 읽는다. Samsung 로그에 발화 내용이 없어 검사 중 Speech output overlay를 켜고 표시 영역의 한국어 텍스트를 OCR로 대조한다. 화면 계층과 발화 텍스트 관찰은 음성을 직접 듣고 발음·스피커 음질을 평가한 결과와 구분한다. 수집 범위는 허용한 앱·TalkBack·숫자 키보드로 제한하며 원본 화면은 커밋하지 않는다.
+
+검사 전 서비스 목록·접근성 사용 값·발화 표시·관찰 필터·화면 유지 설정을 기록하고 종료·실패 뒤 복구 여부를 확인한다. 초기 부분 실행의 OCR 검출 실패와 실제 앱 개선을 구분한 근거는 [TalkBack 개발 기록](book/chapters/06e-talkback-accessibility.md)에 남긴다. 최종 전체 결과는 검사 시작 HEAD `0e008b9`인 자동 보고서로 확인한다.
+
 ## 검사와 기록
 
 - PGlite의 메모리 PostgreSQL에서 상품·가격 이력·예시 데이터·공개 조건·역할별 권한을 검사한다. 실제 Supabase 클라우드/HTTP 검증과 구분한다.
@@ -93,7 +108,7 @@ node scripts/device/verify.mjs --readability --message "feat: 큰 글자와 좁�
 
 큰 글자·작은 화면·키보드 개선과 Expo Go 전체 검증은 `e15dac6`으로 완료했고 사용자가 GitHub 업로드를 확인했다. 실행 `20261115T161955875Z-724b31ea`에서 기존 놀이·세 화면 조건·각 두 번의 열린 키보드 실측·설정 복구가 모두 통과했다. [당시 개발 기록](book/chapters/06b-readable-layout.md)과 `e15dac6`에 포함된 자동 보고서로 확인한다.
 
-**꼬마 시장 화면 검사** APK의 스마트폰 실제 오프라인 첫 실행·후속 화면 검사·복구는 `f0b408d`로 완료했고 사용자가 GitHub 업로드를 확인했다. [APK 기록](book/chapters/06c-readable-offline-apk.md)과 해당 커밋의 보고서가 근거다. 이번에는 동일 APK를 SIM 없는 태블릿에서 검사하며 이전 스마트폰 성공과 구분한다.
+**꼬마 시장 화면 검사** APK의 스마트폰 검증은 `f0b408d`, 같은 APK의 SIM 없는 SM-X710 태블릿 검증은 `0e008b9`로 완료했고 사용자가 GitHub 업로드를 확인했다. 태블릿 실행 `20261116T081042192Z-86a428d9`에서 실제 오프라인·화면·설정 복구가 통과했다. 각 커밋의 보고서를 당시 근거로 보존한다. 이번 단계는 Expo Go 최신 코드의 TalkBack 접근성 검사이며 이전 APK 성공과 구분한다.
 
 사전 연결 확인인 device:doctor는 실기기 시나리오를 실행하거나 커밋하지 않는다. 실제 화면 조건을 적용한 검사와 설정 복구가 완료돼야 그 범위의 성공으로 기록한다.
 
@@ -103,13 +118,13 @@ SM-X710 / Android 14는 정확한 전화 하드웨어 기능이 없고 SIM 상�
 
 기존 활성 SIM 한 개의 스마트폰은 `single-sim` 경로와 모바일 데이터 복구를 유지한다. 다중 활성 SIM·불명확한 응답·전화 하드웨어는 있지만 SIM이 없는 경우는 중단한다. Wi-Fi 전용 조회 결과의 모바일 데이터 상태는 null, 복구는 `not-applicable`로 구분한다. 실제 인터넷 경로와 USB 전달이 없는지 확인하는 조건은 두 모드 모두 유지한다.
 
-읽기 전용 태블릿 분류와 도구 모의 검사 43개가 통과했다. 이번 스마트폰 검사는 모의 회귀이며 현재 연결된 스마트폰의 새 실기기 결과가 아니다. 태블릿 화면 조건은 원래 밀도 340에서 배율 1.0/1.5, 밀도 800에서 배율 1.5다. 폭은 약 753dp/320dp이며 원래 override가 없는 상태까지 복구한다.
+이 지원 단계에서는 도구 모의 검사 43개와 태블릿 전체 실기기를 통과해 `0e008b9`로 기록했다. 해당 단계의 스마트폰 검사는 모의 회귀이며 새 스마트폰 실기기 결과가 아니다. 태블릿 화면 조건은 원래 밀도 340에서 배율 1.0/1.5, 밀도 800에서 배율 1.5다. 폭은 약 753dp/320dp이며 원래 override가 없는 상태까지 복구한다.
 
 ```bash
 node scripts/device/verify.mjs --standalone-apk .artifacts/build/standalone-cf5eaac5f72fa3f0/provenance.json --readability --message "test: SIM 없는 태블릿과 스마트폰 검사 지원"
 ```
 
-앱·DB·API 변경이나 APK 재빌드는 포함하지 않는다. [태블릿·스마트폰 검사 기록](book/chapters/06d-tablet-and-phone-verification.md) 및 검사 시작 HEAD `f0b408d`인 자동 보고서로 실제 태블릿 성공 여부를 확인한다.
+이 단계는 앱·DB·API 변경이나 APK 재빌드를 포함하지 않았다. [태블릿·스마트폰 검사 기록](book/chapters/06d-tablet-and-phone-verification.md)과 `0e008b9`에 포함된 자동 보고서에 결과를 보존한다.
 
 ## 설치형 APK의 실제 오프라인 첫 실행
 

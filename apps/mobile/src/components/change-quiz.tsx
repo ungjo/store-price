@@ -1,7 +1,8 @@
-import { type ComponentRef, useRef } from 'react';
+import { type ComponentRef, useEffect, useRef } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 
 import { MAX_CHANGE_ANSWER_LENGTH, type ChangeQuizState } from '../features/payment/change-quiz';
+import { useAccessibilityFocus } from '../features/accessibility/use-accessibility-focus';
 
 type ChangeQuizProps = {
   totalPriceKrw: number;
@@ -28,6 +29,21 @@ export function ChangeQuiz({ totalPriceKrw, selectedPaymentKrw, quiz, onAnswer, 
   // 큰 글자를 줄이지 않고 답 입력 폭을 확보하도록 좁은 화면에서는 채점 버튼을 아래로 옮깁니다.
   const stacked = width < 380 || fontScale > 1.2;
   const solved = quiz.status === 'correct';
+  const answerRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const restoreAnswerFocus = useRef(false);
+  const focusAnswer = useAccessibilityFocus(answerRef, { afterKeyboardHides: true });
+  const feedbackRef = useRef<ComponentRef<typeof Text>>(null);
+  const focusFeedback = useAccessibilityFocus(feedbackRef, { afterKeyboardHides: true });
+  useEffect(() => {
+    // 정답 확인 버튼이 사라진 자리에서 초점을 잃지 않고 다음 결과를 읽게 합니다.
+    if (solved) return focusFeedback();
+  }, [solved, focusFeedback]);
+  useEffect(() => {
+    if (restoreAnswerFocus.current && quiz.answer === '' && quiz.status === 'unanswered') {
+      restoreAnswerFocus.current = false;
+      return focusAnswer();
+    }
+  }, [quiz.answer, quiz.status, focusAnswer]);
   const canRetry = quiz.answer !== '' || quiz.status !== 'unanswered';
   const checkAnswer = () => {
     // 채점 뒤에는 키보드를 닫아 정답 안내와 계산식을 바로 읽을 수 있게 합니다.
@@ -50,6 +66,7 @@ export function ChangeQuiz({ totalPriceKrw, selectedPaymentKrw, quiz, onAnswer, 
       <View ref={rowRef} collapsable={false} style={[styles.inputRow, stacked && styles.stackedInputRow]}>
         <View style={[styles.answerFields, stacked && styles.stackedAnswerFields]}>
           <TextInput
+            ref={answerRef}
             testID="quiz-answer"
             accessibilityLabel="거스름돈 답 입력"
             accessibilityState={{ disabled: solved }}
@@ -83,9 +100,11 @@ export function ChangeQuiz({ totalPriceKrw, selectedPaymentKrw, quiz, onAnswer, 
         )}
       </View>
       <Text
+        ref={feedbackRef}
+        accessible
         testID="quiz-feedback"
         style={[styles.feedback, solved && styles.correctFeedback]}
-        accessibilityLiveRegion="polite"
+        accessibilityLiveRegion={solved ? 'none' : 'polite'}
         accessibilityLabel={feedback[quiz.status]}
       >
         {feedback[quiz.status]}
@@ -94,7 +113,12 @@ export function ChangeQuiz({ totalPriceKrw, selectedPaymentKrw, quiz, onAnswer, 
         <Pressable
           testID="quiz-retry"
           accessibilityRole="button"
-          onPress={() => { Keyboard.dismiss(); onRetry(); }}
+          onPress={() => {
+            // 사라지는 다시 풀기 버튼 대신 빈 입력칸을 읽게 하되, 키보드를 강제로 열지는 않습니다.
+            restoreAnswerFocus.current = true;
+            Keyboard.dismiss();
+            onRetry();
+          }}
           style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
         >
           <Text style={styles.retryText}>다시 풀기</Text>

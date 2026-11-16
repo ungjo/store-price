@@ -6,7 +6,7 @@ name: 상품 분류와 새 예시의 장바구니·영수증 회귀 검사
 ---
 - assertVisible:
     id: category-all
-    text: '^전체 상품 12개, 선택됨$'
+    text: '^전체 상품 12개$'
     selected: true
 - scrollUntilVisible:
     element:
@@ -34,7 +34,7 @@ name: 상품 분류와 새 예시의 장바구니·영수증 회귀 검사
     enabled: true
 - assertVisible:
     id: category-produce
-    text: '^과일·채소 상품 6개, 선택됨$'
+    text: '^과일·채소 상품 6개$'
     selected: true
 - scrollUntilVisible:
     element:
@@ -122,7 +122,7 @@ name: 상품 분류와 새 예시의 장바구니·영수증 회귀 검사
     enabled: true
 - assertVisible:
     id: category-dairy-eggs
-    text: '^유제품·달걀 상품 4개, 선택됨$'
+    text: '^유제품·달걀 상품 4개$'
     selected: true
 - scrollUntilVisible:
     element:
@@ -192,7 +192,7 @@ name: 상품 분류와 새 예시의 장바구니·영수증 회귀 검사
     enabled: true
 - assertVisible:
     id: category-bakery-snacks
-    text: '^빵·간식 상품 2개, 선택됨$'
+    text: '^빵·간식 상품 2개$'
     selected: true
 - scrollUntilVisible:
     element:
@@ -264,7 +264,7 @@ name: 상품 분류와 새 예시의 장바구니·영수증 회귀 검사
     enabled: true
 - assertVisible:
     id: category-produce
-    text: '^과일·채소 상품 6개, 선택됨$'
+    text: '^과일·채소 상품 6개$'
     selected: true
 - scrollUntilVisible:
     element:
@@ -419,7 +419,7 @@ name: 상품 분류와 새 예시의 장바구니·영수증 회귀 검사
     centerElement: false
 - assertVisible:
     id: category-all
-    text: '^전체 상품 12개, 선택됨$'
+    text: '^전체 상품 12개$'
     selected: true
 - scrollUntilVisible:
     element:
