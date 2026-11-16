@@ -51,7 +51,9 @@
 
 SIM 없는 SM-X710 / Android 14의 실제 오프라인·화면·복구 검증은 `0e008b9`로 완료했고 사용자가 GitHub 업로드를 확인했습니다. [태블릿 기록](book/chapters/06d-tablet-and-phone-verification.md)과 해당 커밋의 보고서에 결과를 보존합니다. 이 단계의 스마트폰 회귀는 모의 검사이며 과거 스마트폰 실기기 성공과 구분합니다.
 
-이번 단계는 Expo Go 최신 코드에서 TalkBack 장보기·영수증의 읽기 정보와 포커스를 개선합니다. 실제 스와이프·두 번 탭, native 정보, 발화 표시 텍스트를 근거로 확인합니다. 첫 담기 뒤 포커스 유지 등 부분 결과는 [개발 기록](book/chapters/06e-talkback-accessibility.md)에 남기고 최종 전체 결과는 검사 시작 HEAD `0e008b9`인 [자동 보고서](book/verification/latest-android.md)로 구분합니다. 새 APK·iOS·음성 청취 평가를 완료한 단계는 아닙니다. 아래의 과거 단계 기록은 당시 결과입니다.
+TalkBack 장보기·영수증 개선과 Expo Go 검증은 `c949154`에 포함했습니다. 실행 `20261116T112508546Z-5416f64e`에서 23개 확인 지점과 설정 복구를 통과했습니다. [개발 기록](book/chapters/06e-talkback-accessibility.md)과 해당 커밋의 보고서가 당시 근거입니다.
+
+이번 단계는 같은 앱 코드를 **꼬마 시장 읽기 검사** APK로 빌드하고 현재 태블릿에서 오프라인 첫 실행·통신 복구·설치형 앱 TalkBack을 검사합니다. 새 APK의 출처와 실제 실행 결과는 [빌드 기록](book/chapters/06f-talkback-offline-apk.md) 및 검사 시작 HEAD `c949154`인 [자동 보고서](book/verification/latest-android.md)로 확인합니다. DB·가격·화면 배율 검사·iOS·음성 청취 평가를 추가하는 단계는 아닙니다. 아래의 과거 단계 기록은 당시 결과입니다.
 
 장바구니는 `6009317`, 놀이돈 예산·잔액은 `281a5e9`, 돈 선택과 갤럭시 검사·기록·커밋 자동화는 `8309377`에서 구현하고 검증했습니다.
 

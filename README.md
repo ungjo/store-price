@@ -49,12 +49,13 @@
 - [x] 큰 글자·작은 화면·키보드 대응과 Expo Go 전체 검증 (`e15dac6`) — [개발 기록](docs/book/chapters/06b-readable-layout.md)
 - [x] 화면 개선 APK의 스마트폰 오프라인·키보드 검증 (`f0b408d`) — [개발 기록](docs/book/chapters/06c-readable-offline-apk.md)
 - [x] SIM 없는 태블릿 실기기·기존 스마트폰 검사 경로 검증 (`0e008b9`) — [개발 기록](docs/book/chapters/06d-tablet-and-phone-verification.md)
-- TalkBack 장보기·영수증 개선은 [개발 기록](docs/book/chapters/06e-talkback-accessibility.md), 최종 결과는 [자동 보고서](docs/book/verification/latest-android.md) 참조
+- [x] TalkBack 장보기·영수증 개선과 Expo Go 검증 (`c949154`) — [개발 기록](docs/book/chapters/06e-talkback-accessibility.md)
+- TalkBack 개선 APK의 빌드·오프라인·접근성 검사는 [개발 기록](docs/book/chapters/06f-talkback-offline-apk.md), 최종 결과는 [자동 보고서](docs/book/verification/latest-android.md) 참조
 - [ ] 허용된 실제 가격의 앱 공개·자동 갱신
 - [ ] Android·iPhone 실기기 검증
 - [ ] 스토어 제출
 
-SIM 없는 태블릿 검증은 `0e008b9`로 완료했고 사용자가 GitHub 업로드를 확인했습니다. 이번 단계는 SM-X710의 실제 TalkBack을 켜고 Expo Go 최신 코드에서 상품 담기·수량·계산·영수증의 읽기 정보와 포커스를 개선합니다. 제스처 뒤 동작과 발화 표시 텍스트를 확인하며 새 APK 빌드나 음성 청취 평가는 포함하지 않습니다. 구현·부분 진단과 최종 성공은 [개발 기록](docs/book/chapters/06e-talkback-accessibility.md) 및 검사 시작 HEAD `0e008b9`인 [자동 보고서](docs/book/verification/latest-android.md)로 구분합니다.
+TalkBack 개선과 Expo Go의 23개 확인 지점·설정 복구 검증은 `c949154`에 포함했습니다. 이번 단계는 같은 코드를 **꼬마 시장 읽기 검사** APK로 만들어 SM-X710에서 오프라인 첫 실행과 통신 복구 뒤의 TalkBack 동선을 검사합니다. 기존 설치 앱은 보존하며 새 APK의 실제 결과는 [개발 기록](docs/book/chapters/06f-talkback-offline-apk.md) 및 검사 시작 HEAD `c949154`인 [자동 보고서](docs/book/verification/latest-android.md)로 구분합니다.
 
 ## 첫 화면 실행
 

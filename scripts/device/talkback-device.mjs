@@ -9,6 +9,94 @@ import { readTalkBackSpeechOcr } from './talkback-speech-ocr.mjs';
 const TALKBACK_PACKAGE = 'com.samsung.android.accessibility.talkback';
 const TALKBACK_COMPONENT = TALKBACK_PACKAGE + '/com.samsung.android.marvin.talkback.TalkBackService';
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function talkBackLaunchKind({ mode, applicationId, runId }) {
+  if (typeof runId !== 'string' || runId !== runId.trim() || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/u.test(runId)) {
+    throw new Error('TalkBack 실행 표시가 올바르지 않습니다.');
+  }
+  if (mode === 'expo-go' && applicationId === 'host.exp.exponent') return 'expo-deep-link';
+  if (mode === 'standalone') {
+    const nonce = /^standalone-([a-f0-9]{16})$/u.exec(runId)?.[1];
+    // 기존 앱을 잘못 재시작하지 않도록 검사용 패키지와 빌드 표시의 같은 nonce를 확인합니다.
+    if (nonce && applicationId === 'com.ungjo.storeprice.offline.b' + nonce) return 'android-launcher';
+  }
+  throw new Error('TalkBack 실행 모드와 앱·빌드 표시가 일치하지 않습니다.');
+}
+
+export function resolveTalkBackTarget({ mode = 'expo-go', applicationId, runId, expoUrl }) {
+  const launchKind = talkBackLaunchKind({ mode, applicationId, runId });
+  let launchArgs;
+  if (mode === 'expo-go') {
+    // 개발 서버 주소는 이 검사기가 준비한 로컬 연결로 한정합니다.
+    const matched = typeof expoUrl === 'string' ? /^exp:\/\/127\.0\.0\.1:(\d{1,5})$/u.exec(expoUrl) : null;
+    if (!matched || matched[0] !== expoUrl || Number(matched[1]) < 1 || Number(matched[1]) > 65535) {
+      throw new Error('Expo Go 검사에는 정확한 로컬 Expo 주소가 필요합니다.');
+    }
+    launchArgs = ['am', 'start', '-W', '-a', 'android.intent.action.VIEW', '-d', expoUrl, '-p', applicationId];
+  } else {
+    if (expoUrl !== undefined) throw new Error('설치형 TalkBack 검사는 Expo 주소를 사용하지 않습니다.');
+    // 실제 빌드 manifest의 exported MainActivity를 명시해 DEFAULT가 없는 런처 필터의 암시적 해석에 의존하지 않습니다.
+    launchArgs = ['am', 'start', '-W', '-a', 'android.intent.action.MAIN', '-c', 'android.intent.category.LAUNCHER', '-n', applicationId + '/' + applicationId + '.MainActivity'];
+  }
+  return Object.freeze({ mode, applicationId, runId, launchKind, launchArgs: Object.freeze(launchArgs) });
+}
+
+export function assertTalkBackResult(result, { mode = 'expo-go', applicationId, runId }) {
+  const launchKind = talkBackLaunchKind({ mode, applicationId, runId });
+  // 다른 앱이나 예전 빌드의 성공 결과를 현재 APK의 접근성 증거로 재사용하지 않습니다.
+  if (!result || result.status !== 'passed' || result.mode !== mode || result.launchKind !== launchKind
+    || result.applicationId !== applicationId || result.runId !== runId || result.inputMode !== 'uinput-touch'
+    || typeof result.talkBackVersion !== 'string' || !result.talkBackVersion.trim()
+    || !Array.isArray(result.checkpoints) || result.checkpoints.length === 0
+    || !result.checkpoints.some((entry) => entry?.speech?.matched === true)
+    || result.checkpoints.some((entry) => entry?.expectation?.speechIncludes && entry.speech?.matched !== true)
+    || result.restoration?.verified !== true) {
+    throw new Error('TalkBack의 검사 대상·실제 입력·발화 근거·설정 복구를 확인하지 못해 기록과 커밋을 만들지 않습니다.');
+  }
+}
+
+
+export function assertTalkBackLaunchResult(result, target) {
+  talkBackLaunchKind(target);
+  if (!result || typeof result.stdout !== 'string'
+    || (result.stderr !== undefined && typeof result.stderr !== 'string')
+    || (result.code !== undefined && result.code !== 0)
+    || (result.exitCode !== undefined && result.exitCode !== 0)) {
+    throw new Error('TalkBack 대상 앱 시작 명령이 실패했습니다.');
+  }
+  const output = result.stdout + '\n' + (result.stderr ?? '');
+  // 일부 Android am 명령은 실패를 출력하고도 0을 반환하므로 실제 시작 상태와 Activity를 함께 확인합니다.
+  if (/(?:^|[\r\n])\s*(?:Error\b|Exception\b|[A-Za-z0-9_.$]*Exception\b|Permission Denial\b|Security exception\b)/iu.test(output)) {
+    throw new Error('TalkBack 대상 앱을 시작하지 못했습니다.');
+  }
+  const lines = output.split(/\r?\n/u).map((line) => line.trim());
+  const statuses = lines.filter((line) => line.startsWith('Status:'));
+  const activities = lines.filter((line) => line.startsWith('Activity:'));
+  if (statuses.length !== 1 || statuses[0] !== 'Status: ok' || activities.length !== 1) {
+    throw new Error('TalkBack 대상 앱의 실제 시작 완료를 확인하지 못했습니다.');
+  }
+  const component = activities[0].slice('Activity:'.length).trim();
+  const matched = /^([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+)\/(\.?[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*)$/u.exec(component);
+  if (!matched || matched[1] !== target.applicationId) throw new Error('다른 앱의 시작 결과는 TalkBack 검사에 사용하지 않습니다.');
+  const activity = matched[2].startsWith('.') ? target.applicationId + matched[2] : matched[2];
+  if (target.mode === 'standalone' && activity !== target.applicationId + '.MainActivity') {
+    throw new Error('설치형 APK의 검증된 MainActivity가 시작되지 않았습니다.');
+  }
+  // 이미 열린 앱으로 돌아갈 때의 정상 Warning도 Status: ok와 같은 Activity가 확인된 경우에만 허용합니다.
+  return target.applicationId + '/' + activity;
+}
+
+export function isTalkBackTargetReady(nodes, target) {
+  // 현재 회귀 검사의 상품·가격 조건은 공개 DB의 예시 12개입니다. 다른 출처나 오래된 번들을 통과시키지 않습니다.
+  const expected = [
+    ['device-run-marker', '자동 검사 ' + target.runId],
+    ['catalog-source-marker', '상품 출처 supabase'],
+    ['catalog-loaded-count', '불러온 상품 12개'],
+  ];
+  return expected.every(([id, desc]) => nodes.some((node) =>
+    node.packageName === target.applicationId && node.id === id && node.desc === desc && node.visible));
+}
+
 export const flattenNodes = (value) => value.windows.flatMap((window) => {
   const visit = (node) => [node, ...node.children.flatMap(visit)];
   return visit(window.root);
@@ -52,14 +140,14 @@ export function assertCheckpoint(view, expectation) {
 }
 
 // 일반 Maestro와 분리해 실제 TalkBack이 켜진 구간에는 서비스를 억제하는 UIAutomator를 실행하지 않는다.
-export async function runTalkBack({ repoRoot, runDir, run, adb, tools, selectedSerial, runId, applicationId, expoUrl, say = () => {} }) {
-  if (applicationId !== 'host.exp.exponent' || !/^[A-Za-z0-9._-]+$/u.test(runId)) throw new Error('TalkBack 검사는 현재 Expo Go 실행만 지원합니다.');
+export async function runTalkBack({ repoRoot, runDir, run, adb, tools, selectedSerial, runId, applicationId, expoUrl, mode = 'expo-go', say = () => {} }) {
+  const target = resolveTalkBackTarget({ mode, applicationId, runId, expoUrl });
   const directory = path.join(runDir, 'talkback');
   fs.mkdirSync(directory);
   const nonce = randomBytes(6).toString('hex');
   const inputName = 'StorePriceTalkBack-' + nonce;
   const remote = '/data/local/tmp/store-price-talkback-' + nonce;
-  const result = { status: 'running', applicationId, runId, inputMode: 'uinput-touch',
+  const result = { status: 'running', mode: target.mode, launchKind: target.launchKind, applicationId, runId, inputMode: 'uinput-touch',
     talkBackComponent: TALKBACK_COMPONENT, checkpoints: [], navigation: [], restoration: { verified: false } };
   let cleanupMode = false;
   let count = 0; let input; let overlayOriginal; let overlayChanged = false; let serviceChanged = false; let remoteCreated = false;
@@ -68,6 +156,10 @@ export async function runTalkBack({ repoRoot, runDir, run, adb, tools, selectedS
     return response.stdout.trim();
   };
   const shell = (args, suffix) => command(['shell', ...args], suffix);
+  const launchApp = async (suffix) => {
+    const response = await adb('talkback-' + (++count) + '-' + suffix, ['shell', ...target.launchArgs], { timeout: 30000, cleanup: cleanupMode });
+    return assertTalkBackLaunchResult(response, target);
+  };
   const setting = (key) => shell(['settings', '--user', '0', 'get', 'secure', key], 'setting');
   const servicesBefore = await setting('enabled_accessibility_services');
   const enabledBefore = await setting('accessibility_enabled');
@@ -150,17 +242,17 @@ export async function runTalkBack({ repoRoot, runDir, run, adb, tools, selectedS
     await shell(['settings', '--user', '0', 'put', 'secure', 'accessibility_enabled', '1'], 'enable');
     await pause(700); await serviceState();
     result.talkBackPid = await shell(['pidof', TALKBACK_PACKAGE], 'pid');
-    await shell(['am', 'force-stop', applicationId], 'restart-expo');
-    await shell(['am', 'start', '-a', 'android.intent.action.VIEW', '-d', expoUrl, '-p', applicationId], 'open-expo');
+    await shell(['am', 'force-stop', applicationId], 'restart-app');
+    await launchApp('open-app');
     let ready;
     for (let attempt = 0; attempt < 40; attempt++) {
       await pause(500);
       try {
         const view = await snapshot();
-        if (view.nodes.some((node) => node.id === 'device-run-marker' && node.desc === '자동 검사 ' + runId)) { ready = view; break; }
+        if (isTalkBackTargetReady(view.nodes, target)) { ready = view; break; }
       } catch { /* 새 화면이 나타날 때까지만 기다리고 다른 앱 화면은 성공으로 사용하지 않는다. */ }
     }
-    if (!ready) throw new Error('현재 실행 번호의 Expo 화면을 확인하지 못했습니다.');
+    if (!ready) throw new Error('이번 앱의 실행 표시와 Supabase 상품 12개가 준비된 화면을 확인하지 못했습니다.');
     const root = ready.value.windows.find((window) => window.root.packageName === applicationId).bounds;
     const width = root[2], height = root[3];
     if (width >= height) throw new Error('현재 검사는 세로 화면에서 진행합니다.');
@@ -266,7 +358,7 @@ export async function runTalkBack({ repoRoot, runDir, run, adb, tools, selectedS
         if (findSettingSwitch((await snapshot(false)).nodes, '음성 출력 표시').toggle.checked !== overlayOriginal) throw new Error('음성 표시 원복을 확인하지 못했습니다.');
       }
       result.restoration.speechOverlay = true;
-      await shell(['am', 'start', '-a', 'android.intent.action.VIEW', '-d', expoUrl, '-p', applicationId], 'return-app');
+      await launchApp('return-app');
     } catch (error) { failures.push(error.message); }
     try {
       if (remoteCreated) {

@@ -17,7 +17,7 @@ import { captureStandaloneApk, assertStandaloneApkUnchanged } from '../build/sta
 import { requireOffline, runStandaloneOffline } from './standalone-device.mjs';
 import { captureDisplaySettings, restoreDisplaySettings, serializeDisplaySettings } from './display-settings.mjs';
 import { runReadability } from './readability-device.mjs';
-import { runTalkBack } from './talkback-device.mjs';
+import { runTalkBack, assertTalkBackResult } from './talkback-device.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const mobileRoot = path.join(repoRoot, 'apps/mobile');
@@ -61,8 +61,8 @@ if (readabilityRequested && (receiptOnly || previewPath || (readabilityOnly && s
   throw new Error('화면 사용성 검사는 영수증 부분 검사나 개인 미리보기와 함께 실행하지 않습니다. APK 부분 진단은 --standalone-only --readability를 사용해 주세요.');
 }
 
-if (talkbackRequested && (receiptOnly || previewPath || standalonePath || readabilityRequested)) {
-  throw new Error('TalkBack 검사는 현재 Expo Go에서 단독으로 확인합니다. 영수증 부분 검사·실제 가격 미리보기·설치형 APK·화면 배율 검사와 함께 실행하지 마세요.');
+if (talkbackRequested && (receiptOnly || previewPath || readabilityRequested || (talkbackOnly && standalonePath))) {
+  throw new Error('TalkBack 검사는 영수증 부분 검사·실제 가격 미리보기·화면 배율 검사와 함께 실행하지 않습니다. APK 부분 진단은 --standalone-only --talkback을 사용해 주세요.');
 }
 
 const runId = new Date().toISOString().replace(/[-:.]/gu, '') + '-' + randomBytes(4).toString('hex');
@@ -428,8 +428,12 @@ async function verifyStandaloneOffline() {
       adb, run, tools: { ...tools, selectedSerial }, runDir, apkState,
       discardSuccessfulInstall: standaloneOnly,
       // 설치형 화면 검사는 오프라인 첫 실행과 통신 복구가 끝난 뒤 같은 APK에서 실행합니다.
-      verifyInstalled: readabilityRequested ? async () => {
-        await verifyReadability();
+      verifyInstalled: (readabilityRequested || talkbackRequested) ? async () => {
+        if (readabilityRequested) await verifyReadability();
+        // 통신 복구와 모든 Maestro 검사가 끝난 같은 APK에서만 TalkBack을 마지막으로 켭니다.
+        if (talkbackRequested) await verifyTalkBack();
+        // 설치형 앱에서 원격 상품을 읽은 뒤에도 같은 공개 목록인지 확인합니다. 부분 진단은 전체 비교를 주장하지 않습니다.
+        if (!standaloneOnly) catalogAfter = await verifyCatalogHttp('catalog-http-after-apk', catalogBefore);
         assertStandaloneApkUnchanged(apkState);
         assertCatalogEnvironmentUnchanged(catalogEnvironment);
         assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
@@ -462,7 +466,7 @@ async function verifyStandaloneOffline() {
       || standaloneResult.installedFresh !== true
       || standaloneResult.installationScope !== 'current-android-user'
       || standaloneResult.firstLaunchOffline !== true
-      || (readabilityRequested && standaloneResult.verifyInstalledStatus !== 'passed')
+      || ((readabilityRequested || talkbackRequested) && standaloneResult.verifyInstalledStatus !== 'passed')
       || standaloneResult.installationCleanup !== (standaloneOnly ? 'removed-own-probe-install' : 'not-needed')
       || !offline(standaloneResult.network?.firstOffline)
       || !offline(standaloneResult.network?.lastOffline)
@@ -510,26 +514,24 @@ async function verifyReadability() {
 }
 
 function assertTalkBackEvidence() {
-  if (!talkbackResult || talkbackResult.status !== 'passed'
-    || talkbackResult.applicationId !== 'host.exp.exponent' || talkbackResult.runId !== runId
-    || talkbackResult.inputMode !== 'uinput-touch'
-    || typeof talkbackResult.talkBackVersion !== 'string' || !talkbackResult.talkBackVersion.trim()
-    || !Array.isArray(talkbackResult.checkpoints) || talkbackResult.checkpoints.length === 0
-    || !talkbackResult.checkpoints.some((entry) => entry.speech?.matched === true)
-    || talkbackResult.checkpoints.some((entry) => entry.expectation?.speechIncludes && entry.speech?.matched !== true)
-    || talkbackResult.restoration?.verified !== true) {
-    throw new Error('TalkBack의 검사 대상·실제 입력·발화 근거·설정 복구를 확인하지 못해 기록과 커밋을 만들지 않습니다.');
-  }
+  // 개발 화면의 통과 결과를 설치형 앱의 성공으로 사용할 수 없도록 대상과 실행 표시를 함께 묶습니다.
+  assertTalkBackResult(talkbackResult, {
+    mode: apkState ? 'standalone' : 'expo-go',
+    applicationId: apkState?.applicationId ?? 'host.exp.exponent',
+    runId: apkState?.buildNonce ?? runId,
+  });
 }
 
 async function verifyTalkBack() {
-  say('TalkBack을 켠 실제 읽기 초점·버튼 조작·생성된 안내 문구를 확인합니다. 종료 전에 접근성 설정을 복구합니다.');
+  say((apkState ? '새로 설치한 APK' : 'Expo Go') + '에서 TalkBack 읽기 초점·버튼 조작·생성된 안내 문구를 확인합니다. 종료 전에 접근성 설정을 복구합니다.');
   const started = Date.now();
   try {
     // Maestro 이후에만 호출합니다. 뒤이어 Maestro를 시작하면 활성 접근성 서비스가 억제될 수 있습니다.
     talkbackResult = await runTalkBack({
-      repoRoot, runDir, run, adb, tools, selectedSerial, runId,
-      applicationId: 'host.exp.exponent', expoUrl: 'exp://127.0.0.1:' + port, say,
+      repoRoot, runDir, run, adb, tools, selectedSerial,
+      mode: apkState ? 'standalone' : 'expo-go',
+      runId: apkState?.buildNonce ?? runId, applicationId: apkState?.applicationId ?? 'host.exp.exponent',
+      ...(apkState ? {} : { expoUrl: 'exp://127.0.0.1:' + port }), say,
     });
     assertTalkBackEvidence();
     checks.push({ label: 'talkback-flow', exitCode: 0, milliseconds: Date.now() - started });
@@ -746,7 +748,7 @@ function writeReport(status, reason = '') {
       'adb -s <선택한 실기기> ' + display.recoveryCommands.fontScale.join(' '),
     ] : []),
     ...(talkbackResult ? [
-      '# 앞선 Maestro 검사 종료 후 --talkback 옵션으로 동일 Expo Go 번들의 읽기 흐름 검사',
+      '# 앞선 Maestro 검사 종료 후 --talkback 옵션으로 ' + (apkState ? '새로 설치한 동일 APK' : '동일 Expo Go 번들') + '의 읽기 흐름 검사',
       '# runTalkBack이 실제 읽기 초점·생성된 발화 텍스트·uinput 터치와 설정 복구를 확인',
     ] : []),
     ...(screenAwake.restoreStatus === 'restored' ? [
@@ -765,7 +767,8 @@ function writeReport(status, reason = '') {
     '- 임시 설정의 복구를 확인하지 못하면 성공 보고서와 자동 커밋을 만들지 않는다. 원본 summary.json에 실제 복구 결과와 실행한 명령의 종료 코드를 남긴다.',
     ...(talkbackResult ? [
       '', '## TalkBack 접근성 검사', '',
-      '- 검사 대상: Expo Go / 앱 ID `' + talkbackResult.applicationId + '`, 실행 표시 `' + talkbackResult.runId + '`.',
+      '- 검사 대상: ' + (talkbackResult.mode === 'standalone' ? '새로 설치한 APK' : 'Expo Go') + ' / 앱 ID `' + talkbackResult.applicationId + '`, 실행 표시 `' + talkbackResult.runId + '`.',
+      '- 시작 방식: `' + talkbackResult.launchKind + '`. ' + (apkState ? '오프라인 첫 실행·통신 복구 뒤 같은 APK에서 확인했다.' : '현재 실행 표시의 개발 번들에서 확인했다.'),
       '- TalkBack 버전: ' + talkbackResult.talkBackVersion.replace(/[\r\n]/gu, ' ') + '. 입력 방식: `' + talkbackResult.inputMode + '`.',
       '- 읽기 초점·상품 선택·수량·지불·퀴즈·영수증 흐름에서 확인 지점 ' + talkbackResult.checkpoints.length + '개를 통과했다.',
       '- 접근성 서비스와 관련 설정 복구 확인: ' + talkbackResult.restoration.verified + '.',
@@ -841,7 +844,7 @@ function writeReport(status, reason = '') {
     '- 정답 전 계산 완료 차단, 영수증 상품별 가격·수량·합계·지불액·거스름돈·잔액을 확인한다.',
     '- 0원 거스름돈도 완료하며, 다시 장보기와 영수증 상태의 재실행으로 새 놀이를 시작한다.',
     '', '## 결과', '',
-    ...checks.filter((check) => check.label.startsWith('maestro-syntax-readability-') || /^readability-(?:standard|large-font|narrow-large-font)-(?:open|correct|finish)$/u.test(check.label) || ['display-settings-helpers', 'keyboard-layout-helpers', 'talkback-observer-tests', 'talkback-device-helpers', 'talkback-speech-ocr-tests', 'talkback-flow', 'maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'maestro-syntax-categories', 'maestro-syntax-standalone', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'build-helpers', 'standalone-device-helpers', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow', 'standalone-offline', 'screen-awake-restore', 'screen-awake-restored-check'].includes(check.label))
+    ...checks.filter((check) => check.label.startsWith('maestro-syntax-readability-') || /^readability-(?:standard|large-font|narrow-large-font)-(?:open|correct|finish)$/u.test(check.label) || ['display-settings-helpers', 'keyboard-layout-helpers', 'talkback-observer-tests', 'talkback-device-helpers', 'talkback-speech-ocr-tests', 'talkback-flow', 'maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'maestro-syntax-categories', 'maestro-syntax-standalone', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'build-helpers', 'standalone-device-helpers', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'catalog-http-after-apk', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow', 'standalone-offline', 'screen-awake-restore', 'screen-awake-restored-check'].includes(check.label))
       .map((check) => '- ' + check.label + ': 종료 코드 ' + check.exitCode),
     '- JUnit: ' + (junit ? `${junit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
     '- 예시 선택 JUnit: ' + (loadingJunit ? `${loadingJunit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
@@ -933,6 +936,11 @@ try {
         await run('display-settings-helpers', process.execPath, ['--test', 'scripts/device/display-settings.test.mjs'], { timeout: timeout.check });
         await run('keyboard-layout-helpers', process.execPath, ['--test', 'scripts/device/keyboard-layout.test.mjs'], { timeout: timeout.check });
       }
+      if (talkbackRequested) {
+        await run('talkback-observer-tests', process.execPath, ['--test', 'scripts/device/talkback-observer.test.mjs'], { timeout: timeout.check });
+        await run('talkback-speech-ocr-tests', process.execPath, ['--test', 'scripts/device/talkback-speech-ocr.test.mjs'], { timeout: timeout.check });
+        await run('talkback-device-helpers', process.execPath, ['--test', 'scripts/device/talkback-device.test.mjs'], { timeout: timeout.check });
+      }
       assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
       assertCatalogEnvironmentUnchanged(catalogEnvironment);
       assertStandaloneApkUnchanged(apkState);
@@ -1004,7 +1012,7 @@ try {
         ], { timeout: timeout.flow });
         junit = readJunit(path.join(runDir, 'result.xml'));
       }
-      if (talkbackRequested) {
+      if (talkbackRequested && !apkState) {
         await verifyTalkBack();
         assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
         assertCatalogEnvironmentUnchanged(catalogEnvironment);

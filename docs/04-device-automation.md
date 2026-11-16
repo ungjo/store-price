@@ -73,11 +73,11 @@ node scripts/device/verify.mjs --talkback-only
 node scripts/device/verify.mjs --talkback --message "feat: TalkBack 장보기와 영수증 접근성 개선"
 ```
 
-`--talkback-only`는 전체 성공 보고서나 커밋을 만들지 않는다. 전체 명령은 기존 놀이 회귀와 TalkBack 동선을 함께 확인하고 설정 복구·파일 지문 조건까지 통과해야 기록·커밋한다. 이번 대상은 SM-X710 / Android 14의 Samsung TalkBack 14.5.00.14와 Expo Go 최신 코드다. 기존 APK는 수정 전 비교용이며 새 APK를 빌드하지 않는다.
+`--talkback-only`는 Expo Go 부분 진단이며 전체 성공 보고서나 커밋을 만들지 않는다. 위 전체 명령은 기존 놀이 회귀와 Expo Go TalkBack 동선을 함께 확인하고 설정 복구·파일 지문 조건까지 통과해야 기록·커밋한다. SM-X710 / Android 14의 Samsung TalkBack 14.5.00.14로 23개 확인 지점을 통과한 결과는 `c949154`에 보존한다. 설치형 APK 대상은 아래의 별도 옵션을 사용한다.
 
 임시 터치 장치로 실제 스와이프·탭을 전달하고 접근성 서비스를 억제하지 않는 조회 도구로 포커스·이름·역할·상태를 읽는다. Samsung 로그에 발화 내용이 없어 검사 중 Speech output overlay를 켜고 표시 영역의 한국어 텍스트를 OCR로 대조한다. 화면 계층과 발화 텍스트 관찰은 음성을 직접 듣고 발음·스피커 음질을 평가한 결과와 구분한다. 수집 범위는 허용한 앱·TalkBack·숫자 키보드로 제한하며 원본 화면은 커밋하지 않는다.
 
-검사 전 서비스 목록·접근성 사용 값·발화 표시·관찰 필터·화면 유지 설정을 기록하고 종료·실패 뒤 복구 여부를 확인한다. 초기 부분 실행의 OCR 검출 실패와 실제 앱 개선을 구분한 근거는 [TalkBack 개발 기록](book/chapters/06e-talkback-accessibility.md)에 남긴다. 최종 전체 결과는 검사 시작 HEAD `0e008b9`인 자동 보고서로 확인한다.
+검사 전 서비스 목록·접근성 사용 값·발화 표시·관찰 필터·화면 유지 설정을 기록하고 종료·실패 뒤 복구 여부를 확인한다. 초기 부분 실행의 OCR 검출 실패와 실제 앱 개선을 구분한 근거는 [TalkBack 개발 기록](book/chapters/06e-talkback-accessibility.md)에 남긴다. Expo Go 성공은 `c949154`에 포함된 검사 시작 HEAD `0e008b9`의 보고서로 확인한다.
 
 ## 검사와 기록
 
@@ -108,7 +108,7 @@ node scripts/device/verify.mjs --talkback --message "feat: TalkBack 장보기와
 
 큰 글자·작은 화면·키보드 개선과 Expo Go 전체 검증은 `e15dac6`으로 완료했고 사용자가 GitHub 업로드를 확인했다. 실행 `20261115T161955875Z-724b31ea`에서 기존 놀이·세 화면 조건·각 두 번의 열린 키보드 실측·설정 복구가 모두 통과했다. [당시 개발 기록](book/chapters/06b-readable-layout.md)과 `e15dac6`에 포함된 자동 보고서로 확인한다.
 
-**꼬마 시장 화면 검사** APK의 스마트폰 검증은 `f0b408d`, 같은 APK의 SIM 없는 SM-X710 태블릿 검증은 `0e008b9`로 완료했고 사용자가 GitHub 업로드를 확인했다. 태블릿 실행 `20261116T081042192Z-86a428d9`에서 실제 오프라인·화면·설정 복구가 통과했다. 각 커밋의 보고서를 당시 근거로 보존한다. 이번 단계는 Expo Go 최신 코드의 TalkBack 접근성 검사이며 이전 APK 성공과 구분한다.
+**꼬마 시장 화면 검사** APK의 스마트폰 검증은 `f0b408d`, 같은 APK의 SIM 없는 SM-X710 태블릿 검증은 `0e008b9`로 완료했고 사용자가 GitHub 업로드를 확인했다. 태블릿 실행 `20261116T081042192Z-86a428d9`에서 실제 오프라인·화면·설정 복구가 통과했다. 각 커밋의 보고서를 당시 근거로 보존한다. Expo Go의 TalkBack 검증은 `c949154`에 포함했으며 이번 **꼬마 시장 읽기 검사** APK의 새 검증과 구분한다.
 
 사전 연결 확인인 device:doctor는 실기기 시나리오를 실행하거나 커밋하지 않는다. 실제 화면 조건을 적용한 검사와 설정 복구가 완료돼야 그 범위의 성공으로 기록한다.
 
@@ -128,7 +128,7 @@ node scripts/device/verify.mjs --standalone-apk .artifacts/build/standalone-cf5e
 
 ## 설치형 APK의 실제 오프라인 첫 실행
 
-Expo 계정으로 EAS 클라우드에서 release APK를 만든 뒤 아래처럼 기존 전체 검사에 독립 APK 단계를 추가할 수 있다. 최초 준비는 [설치형 앱 기록](book/chapters/05a-standalone-offline.md), 예시 12개 빌드는 [분류 APK 기록](book/chapters/06a-categories-offline-apk.md), 화면 개선을 담는 현재 작업은 [화면 개선 APK 기록](book/chapters/06c-readable-offline-apk.md)에 남긴다.
+Expo 계정으로 EAS 클라우드에서 release APK를 만든 뒤 아래처럼 기존 전체 검사에 독립 APK 단계를 추가할 수 있다. 최초 준비는 [설치형 앱 기록](book/chapters/05a-standalone-offline.md), 예시 12개 빌드는 [분류 APK 기록](book/chapters/06a-categories-offline-apk.md), 화면 개선은 [화면 개선 APK 기록](book/chapters/06c-readable-offline-apk.md), TalkBack 개선은 [읽기 검사 APK 기록](book/chapters/06f-talkback-offline-apk.md)에 남긴다.
 
 ```bash
 node scripts/device/verify.mjs --standalone-apk .artifacts/build/<빌드 번호>/provenance.json --message "test: 설치형 앱의 오프라인 첫 실행 검증"
@@ -169,6 +169,24 @@ node scripts/device/verify.mjs --standalone-only --readability --standalone-apk 
 ```
 
 이 진단은 오프라인 첫 실행·통신 복구·같은 APK 화면 검사 순서를 실행한다. 성공하더라도 이번 진단 앱을 정리하며 전체 보고서나 자동 커밋을 만들지 않는다. 최종 전체 결과를 대신하지 않는다.
+
+## 같은 APK에서 오프라인과 TalkBack 검사
+
+새 **꼬마 시장 읽기 검사** APK의 전체 검사는 저장소 루트에서 실행한다.
+
+```bash
+node scripts/device/verify.mjs --standalone-apk .artifacts/build/standalone-edc2c57143e6fb27/provenance.json --talkback --message "test: TalkBack APK의 오프라인·접근성 검증"
+```
+
+기존 코드·온라인 놀이 검사 뒤 새 APK의 오프라인 첫 실행을 검사한다. 오프라인 JUnit과 통신 복구가 성공한 뒤 같은 APK의 공개 상품 12개를 불러와 TalkBack을 마지막에 실행한다. APK는 MAIN/LAUNCHER로 열고 전용 패키지와 빌드 표시를 대조한다. Expo Go의 VIEW 실행이나 이전 앱의 결과를 새 APK의 성공으로 인정하지 않는다. TalkBack·통신·화면 유지 설정 복구와 APK 지문까지 통과해야 자동 기록·커밋한다.
+
+이번 단계는 전체 검사를 먼저 실행하고 실패한 구간을 따로 확인해야 할 때만 다음 부분 진단을 사용한다. 부분 진단은 성공해도 이번에 새로 설치한 정확한 지문의 앱을 정리하며 전체 보고서·커밋은 생성하지 않는다. 후속 TalkBack 실패 때도 기존 신규 앱 정리 조건을 유지한다.
+
+```bash
+node scripts/device/verify.mjs --standalone-only --standalone-apk .artifacts/build/standalone-edc2c57143e6fb27/provenance.json --talkback
+```
+
+`--talkback-only`는 Expo Go용으로 남긴다. TalkBack은 화면 배율 검사(`--readability`, `--readability-only`)·영수증 부분 검사·비공개 가격 미리보기와 함께 실행하지 않는다. 이번 APK의 실제 결과는 [개발 기록](book/chapters/06f-talkback-offline-apk.md)과 이 단계의 같은 커밋에 포함된 검사 시작 HEAD `c949154`의 자동 보고서로 확인한다.
 
 ## 공식 자료
 
