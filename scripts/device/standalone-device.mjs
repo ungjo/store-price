@@ -43,34 +43,63 @@ function reverseCount(text) {
   return lines.length;
 }
 
+function hasTelephonyFeature(text) {
+  const lines = text.split(/\r?\n/u);
+  if (!lines.length || lines.some((line) => !/^feature:[A-Za-z0-9_]+(?:[.-][A-Za-z0-9_]+)*(?:=(?:0x[0-9a-fA-F]+|\d+))?$/u.test(line))) {
+    throw bad('기기의 통신 기능 목록을 정확히 확인하지 못했습니다.');
+  }
+  // Wi-Fi 태블릿도 telephony.ims 등을 보고하므로 접두사가 아닌 정확한 기능 이름만 비교합니다.
+  return lines.some((line) => line.split('=')[0] === 'feature:android.hardware.telephony');
+}
+
 export async function inspectOfflineNetwork({ adb, label = 'standalone-network', cleanup = false }) {
-  const read = async (name, args) => (await adb(label + '-' + name, args, { cleanup })).stdout.trim();
+  const read = async (name, args) => checkedOutput(await adb(label + '-' + name, args, { cleanup }), '기기 연결 상태 조회에 실패했습니다.');
   const wifi = await read('wifi', ['shell', 'settings', 'get', 'global', 'wifi_on']);
   const mobile = await read('data', ['shell', 'settings', 'get', 'global', 'mobile_data']);
   const airplane = await read('airplane', ['shell', 'settings', 'get', 'global', 'airplane_mode_on']);
   const sub = await read('subscription', ['shell', 'settings', 'get', 'global', 'multi_sim_data_call']);
-  if (!/^\d{1,9}$/u.test(sub)) throw bad('기본 데이터 회선을 확인하지 못했습니다.');
-  const perSubscription = await read('subscription-data', ['shell', 'settings', 'get', 'global', 'mobile_data' + sub]);
-  if (!/^(?:null|0|1)$/u.test(perSubscription)) throw bad('회선별 데이터 설정을 확인하지 못했습니다.');
   const sim = await read('sim-state', ['shell', 'getprop', 'gsm.sim.state']);
+  const telephony = hasTelephonyFeature(await read('features', ['shell', 'pm', 'list', 'features']));
   const slots = sim.split(',');
-  if (slots.filter((slot) => ['LOADED', 'READY'].includes(slot)).length !== 1
-    || slots.some((slot) => !['LOADED', 'READY', 'ABSENT', 'NOT_READY', 'UNKNOWN'].includes(slot))) {
-    throw bad('이 자동 검사는 데이터 회선 하나의 상태를 명확히 복구할 수 있을 때만 실행합니다.');
+  const activeSlots = slots.filter((slot) => ['LOADED', 'READY'].includes(slot)).length;
+  let networkMode;
+  let perSubscription = null;
+
+  if (telephony && activeSlots === 1
+    && slots.every((slot) => ['LOADED', 'READY', 'ABSENT', 'NOT_READY', 'UNKNOWN'].includes(slot))) {
+    if (!/^\d{1,9}$/u.test(sub)) throw bad('기본 데이터 회선을 확인하지 못했습니다.');
+    networkMode = 'single-sim';
+    perSubscription = await read('subscription-data', ['shell', 'settings', 'get', 'global', 'mobile_data' + sub]);
+    if (!/^(?:null|0|1)$/u.test(perSubscription)) throw bad('회선별 데이터 설정을 확인하지 못했습니다.');
+  } else if (!telephony && (sim === '' || slots.every((slot) => slot === 'ABSENT'))
+    && ['null', '-1'].includes(sub)) {
+    networkMode = 'wifi-only';
+    // SIM 없는 기기의 mobile_data=1도 실제 회선 연결이 아닙니다. 없는 설정을 만들거나 값을 0으로 덮지 않습니다.
+    if (!/^(?:null|0|1)$/u.test(mobile)) throw bad('SIM 없는 기기의 원래 모바일 데이터 설정을 확인하지 못했습니다.');
+  } else {
+    throw bad('이 자동 검사는 데이터 회선 하나 또는 SIM 없는 Wi-Fi 전용 기기를 명확히 구분할 수 있을 때만 실행합니다.');
   }
+
   const connectivity = parseConnectivity(await read('connectivity', ['shell', 'dumpsys', 'connectivity']));
   const result = Object.freeze({
-    wifiEnabled: binary(wifi, 'Wi-Fi'), mobileDataEnabled: binary(mobile, '모바일 데이터'),
-    airplaneModeEnabled: binary(airplane, '비행기 모드'), defaultSubscription: Number(sub),
+    networkMode,
+    wifiEnabled: binary(wifi, 'Wi-Fi'),
+    mobileDataEnabled: networkMode === 'single-sim' ? binary(mobile, '모바일 데이터') : null,
+    airplaneModeEnabled: binary(airplane, '비행기 모드'),
+    defaultSubscription: networkMode === 'single-sim' ? Number(sub) : null,
     ...connectivity,
     reverseMappingCount: reverseCount(await read('reverse', ['reverse', '--list'])),
   });
-  snapshots.set(result, { wifi, mobile, airplane, sub, perSubscription, sim });
+  snapshots.set(result, { wifi, mobile, airplane, sub, perSubscription, sim, telephony, networkMode });
   return result;
 }
 
 export function requireOffline(state) {
-  if (state.wifiEnabled || state.mobileDataEnabled || state.activeDefaultNetwork
+  // 미해당(null)을 꺼짐(false)으로 꾸미지 않으며, 모드와 값이 일치하지 않는 불완전한 증거도 거부합니다.
+  const mobileOffline = (state.networkMode === 'single-sim' && state.mobileDataEnabled === false
+    && Number.isInteger(state.defaultSubscription) && state.defaultSubscription >= 0)
+    || (state.networkMode === 'wifi-only' && state.mobileDataEnabled === null && state.defaultSubscription === null);
+  if (!mobileOffline || state.wifiEnabled !== false || state.activeDefaultNetwork !== false
     || state.internetNetworkCount !== 0 || state.reverseMappingCount !== 0) {
     throw bad('실제 오프라인 상태 또는 USB 전달 연결 없음을 확인하지 못했습니다.');
   }
@@ -80,7 +109,11 @@ function sameSubscription(state, baseline) {
   const original = snapshots.get(baseline);
   const current = snapshots.get(state);
   if (!original || !current || current.sub !== original.sub || current.sim !== original.sim
-    || current.airplane !== original.airplane) throw bad('검사 중 회선 또는 비행기 모드 상태가 바뀌었습니다.');
+    || current.telephony !== original.telephony || current.networkMode !== original.networkMode
+    || current.airplane !== original.airplane
+    || (original.networkMode === 'wifi-only' && current.mobile !== original.mobile)) {
+    throw bad('검사 중 회선 또는 비행기 모드나 SIM 없는 기기의 데이터 설정이 바뀌었습니다.');
+  }
 }
 
 function apkHash(file) {
@@ -222,6 +255,7 @@ export async function runStandaloneOffline({ adb, run, tools, runDir, apkState, 
     currentUser = await requireFreshInstall({ adb, apkState });
     before = await inspectOfflineNetwork({ adb, label: 'standalone-before' });
     evidence.network.before = before;
+    if (before.networkMode === 'wifi-only') evidence.network.restoration.mobileData = 'not-applicable';
     if (before.reverseMappingCount !== 0) throw bad('기존 USB 역방향 연결을 보존하고 검사를 중단합니다.');
     await installFresh({ adb, apkState, currentUser, onHashVerified: () => { evidence.installedFresh = true; } });
     const beforeChange = await inspectOfflineNetwork({ adb, label: 'standalone-before-change' });
@@ -233,7 +267,7 @@ export async function runStandaloneOffline({ adb, run, tools, runDir, apkState, 
       throw bad('설치 중 연결 설정이 바뀌어 그대로 보존하고 중단합니다.');
     }
     // 상태 변경을 요청하기 전에 복구 필요성을 먼저 기록해 중간 실패에도 복구합니다.
-    if (before.mobileDataEnabled) {
+    if (before.networkMode === 'single-sim' && before.mobileDataEnabled === true) {
       changed.mobileData = true;
       await adb('standalone-data-disable', ['shell', 'svc', 'data', 'disable']);
     }

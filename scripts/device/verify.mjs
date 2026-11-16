@@ -14,7 +14,7 @@ import { PREVIEW_PORT, capturePrivatePreview, assertPrivatePreviewUnchanged,
   startPrivatePreviewServer, checkPrivatePreviewHttp, previewEnvironment,
   scanReleaseForPrivateData, writePreviewExpectations } from './private-price-preview.mjs';
 import { captureStandaloneApk, assertStandaloneApkUnchanged } from '../build/standalone.mjs';
-import { runStandaloneOffline } from './standalone-device.mjs';
+import { requireOffline, runStandaloneOffline } from './standalone-device.mjs';
 import { captureDisplaySettings, restoreDisplaySettings, serializeDisplaySettings } from './display-settings.mjs';
 import { runReadability } from './readability-device.mjs';
 
@@ -442,8 +442,10 @@ async function verifyStandaloneOffline() {
         return checkedJunit;
       },
     });
-    const offline = (value) => value?.wifiEnabled === false && value.mobileDataEnabled === false
-      && value.activeDefaultNetwork === false && value.internetNetworkCount === 0 && value.reverseMappingCount === 0;
+    // 실기기 감시와 커밋 직전 판정에 같은 모드·회선·연결 검증을 적용합니다.
+    const offline = (value) => {
+      try { requireOffline(value); return true; } catch { return false; }
+    };
     if (standaloneResult.applicationId !== apkState.applicationId
       || standaloneResult.buildNonce !== apkState.buildNonce
       || standaloneResult.apkSha256 !== apkState.sha256
@@ -454,6 +456,10 @@ async function verifyStandaloneOffline() {
       || standaloneResult.installationCleanup !== (standaloneOnly ? 'removed-own-probe-install' : 'not-needed')
       || !offline(standaloneResult.network?.firstOffline)
       || !offline(standaloneResult.network?.lastOffline)
+      || standaloneResult.network.before?.networkMode !== standaloneResult.network.firstOffline.networkMode
+      || standaloneResult.network.before?.networkMode !== standaloneResult.network.lastOffline.networkMode
+      || (standaloneResult.network.before?.networkMode === 'wifi-only'
+        && standaloneResult.network.restoration?.mobileData !== 'not-applicable')
       || !Number.isInteger(standaloneResult.network?.offlineChecks)
       || standaloneResult.network.offlineChecks < 2
       || standaloneResult.network?.restoration?.verified !== true) {
@@ -495,6 +501,7 @@ async function verifyReadability() {
 
 function standaloneEvidence() {
   const networkState = (value) => value && ({
+    networkMode: value.networkMode,
     wifiEnabled: value.wifiEnabled,
     mobileDataEnabled: value.mobileDataEnabled,
     airplaneModeEnabled: value.airplaneModeEnabled,
@@ -673,7 +680,9 @@ function writeReport(status, reason = '') {
     ...(standaloneJunit ? [
       '# 직접 시작한 개발 서버·USB 연결을 정리한 후 현재 Android 프로필에 검증한 APK를 새로 설치',
       'adb -s <선택한 실기기> install -R --user <현재 Android 사용자> <검증한 APK>',
-      '# Wi-Fi·모바일 데이터와 활성 인터넷 경로·USB reverse가 없는지 첫 실행 전부터 확인',
+      standalone.network.before.networkMode === 'wifi-only'
+        ? '# Wi-Fi 전용 기기는 모바일 데이터 설정을 보존하고 Wi-Fi·활성 인터넷 경로·USB reverse가 없는지 확인'
+        : '# 단일 SIM 스마트폰은 Wi-Fi·모바일 데이터와 활성 인터넷 경로·USB reverse가 없는지 확인',
       'maestro --device <선택한 실기기> test -e APP_ID=<검증한 앱 ID> -e RUN_ID=<빌드 확인 번호> --format junit --output <검사폴더>/standalone-result.xml --test-output-dir <검사폴더>/maestro-standalone --debug-output <검사폴더>/maestro-standalone apps/mobile/.maestro/standalone-offline.yaml',
       '# 검사 종료 뒤 휴대전화의 통신 설정을 원래 값으로 복구하고 확인',
     ] : []),
@@ -731,8 +740,12 @@ function writeReport(status, reason = '') {
       ...(standalone.apk.backupDisabled === true ? ['- APK manifest 검사: 백업 복원 비활성 확인.'] : []),
       '- 현재 Android 프로필에서 이번 APK의 새 설치·미실행 상태를 확인하고 인터넷과 개발 서버 연결이 없는 상태에서 첫 실행했다. 다른 프로필의 설치 여부는 조사하지 않았다.',
       '- 설치 시 -R로 기존 패키지 교체를 금지하고 --user로 현재 프로필을 지정했다. Expo Go 실행 기록과 별도로 검사했다.',
-      '- 검사 전 Wi-Fi: ' + standalone.network.before.wifiEnabled + ', 모바일 데이터: ' + standalone.network.before.mobileDataEnabled + ', 비행기 모드: ' + standalone.network.before.airplaneModeEnabled + '.',
-      '- 첫 실행 전과 마지막 확인 모두 Wi-Fi·모바일 데이터 꺼짐, 활성 기본 네트워크 없음, 인터넷 연결 ' + standalone.network.lastOffline.internetNetworkCount + '개, USB reverse ' + standalone.network.lastOffline.reverseMappingCount + '개.',
+      '- 통신 검사 방식: `' + standalone.network.before.networkMode + '`. ' + (standalone.network.before.networkMode === 'wifi-only'
+        ? '이동통신 기능이 없는 기기로 확인해 모바일 데이터 설정은 조회·보존하며 변경하지 않았다.'
+        : '단일 활성 SIM 스마트폰의 Wi-Fi와 모바일 데이터를 각각 확인하고 원래 값으로 복구했다.'),
+      '- 검사 전 Wi-Fi: ' + standalone.network.before.wifiEnabled + ', 모바일 데이터: ' + (standalone.network.before.mobileDataEnabled === null ? '미해당' : standalone.network.before.mobileDataEnabled) + ', 비행기 모드: ' + standalone.network.before.airplaneModeEnabled + '.',
+      '- 첫 실행 전과 마지막 확인 모두 ' + (standalone.network.before.networkMode === 'wifi-only' ? 'Wi-Fi 꺼짐, 모바일 데이터 미해당' : 'Wi-Fi·모바일 데이터 꺼짐')
+        + ', 활성 기본 네트워크 없음, 인터넷 연결 ' + standalone.network.lastOffline.internetNetworkCount + '개, USB reverse ' + standalone.network.lastOffline.reverseMappingCount + '개.',
       '- 오프라인 상태 확인 횟수: ' + standalone.network.offlineChecks + '. 중간 연결 복구가 감지되면 검사를 중단한다.',
       '- 같은 오프라인 실행에서 내장 예시 12개와 분류별 6·4·2개를 확인했다. 새 상품 세 개의 4,500원 합계·500원 거스름돈·분류 변경 후 장바구니와 정답 유지·영수증·전체 분류 초기화도 검사했다.',
       '- 통신 설정 복구: Wi-Fi ' + standalone.network.restoration.wifi + ', 모바일 데이터 ' + standalone.network.restoration.mobileData + ', 복구 확인 ' + standalone.network.restoration.verified + '.',

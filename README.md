@@ -47,12 +47,13 @@
 - [x] 상품 분류와 예시 12개 구현·검증 (`479f6f5`) — [개발 기록](docs/book/chapters/06-product-categories.md)
 - [x] 분류와 예시 12개 APK의 빌드·실제 오프라인 첫 실행 검증 (`125d852`) — [개발 기록](docs/book/chapters/06a-categories-offline-apk.md)
 - [x] 큰 글자·작은 화면·키보드 대응과 Expo Go 전체 검증 (`e15dac6`) — [개발 기록](docs/book/chapters/06b-readable-layout.md)
-- 화면 개선 APK의 빌드·검사 방식은 [개발 기록](docs/book/chapters/06c-readable-offline-apk.md), 최종 성공 여부는 [자동 보고서](docs/book/verification/latest-android.md) 참조
+- [x] 화면 개선 APK의 스마트폰 오프라인·키보드 검증 (`f0b408d`) — [개발 기록](docs/book/chapters/06c-readable-offline-apk.md)
+- SIM 없는 태블릿 지원과 기존 스마트폰 검사 경로는 [개발 기록](docs/book/chapters/06d-tablet-and-phone-verification.md), 최종 태블릿 결과는 [자동 보고서](docs/book/verification/latest-android.md) 참조
 - [ ] 허용된 실제 가격의 앱 공개·자동 갱신
 - [ ] Android·iPhone 실기기 검증
 - [ ] 스토어 제출
 
-큰 글자·작은 화면·키보드 개선과 Expo Go 전체 검증은 `e15dac6`으로 완료했고 사용자가 GitHub 업로드를 확인했습니다. 이번 단계는 같은 화면을 포함한 **꼬마 시장 화면 검사** APK를 빌드하고 검사합니다. 빌드와 다운로드를 완료했으며, 실제 오프라인 첫 실행 뒤 통신을 복구하고 같은 APK에서 세 화면 조건과 열린 키보드를 확인합니다. 준비·빌드와 실제 성공은 [새 APK 기록](docs/book/chapters/06c-readable-offline-apk.md) 및 검사 시작 HEAD `e15dac6`인 [자동 보고서](docs/book/verification/latest-android.md)로 구분합니다. 상품 DB·가격·공개 권한은 이번에 변경하지 않습니다.
+**꼬마 시장 화면 검사** APK의 스마트폰 검증은 `f0b408d`로 완료했고 사용자가 GitHub 업로드를 확인했습니다. 이번 단계는 검사 도구를 SIM 없는 태블릿에도 맞추고 SM-X710 / Android 14에서 같은 APK를 검사합니다. 태블릿의 모바일 데이터 원본 값은 보존하고 Wi-Fi만 다룹니다. 이번 스마트폰 회귀는 모의 검사이며 이전 실제 스마트폰 성공과 구분합니다. [개발 기록](docs/book/chapters/06d-tablet-and-phone-verification.md)과 검사 시작 HEAD `f0b408d`인 [자동 보고서](docs/book/verification/latest-android.md)로 실제 태블릿 결과를 확인합니다. 앱·DB·API 변경이나 APK 재빌드는 포함하지 않습니다.
 
 ## 첫 화면 실행
 

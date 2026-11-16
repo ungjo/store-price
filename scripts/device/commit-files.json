@@ -87,6 +87,7 @@
   "docs/book/chapters/06a-categories-offline-apk.md",
   "docs/book/chapters/06b-readable-layout.md",
   "docs/book/chapters/06c-readable-offline-apk.md",
+  "docs/book/chapters/06d-tablet-and-phone-verification.md",
   "apps/mobile/.maestro/readability-open.yaml",
   "apps/mobile/.maestro/readability-correct.yaml",
   "apps/mobile/.maestro/readability-finish.yaml",

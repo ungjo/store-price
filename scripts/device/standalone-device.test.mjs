@@ -28,12 +28,18 @@ function harness(t, options = {}) {
   const sha256 = createHash('sha256').update(fs.readFileSync(apkPath)).digest('hex');
   const buildNonce = 'standalone-0123456789abcdef';
   const apkState = { apkPath, sha256, buildNonce, applicationId: 'com.ungjo.storeprice.offline.b0123456789abcdef', versionCode: 1, versionName: '0.1.0' };
-  const state = { wifi: options.wifi ?? '1', data: options.data ?? '1', sub: '1', sim: 'LOADED,NOT_READY',
+  const state = { wifi: options.wifi ?? '1', data: options.data ?? '1',
+    sub: options.sub ?? (options.wifiOnly ? 'null' : '1'),
+    sim: options.sim ?? (options.wifiOnly ? '' : 'LOADED,NOT_READY'),
+    features: options.features ?? ('feature:reqGlEsVersion=0x30002\nfeature:android.hardware.wifi\n'
+      + 'feature:android.hardware.telephony.ims\nfeature:android.hardware.telephony.ims.singlereg\nfeature:android.hardware.telephony.mbms'
+      + (options.wifiOnly ? '' : '\nfeature:android.hardware.telephony')),
     perSub: 'null', airplane: '0', installed: false, installedSha: sha256, reverses: options.reverses ?? '', notLaunched: true };
   const calls = [];
   const apkDevicePath = '/data/app/~~random/package-name==/base.apk';
   const adb = async (label, args, opts = {}) => {
     calls.push({ label, args, cleanup: opts.cleanup === true });
+    options.beforeAdb?.({ label, args, state });
     if (options.prematureLaunch && label === 'standalone-before-change-wifi') state.notLaunched = false;
     if (options.changeApkAfterRestore && label === 'standalone-restored-reverse') fs.appendFileSync(apkPath, 'changed after restoration');
     const command = args.join(' ');
@@ -61,23 +67,34 @@ function harness(t, options = {}) {
     else if (command === 'shell settings get global multi_sim_data_call') stdout = state.sub;
     else if (command === 'shell settings get global airplane_mode_on') stdout = state.airplane;
     else if (command === 'shell getprop gsm.sim.state') stdout = state.sim;
-    else if (command === 'shell dumpsys connectivity') stdout = connectivity(state.wifi === '1' || state.data === '1');
+    else if (command === 'shell pm list features') {
+      if (options.featureReadError) return { stdout: state.features, stderr: 'Feature lookup denied', code: 0 };
+      stdout = state.features;
+    }
+    else if (command === 'shell dumpsys connectivity') stdout = connectivity(state.wifi === '1' || (!options.wifiOnly && state.data === '1'), options.extraInternet === true);
     else if (command === 'reverse --list') stdout = state.reverses;
     else if (command === 'shell svc data disable') {
       state.data = '0';
       if (options.partialDisableFailure) throw new Error('simulated failure after data was disabled');
       stdout = '';
-    } else if (command === 'shell svc wifi disable') { state.wifi = '0'; stdout = ''; }
+    } else if (command === 'shell svc wifi disable') {
+      state.wifi = '0';
+      if (options.partialWifiDisableFailure) throw new Error('simulated failure after Wi-Fi was disabled');
+      stdout = '';
+    }
     else if (command === 'shell svc data enable') {
       if (options.restoreFailure) throw new Error('simulated data restoration failure');
       state.data = '1'; stdout = '';
-    } else if (command === 'shell svc wifi enable') { state.wifi = '1'; stdout = ''; }
+    } else if (command === 'shell svc wifi enable') {
+      if (options.restoreWifiFailure) throw new Error('simulated Wi-Fi restoration failure');
+      state.wifi = '1'; stdout = '';
+    }
     else throw new Error('Unexpected test command: ' + command);
     return { stdout, stderr: '', code: 0 };
   };
   const run = async (label, executable, args, opts) => {
     calls.push({ label, args });
-    assert.equal(state.wifi, '0'); assert.equal(state.data, '0'); assert.equal(state.reverses, '');
+    assert.equal(state.wifi, '0'); assert.equal(state.data, options.wifiOnly ? (options.data ?? '1') : '0'); assert.equal(state.reverses, '');
     assert.equal(opts.timeout, 600_000); assert.ok(opts.signal instanceof AbortSignal);
     assert.ok(args.includes('APP_ID=' + apkState.applicationId)); assert.ok(args.includes('RUN_ID=' + buildNonce));
     state.notLaunched = false;
@@ -92,6 +109,7 @@ function harness(t, options = {}) {
         opts.signal.addEventListener('abort', () => { clearTimeout(timer); reject(new Error('native interrupted')); }, { once: true });
       });
     }
+    options.afterNative?.(state);
     return { stdout: '', code: 0 };
   };
   return { root, state, calls, adb, apkState,
@@ -113,9 +131,11 @@ test('현재 NetworkAgent만 검사하고 과거 요청의 INTERNET 문구는 �
 });
 
 test('Wi-Fi·데이터·기본 연결·인터넷 가능 망·USB 전달 중 하나라도 있으면 오프라인으로 통과하지 않는다', () => {
-  const offline = { wifiEnabled: false, mobileDataEnabled: false, activeDefaultNetwork: false, internetNetworkCount: 0, reverseMappingCount: 0 };
+  const offline = { networkMode: 'single-sim', defaultSubscription: 1, wifiEnabled: false, mobileDataEnabled: false, activeDefaultNetwork: false, internetNetworkCount: 0, reverseMappingCount: 0 };
   assert.doesNotThrow(() => requireOffline(offline));
-  for (const key of Object.keys(offline)) assert.throws(() => requireOffline({ ...offline, [key]: typeof offline[key] === 'boolean' ? true : 1 }));
+  for (const key of ['wifiEnabled', 'mobileDataEnabled', 'activeDefaultNetwork', 'internetNetworkCount', 'reverseMappingCount']) {
+    assert.throws(() => requireOffline({ ...offline, [key]: typeof offline[key] === 'boolean' ? true : 1 }));
+  }
 });
 
 test('진단 결과는 상태와 개수만 반환하며 네트워크 이름·원본 진단을 공개하지 않는다', async (t) => {
@@ -392,4 +412,178 @@ test('후속 검사 중 설치된 앱 해시가 바뀌면 실패하더라도 다
   });
   assert.equal(h.state.installed, true);
   assert.equal(h.calls.some((call) => call.args.includes('uninstall')), false);
+});
+
+
+function assertNoMobileWrites(h) {
+  assert.equal(h.calls.some(({ args }) => args[0] === 'shell' && (
+    (args[1] === 'svc' && args[2] === 'data')
+    || (args[1] === 'settings' && (args.includes('put') || args.includes('delete'))
+      && args.some((part) => part.startsWith('mobile_data') || part === 'multi_sim_data_call'))
+  )), false);
+  assert.equal(h.calls.some(({ args }) => args.some((part) => /^mobile_data(?:null|-1)$/u.test(part))), false);
+}
+
+test('Wi-Fi 전용 태블릿은 IMS 하위 기능과 mobile_data=1을 실제 데이터 회선으로 오인하지 않는다', async (t) => {
+  const h = harness(t, { wifiOnly: true });
+  const result = await inspectOfflineNetwork({ adb: h.adb });
+  assert.equal(result.networkMode, 'wifi-only');
+  assert.equal(result.mobileDataEnabled, null); assert.equal(result.defaultSubscription, null);
+  assert.equal(result.wifiEnabled, true); assert.equal(result.internetNetworkCount, 1);
+  assertNoMobileWrites(h);
+  const phone = harness(t);
+  const cellular = await inspectOfflineNetwork({ adb: phone.adb });
+  assert.equal(cellular.networkMode, 'single-sim'); assert.equal(cellular.mobileDataEnabled, true);
+  assert.equal(cellular.defaultSubscription, 1);
+});
+
+test('Wi-Fi 전용 기기는 원래 mobile_data null·0·1을 그대로 남기고 Wi-Fi만 복구한다', async (t) => {
+  for (const data of ['null', '0', '1']) {
+    const h = harness(t, { wifiOnly: true, data });
+    const result = await h.execute();
+    assert.equal(result.firstLaunchOffline, true); assert.equal(h.state.installed, true);
+    assert.equal(result.network.before.networkMode, 'wifi-only');
+    assert.equal(result.network.firstOffline.mobileDataEnabled, null);
+    assert.equal(result.network.firstOffline.defaultSubscription, null);
+    assert.deepEqual(result.network.restoration, { wifi: 'restored', mobileData: 'not-applicable', verified: true });
+    assert.equal(h.state.wifi, '1'); assert.equal(h.state.data, data); assert.equal(h.state.sub, 'null');
+    assertNoMobileWrites(h);
+    assert.deepEqual(h.calls.filter(({ args }) => args.includes('svc')).map(({ args }) => args.join(' ')),
+      ['shell svc wifi disable', 'shell svc wifi enable']);
+  }
+});
+
+test('이미 Wi-Fi도 꺼진 SIM 없는 기기는 설정을 새로 만들거나 토글하지 않는다', async (t) => {
+  const h = harness(t, { wifiOnly: true, wifi: '0', data: 'null', sim: 'ABSENT,ABSENT', sub: '-1' });
+  const result = await h.execute();
+  assert.deepEqual(result.network.restoration, { wifi: 'not-needed', mobileData: 'not-applicable', verified: true });
+  assert.equal(h.calls.some(({ args }) => args.includes('svc')), false);
+  assert.equal(h.state.data, 'null'); assert.equal(h.state.wifi, '0');
+  assertNoMobileWrites(h);
+});
+
+test('Wi-Fi 전용 기기도 기본 연결·INTERNET 망·USB 전달이 남아 있으면 오프라인으로 인정하지 않는다', async (t) => {
+  const h = harness(t, { wifiOnly: true, wifi: '0', extraInternet: true });
+  const result = await inspectOfflineNetwork({ adb: h.adb });
+  assert.equal(result.activeDefaultNetwork, false); assert.equal(result.internetNetworkCount, 1);
+  assert.throws(() => requireOffline(result));
+  const offline = { ...result, internetNetworkCount: 0 };
+  assert.doesNotThrow(() => requireOffline(offline));
+  for (const patch of [{ activeDefaultNetwork: true }, { reverseMappingCount: 1 }, { wifiEnabled: true }]) {
+    assert.throws(() => requireOffline({ ...offline, ...patch }));
+  }
+});
+
+test('오프라인 증거의 모드와 null·false가 맞지 않거나 누락되면 통과시키지 않는다', () => {
+  const base = { networkMode: 'wifi-only', defaultSubscription: null, mobileDataEnabled: null,
+    wifiEnabled: false, activeDefaultNetwork: false, internetNetworkCount: 0, reverseMappingCount: 0 };
+  for (const patch of [{ networkMode: undefined }, { networkMode: 'unknown' },
+    { mobileDataEnabled: false }, { mobileDataEnabled: undefined }, { defaultSubscription: 1 },
+    { networkMode: 'single-sim' }, { networkMode: 'single-sim', mobileDataEnabled: false }]) {
+    assert.throws(() => requireOffline({ ...base, ...patch }));
+  }
+  assert.doesNotThrow(() => requireOffline({ ...base, networkMode: 'single-sim', mobileDataEnabled: false, defaultSubscription: 1 }));
+});
+
+test('불명확·잠긴·여러 활성 SIM과 통신 기능에 모순되는 정보는 설치 전에 중단한다', async (t) => {
+  for (const option of [
+    { wifiOnly: true, sim: 'UNKNOWN' }, { wifiOnly: true, sim: 'NOT_READY' },
+    { wifiOnly: true, sim: 'PIN_REQUIRED' }, { wifiOnly: true, sim: 'LOADED' },
+    { wifiOnly: true, sub: '1' }, { wifiOnly: true, data: 'unknown' },
+    { sim: '' }, { sim: 'ABSENT' }, { sim: 'LOADED,LOADED' }, { sim: 'LOADED,PIN_REQUIRED' },
+    { sub: 'null' }, { data: 'null' },
+  ]) {
+    const h = harness(t, option);
+    await assert.rejects(h.execute());
+    assert.equal(h.calls.some(({ args }) => args[0] === 'install' || args.includes('svc')), false);
+    assertNoMobileWrites(h);
+  }
+});
+
+test('기능 목록의 빈 응답·오류·잘못된 줄은 Wi-Fi 전용 증거로 사용하지 않는다', async (t) => {
+  for (const option of [{ features: '' }, { features: 'Feature lookup denied' },
+    { features: 'feature:android.hardware.wifi\nerror: incomplete list' },
+    { featureReadError: true }]) {
+    const h = harness(t, { wifiOnly: true, ...option });
+    await assert.rejects(h.execute());
+    assert.equal(h.calls.some(({ args }) => args[0] === 'install' || args.includes('svc')), false);
+    assertNoMobileWrites(h);
+  }
+  const h = harness(t, { features: 'feature:android.hardware.wifi\nfeature:android.hardware.telephony=1' });
+  assert.equal((await inspectOfflineNetwork({ adb: h.adb })).networkMode, 'single-sim');
+});
+
+test('Wi-Fi 전용 네이티브 검사 실패도 Wi-Fi를 복구한 뒤 이번 앱만 정리한다', async (t) => {
+  const h = harness(t, { wifiOnly: true, runError: true });
+  await assert.rejects(h.execute(), (error) => {
+    assert.equal(error.standalone.network.restoration.verified, true);
+    assert.equal(error.standalone.network.restoration.mobileData, 'not-applicable');
+    assert.equal(error.standalone.installationCleanup, 'removed-own-failed-install'); return true;
+  });
+  assert.equal(h.state.wifi, '1'); assert.equal(h.state.data, '1'); assert.equal(h.state.installed, false);
+  assertNoMobileWrites(h);
+});
+
+test('Wi-Fi 끄기가 적용된 뒤 명령이 실패해도 변경 기록으로 원래 연결을 복구한다', async (t) => {
+  const h = harness(t, { wifiOnly: true, partialWifiDisableFailure: true });
+  await assert.rejects(h.execute(), (error) => error.standalone.network.restoration.verified === true);
+  assert.equal(h.state.wifi, '1'); assert.equal(h.state.data, '1'); assert.equal(h.state.installed, false);
+  assertNoMobileWrites(h);
+});
+
+test('Wi-Fi 전용 연결 복구가 실패하면 후속 검사를 실행하지 않고 실패를 남긴다', async (t) => {
+  let called = false;
+  const h = harness(t, { wifiOnly: true, restoreWifiFailure: true, verifyInstalled: async () => { called = true; } });
+  await assert.rejects(h.execute(), (error) => {
+    assert.equal(error.standalone.network.restoration.verified, false);
+    assert.equal(error.standalone.network.restoration.wifi, 'failed');
+    assert.equal(error.standalone.network.restoration.mobileData, 'not-applicable');
+    assert.equal(error.standalone.verifyInstalledStatus, 'not-run'); return true;
+  });
+  assert.equal(called, false); assert.equal(h.state.data, '1');
+  assertNoMobileWrites(h);
+});
+
+test('SIM 없는 기기의 데이터 원문이 바뀌면 사용자 값을 덮지 않고 검사를 실패 처리한다', async (t) => {
+  const h = harness(t, { wifiOnly: true, afterNative: (state) => { state.data = '0'; } });
+  await assert.rejects(h.execute(), (error) => {
+    assert.equal(error.standalone.network.restoration.verified, false);
+    assert.equal(error.standalone.network.restoration.mobileData, 'not-applicable'); return true;
+  });
+  assert.equal(h.state.data, '0'); assert.equal(h.state.wifi, '1'); assert.equal(h.state.installed, false);
+  assertNoMobileWrites(h);
+});
+
+test('검사 중 SIM·기본 회선·기기 통신 모드가 바뀌면 오프라인 성공으로 넘기지 않는다', async (t) => {
+  for (const mutate of [
+    (state) => { state.sim = 'ABSENT'; },
+    (state) => { state.sub = '-1'; },
+    (state) => { state.features += '\nfeature:android.hardware.telephony'; state.sim = 'LOADED'; state.sub = '1'; },
+  ]) {
+    const h = harness(t, { wifiOnly: true, afterNative: mutate });
+    await assert.rejects(h.execute(), (error) => error.standalone.network.restoration.verified === false);
+    assert.equal(h.state.installed, false); assert.equal(h.state.wifi, '1');
+    assertNoMobileWrites(h);
+  }
+});
+
+test('설치하는 동안 SIM 없는 기기의 설정이 바뀌면 Wi-Fi를 끄기 전에 중단한다', async (t) => {
+  const h = harness(t, { wifiOnly: true, beforeAdb: ({ label, state }) => {
+    if (label === 'standalone-before-change-wifi') state.data = 'null';
+  } });
+  await assert.rejects(h.execute(), (error) => error.standalone.network.restoration.verified === false);
+  assert.equal(h.calls.some(({ args }) => args.includes('svc')), false);
+  assert.equal(h.state.data, 'null'); assert.equal(h.state.installed, false);
+  assertNoMobileWrites(h);
+});
+
+test('Wi-Fi 전용 후속 검사는 Wi-Fi 복구와 mobile_data 원문 보존을 확인한 뒤 실행한다', async (t) => {
+  const h = harness(t, { wifiOnly: true, verifyInstalled: async () => {
+    assert.equal(h.state.wifi, '1'); assert.equal(h.state.data, '1'); assert.equal(h.state.installed, true);
+    assert.equal(h.calls.at(-1).label, 'standalone-restored-reverse');
+  } });
+  const result = await h.execute();
+  assert.equal(result.verifyInstalledStatus, 'passed');
+  assert.equal(result.network.restoration.verified, true);
+  assertNoMobileWrites(h);
 });
