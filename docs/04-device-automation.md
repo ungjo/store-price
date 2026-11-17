@@ -108,7 +108,7 @@ node scripts/device/verify.mjs --talkback --message "feat: TalkBack 장보기와
 
 ## 현재 확인 범위
 
-Android 배포 설정·검사 앱 분리 단계의 전체 명령은 다음과 같다. 이번에는 기본 Expo Go 전체 놀이 회귀를 실행하며 `--standalone-apk`나 `--talkback`을 추가하지 않는다. 결과는 [개발 기록](book/chapters/07-android-release-config.md)과 같은 커밋의 검사 시작 HEAD `97b00ff`인 보고서로 확인한다.
+Android 배포 설정·검사 앱 분리는 `a6d9bb4`로 완료했다. 아래 명령으로 기본 Expo Go 전체 놀이 회귀를 실행했으며 `--standalone-apk`나 `--talkback`은 추가하지 않았다. 결과는 [개발 기록](book/chapters/07-android-release-config.md)과 해당 커밋의 실행 `20261117T104522208Z-d7b5bd39` 보고서로 확인한다.
 
 ```bash
 node scripts/device/verify.mjs --message "chore: Android 배포 설정과 검사 앱 분리"
@@ -135,6 +135,16 @@ node scripts/device/verify.mjs --standalone-apk .artifacts/build/standalone-cf5e
 ```
 
 이 단계는 앱·DB·API 변경이나 APK 재빌드를 포함하지 않았다. [태블릿·스마트폰 검사 기록](book/chapters/06d-tablet-and-phone-verification.md)과 `0e008b9`에 포함된 자동 보고서에 결과를 보존한다.
+
+## 고정 검사 APK에서 전체 놀이 검사
+
+고정 패키지 **꼬마 시장 검사**의 새 APK 빌드·온라인 전체 놀이 검사는 [별도 개발 기록](book/chapters/07a-inspection-apk.md)을 따른다. 이번 고정 앱 검사는 APK에서 장바구니·계산·영수증·분류 전체 흐름을 직접 실행하고 Expo Go는 지연 응답 예시 선택에만 사용한다. 네트워크 차단과 TalkBack 재검사는 하지 않는다. 아래 nonce preview 절차와 대상 패키지를 혼용하지 않는다.
+
+```bash
+node scripts/device/verify.mjs --inspection-apk .artifacts/build/inspection-a8c0f5699d49d2cd/provenance.json --message "test: 고정 검사 APK의 태블릿 설치와 전체 놀이 검증"
+```
+
+앱이 없으면 새로 설치하고, 기존 설치가 있으면 같은 APK SHA-256·버전만 `reused-exact`로 재사용한다. 다른 파일이면 기존 앱·자료를 보존하고 중단한다. 고정 검사 앱은 성공·실패 뒤 자동 삭제하지 않는다. 최종 전체 결과는 검사 시작 HEAD `a6d9bb4`와 이번 APK 지문이 포함된 같은 커밋의 자동 보고서로 확인한다.
 
 ## 설치형 APK의 실제 오프라인 첫 실행
 

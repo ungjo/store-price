@@ -57,7 +57,9 @@ TalkBack 장보기·영수증 개선과 Expo Go 검증은 `c949154`에 포함했
 
 **꼬마 시장 읽기 검사** APK의 태블릿 오프라인 첫 실행·TalkBack·설정 복구는 `97b00ff`로 완료했고 사용자가 GitHub 업로드를 확인했습니다. 실행 `20261116T222305411Z-db74af27`의 PASS 보고서와 [빌드 기록](book/chapters/06f-talkback-offline-apk.md)을 해당 커밋에 보존합니다. 앞으로는 Android 배포용 앱 설정과 Google Play 테스트를 준비합니다. 아래의 과거 단계 기록은 당시 결과입니다.
 
-이번 작업은 정식 앱 ID `com.ungjo.storeprice`, 검사 앱 ID `com.ungjo.storeprice.inspection`, 버전 `1.0.0`·코드 `1`, production AAB·inspection APK 설정을 정리합니다. 기존 오프라인 첫 실행용 preview와 iOS 중단 기록도 구분해 유지합니다. 설정 자동 검사와 Expo Go 전체 회귀의 실제 결과는 [7장](book/chapters/07-android-release-config.md) 및 검사 시작 HEAD `97b00ff`의 자동 보고서에서 확인합니다. 새 네이티브 빌드·Google Play 테스트 업로드·전용 아이콘과 심사 자료는 후속 작업입니다.
+정식 앱·검사 앱 식별자와 버전·EAS 프로필 설정, iOS 중단 변경은 `a6d9bb4`에 포함했고 사용자가 GitHub 업로드를 확인했습니다. [7장](book/chapters/07-android-release-config.md)과 해당 커밋의 실행 `20261117T104522208Z-d7b5bd39` 보고서에 설정·Expo Go 검증 결과를 보존합니다.
+
+이번 작업은 **꼬마 시장 검사** / `com.ungjo.storeprice.inspection`의 고정 검사 APK를 빌드하고 현재 SM-X710에서 전체 놀이를 직접 검사합니다. 소스·공개 설정·APK 지문을 연결하고 같은 패키지의 기존 설치를 덮어쓰지 않습니다. [고정 검사 APK 기록](book/chapters/07a-inspection-apk.md)과 검사 시작 HEAD `a6d9bb4`의 새 자동 보고서가 실제 결과의 근거입니다. 인터넷 차단·TalkBack 재검사와 Google Play 테스트 업로드·전용 아이콘·심사 자료는 이번 작업에 포함하지 않습니다.
 
 장바구니는 `6009317`, 놀이돈 예산·잔액은 `281a5e9`, 돈 선택과 갤럭시 검사·기록·커밋 자동화는 `8309377`에서 구현하고 검증했습니다.
 

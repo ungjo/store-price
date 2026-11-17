@@ -1,21 +1,26 @@
-appId: host.exp.exponent
+appId: ${APP_ID || 'host.exp.exponent'}
 name: 놀이돈 선택과 장바구니 실기기 회귀 검사
-# EXPO_URL과 RUN_ID는 실행기가 같은 Expo 서버의 주소와 실행 번호로 전달합니다.
+# 실행기는 Expo Go의 EXPO_URL 또는 설치형 앱의 APP_ID·TARGET_MODE와 검증할 RUN_ID를 전달합니다.
 # 스크린샷은 --test-output-dir로 지정한 이번 실행의 결과 폴더에만 저장합니다.
 ---
 
-# 이전 Expo Go 실행을 닫고 현재 소스를 확인한 뒤 시작합니다. 앱 데이터는 지우지 않습니다.
-# Expo Go를 먼저 띄워 콜드 스타트와 개발 주소 열기를 분리합니다.
+# 선택한 앱의 이전 실행을 닫고 검증할 실행 번호를 확인합니다. 앱 데이터는 지우지 않습니다.
+# Expo Go에서는 콜드 스타트와 주소 열기를 분리하고, 설치형 앱은 같은 앱 ID로 직접 시작합니다.
 # 빈 permissions는 기존 권한을 유지하고, clearState:false는 앱 데이터를 보존합니다.
 - stopApp
 - launchApp:
-    appId: host.exp.exponent
+    appId: ${APP_ID || 'host.exp.exponent'}
     clearState: false
     stopApp: false
     permissions: {}
 - waitForAnimationToEnd:
     timeout: 10000
-- openLink: "${EXPO_URL}"
+# 설치형 검사 앱은 내장 번들로 시작하며 Expo 개발 주소를 열지 않습니다.
+- runFlow:
+    when:
+      true: ${typeof TARGET_MODE === 'undefined' || TARGET_MODE !== 'inspection'}
+    commands:
+      - openLink: "${EXPO_URL}"
 - extendedWaitUntil:
     visible:
       id: "device-run-marker"
@@ -1391,13 +1396,18 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     text: "^장바구니 총 1개, 합계 1,000원\\. 오늘의 놀이돈 10,000원\\. 남을 돈 9,000원\\. 이대로 사면 남을 돈이에요\\.$"
 - stopApp
 - launchApp:
-    appId: host.exp.exponent
+    appId: ${APP_ID || 'host.exp.exponent'}
     clearState: false
     stopApp: false
     permissions: {}
 - waitForAnimationToEnd:
     timeout: 10000
-- openLink: "${EXPO_URL}"
+# 설치형 검사 앱은 내장 번들로 시작하며 Expo 개발 주소를 열지 않습니다.
+- runFlow:
+    when:
+      true: ${typeof TARGET_MODE === 'undefined' || TARGET_MODE !== 'inspection'}
+    commands:
+      - openLink: "${EXPO_URL}"
 - extendedWaitUntil:
     visible:
       id: "device-run-marker"

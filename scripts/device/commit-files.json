@@ -113,5 +113,10 @@
   "docs/book/chapters/06f-talkback-offline-apk.md",
   "apps/mobile/package-lock.json",
   "scripts/build/app-config.test.mjs",
-  "docs/book/chapters/07-android-release-config.md"
+  "docs/book/chapters/07-android-release-config.md",
+  "scripts/build/inspection.mjs",
+  "scripts/build/inspection.test.mjs",
+  "scripts/device/inspection-device.mjs",
+  "scripts/device/inspection-device.test.mjs",
+  "docs/book/chapters/07a-inspection-apk.md"
 ]

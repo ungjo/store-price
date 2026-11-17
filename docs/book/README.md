@@ -6,7 +6,7 @@
 
 2026-11-17 사용자 요청으로 iOS 개발을 중단하고 Android·Google Play 출시로 범위를 좁혔다. 이후 계획과 검사 안내는 새 범위를 따르며, 이미 작성한 장의 당시 계획·iOS 번들 검사 결과·자동 보고서는 고치지 않고 보존한다.
 
-범위 변경 직후 `npm run typecheck`, `npm run lint`, `npm run export:check`가 모두 통과했고, 번들은 Android 645개 모듈·개발용 웹 251개 모듈만 생성했으며 iOS 번들은 생성하지 않았다. 당시 실기기 재검사·신규 APK 빌드·별도 커밋은 만들지 않았다. 이 변경을 이번 Android 배포 설정·검사 앱 분리 작업에 함께 포함하고, 설정 검사와 Expo Go 전체 회귀를 거쳐 기록한다.
+범위 변경 직후 `npm run typecheck`, `npm run lint`, `npm run export:check`가 모두 통과했고, 번들은 Android 645개 모듈·개발용 웹 251개 모듈만 생성했으며 iOS 번들은 생성하지 않았다. 당시 실기기 재검사·신규 APK 빌드·별도 커밋은 만들지 않았다. 이후 Android 배포 설정·검사 앱 분리와 함께 설정 검사·Expo Go 전체 회귀를 통과해 `a6d9bb4`에 기록했다.
 
 ## 장 구성
 
@@ -35,7 +35,8 @@
 | 06 태블릿·스마트폰 검사 | SIM 없는 태블릿 실기기와 기존 단일 SIM 모의 회귀 | `0e008b9` |
 | 06 TalkBack | 장보기·영수증의 읽기 정보와 포커스 개선·Expo Go 검증 | `c949154` |
 | 06 TalkBack APK | 새 APK의 오프라인 첫 실행과 설치형 앱 접근성 검사 | `97b00ff` |
-| 07 배포 설정 | Android 정식 앱·검사 앱 구분과 버전·빌드 설정 | 시작 HEAD `97b00ff`, 이 단계의 자동 보고서 참조 |
+| 07 배포 설정 | Android 정식 앱·검사 앱 구분과 버전·빌드 설정 | `a6d9bb4` |
+| 07 고정 검사 APK | 꼬마 시장 검사 APK 빌드와 실제 전체 놀이 검사 | 시작 HEAD `a6d9bb4`, 이 단계의 자동 보고서 참조 |
 | 이후 자료 연결 | 허용된 실제 가격 자료 연결 | 이후 단계에서 확정 |
 | 06 | 아이와 함께 사용성 확인 | 이후 단계에서 확정 |
 | 07 | Google Play에 Android 앱 제출하기 | 이후 단계에서 확정 |
@@ -93,6 +94,7 @@ git log --oneline --decorate
 - [06장 보충: TalkBack으로 상품을 담고 영수증까지 이동하기](chapters/06e-talkback-accessibility.md)
 - [06장 보충: TalkBack 개선을 새 APK에 담아 검사하기](chapters/06f-talkback-offline-apk.md)
 - [07장: Android 배포 설정과 검사 앱 분리](chapters/07-android-release-config.md)
+- [07장 보충: 고정 검사 APK로 전체 놀이 확인하기](chapters/07a-inspection-apk.md)
 
 개발용 실제 가격 미리보기는 `f6f4ccb`로 로컬 커밋했습니다. 2026-11-13에는 상품 조회 중 내장 예시를 선택하는 흐름을 구현하고 코드 검사를 통과했습니다. 최초 연결 점검이 USB 승인 부족으로 멈춘 뒤 사용자가 승인을 완료했고 전체 실기기 검사를 준비했습니다. 최종 결과는 `verification/latest-android.md`의 검사 시작 HEAD `f6f4ccb`와 실제 단계 결과로 확인하며, 앞 커밋의 성공 기록과 구분합니다. 로컬 커밋을 GitHub 업로드 완료로 기록하지 않습니다.
 
@@ -110,4 +112,6 @@ git log --oneline --decorate
 
 **꼬마 시장 읽기 검사** APK의 태블릿 오프라인 첫 실행·TalkBack·설정 복구 검증을 `97b00ff`로 완료했고 사용자가 GitHub 업로드를 확인했다. 06f 장과 실행 `20261116T222305411Z-db74af27`의 PASS 보고서를 해당 커밋에 보존한다. 이후 작업과 책의 출시 과정은 Android·Google Play를 대상으로 진행한다.
 
-이번 7장에서는 iOS 중단 변경과 함께 정식·검사용 Android 앱 설정을 정리한다. 실제 신규 APK/AAB를 만들지 않고 설정 자동 검사와 Expo Go 회귀를 수행하며, 최종 결과는 이 단계와 같은 커밋에 포함된 검사 시작 HEAD `97b00ff`의 자동 보고서로 확인한다.
+7장의 iOS 중단 변경과 정식·검사용 Android 앱 설정은 `a6d9bb4`에 포함했고 사용자가 GitHub 업로드를 확인했다. 당시 새 APK/AAB는 만들지 않았으며 설정 검사·Expo Go 회귀 성공은 실행 `20261117T104522208Z-d7b5bd39`의 보고서에 보존한다.
+
+이번 7a 장은 고정 패키지 **꼬마 시장 검사**를 실제 APK로 빌드하고 태블릿에서 전체 놀이를 확인하는 단계다. 빌드 출처·새 설치·APK 실행과 Expo Go의 별도 대기 응답 검사를 구분하며 최종 결과는 같은 커밋의 검사 시작 HEAD `a6d9bb4`인 자동 보고서로 확인한다.

@@ -1,4 +1,4 @@
-appId: host.exp.exponent
+appId: ${APP_ID || 'host.exp.exponent'}
 name: 계산 완료와 영수증 실기기 회귀 검사
 # 이 흐름만 실행해도 같은 RUN_ID의 새 앱에서 시작하도록 기존 실행 순서를 사용합니다.
 # 계산 전 조건과 계산 후 복사된 금액을 따로 확인하며 실제 결제는 하지 않습니다.
@@ -6,13 +6,18 @@ name: 계산 완료와 영수증 실기기 회귀 검사
 
 - stopApp
 - launchApp:
-    appId: host.exp.exponent
+    appId: ${APP_ID || 'host.exp.exponent'}
     clearState: false
     stopApp: false
     permissions: {}
 - waitForAnimationToEnd:
     timeout: 10000
-- openLink: "${EXPO_URL}"
+# 설치형 검사 앱은 내장 번들로 시작하며 Expo 개발 주소를 열지 않습니다.
+- runFlow:
+    when:
+      true: ${typeof TARGET_MODE === 'undefined' || TARGET_MODE !== 'inspection'}
+    commands:
+      - openLink: "${EXPO_URL}"
 - extendedWaitUntil:
     visible:
       id: "device-run-marker"
@@ -615,13 +620,18 @@ name: 계산 완료와 영수증 실기기 회귀 검사
 # 영수증도 메모리에만 있으므로 앱을 다시 실행하면 이전 구매가 남지 않습니다.
 - stopApp
 - launchApp:
-    appId: host.exp.exponent
+    appId: ${APP_ID || 'host.exp.exponent'}
     clearState: false
     stopApp: false
     permissions: {}
 - waitForAnimationToEnd:
     timeout: 10000
-- openLink: "${EXPO_URL}"
+# 설치형 검사 앱은 내장 번들로 시작하며 Expo 개발 주소를 열지 않습니다.
+- runFlow:
+    when:
+      true: ${typeof TARGET_MODE === 'undefined' || TARGET_MODE !== 'inspection'}
+    commands:
+      - openLink: "${EXPO_URL}"
 - extendedWaitUntil:
     visible:
       id: "device-run-marker"

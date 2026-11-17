@@ -53,12 +53,13 @@
 - [x] SIM 없는 태블릿 실기기·기존 스마트폰 검사 경로 검증 (`0e008b9`) — [개발 기록](docs/book/chapters/06d-tablet-and-phone-verification.md)
 - [x] TalkBack 장보기·영수증 개선과 Expo Go 검증 (`c949154`) — [개발 기록](docs/book/chapters/06e-talkback-accessibility.md)
 - [x] TalkBack 개선 APK의 빌드·오프라인·접근성 검증 (`97b00ff`) — [개발 기록](docs/book/chapters/06f-talkback-offline-apk.md)
-- Android 배포 설정과 검사 앱 분리는 [개발 기록](docs/book/chapters/07-android-release-config.md)과 이 단계의 자동 보고서 참조
+- [x] Android 배포 설정과 검사 앱 분리 (`a6d9bb4`) — [개발 기록](docs/book/chapters/07-android-release-config.md)
+- 고정 검사 APK의 빌드·설치·전체 놀이 검사는 [개발 기록](docs/book/chapters/07a-inspection-apk.md)과 이 단계의 자동 보고서 참조
 - [ ] 허용된 실제 가격의 앱 공개·자동 갱신
 - [ ] Google Play 테스트
 - [ ] Google Play 제출
 
-**꼬마 시장 읽기 검사** APK의 SM-X710 오프라인 첫 실행·TalkBack·설정 복구 검증은 `97b00ff`로 완료했고 사용자가 GitHub 업로드를 확인했습니다. 실제 실행 `20261116T222305411Z-db74af27`의 PASS 보고서는 해당 커밋에 보존합니다. 이번 단계는 정식 앱 `com.ungjo.storeprice`와 검사 앱 `com.ungjo.storeprice.inspection`의 설정을 분리하고, iOS 중단 변경을 함께 검증·기록합니다. 설정 검사와 기존 Expo Go 전체 회귀의 결과는 검사 시작 HEAD `97b00ff`인 보고서로 확인합니다. 새 APK/AAB 빌드·Google Play 업로드와 실제 가격 공개·자동 갱신은 후속 단계입니다.
+Android 배포 설정과 검사 앱 분리는 `a6d9bb4`로 완료했고 사용자가 GitHub 업로드를 확인했습니다. 실행 `20261117T104522208Z-d7b5bd39`의 설정·Expo Go 회귀 PASS 보고서를 해당 커밋에 보존합니다. 이번 단계는 고정 패키지 `com.ungjo.storeprice.inspection`의 **꼬마 시장 검사** APK를 빌드하고 SM-X710에서 전체 놀이를 직접 검사합니다. 결과는 [개발 기록](docs/book/chapters/07a-inspection-apk.md)과 검사 시작 HEAD `a6d9bb4`인 자동 보고서로 확인합니다. Google Play 업로드와 실제 가격 공개·자동 갱신은 후속 단계입니다.
 
 ## 첫 화면 실행
 
