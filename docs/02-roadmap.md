@@ -3,11 +3,13 @@
 ## 확정한 범위
 
 - 주 사용자: 초등학교 1~3학년
-- 플랫폼: Google Play와 Apple App Store에 배포할 모바일 앱
+- 플랫폼: Google Play에 배포할 Android 앱
 - 가격 기준: SSG.COM 이마트 온라인 상품 가격
 - 학습 목표: 상품 가격 읽기, 덧셈, 예산 관리, 거스름돈 계산
 - 기본 진행: 큰 버튼, 원 단위 정수 계산, 짧은 안내, 반복할 수 있는 놀이
 - 최초 버전: 로그인·광고·실제 결제·채팅 없이 사용
+
+2026-11-17 사용자 요청으로 iOS 개발을 중단했습니다. 이후 구현·검증·출시는 Android·Google Play만 대상으로 합니다. 과거 iOS 번들 검사와 당시 계획은 기존 커밋·책의 장 원문에 보존합니다.
 
 ## 첫 완성 버전(MVP)
 
@@ -32,12 +34,12 @@
 | 04 | DB 설계·앱 연결 | 상품·가격 이력·공개 읽기·관리자 쓰기, 원격 목록·실패 처리 검증 | feat: add catalog database and access rules |
 | 05 | 실제 가격 연결 | 이용 범위 확인, 수집·검증·갱신·실패 기록 | feat: import approved price data |
 | 06 | 아동 사용성 | 실기기·큰 글자·접근성·오프라인 확인 | feat: improve child-friendly play flow |
-| 07 | 출시 테스트 | 개발 빌드·TestFlight·Play 테스트 | test: prepare mobile release candidate |
-| 08 | 스토어 제출·책 편집 | 심사 자료·개인정보 고지·원고 정리 | release: prepare store submissions |
+| 07 | Android 출시 테스트 | 배포용 앱 설정·Android 빌드·Google Play 테스트 | test: prepare Android release candidate |
+| 08 | Google Play 제출·책 편집 | Play 심사 자료·개인정보 고지·원고 정리 | release: prepare Google Play submission |
 
 각 단계에서 목표 → 구현 → 검증 → 기록 → 커밋 → GitHub 업로드 순서로 진행합니다. 소규모 커밋을 보존하며, 책의 장 끝에는 해당 단계 태그와 실제 커밋을 연결합니다.
 
-## 현재 단계 (2026-11-16)
+## 현재 단계 (2026-11-17)
 
 내장 예시로 바로 시작하는 단계는 `7b40957`, 설치형 Android APK의 인터넷 없는 첫 실행 검증은 `4fbe035`로 완료했고 사용자가 GitHub 업로드를 확인했습니다. EAS 빌드·새 설치·통신 차단과 복구·예시 놀이·영수증 결과는 [설치형 앱 기록](book/chapters/05a-standalone-offline.md)과 `4fbe035`에 포함된 검증 보고서에 보존합니다.
 
@@ -53,7 +55,9 @@ SIM 없는 SM-X710 / Android 14의 실제 오프라인·화면·복구 검증은
 
 TalkBack 장보기·영수증 개선과 Expo Go 검증은 `c949154`에 포함했습니다. 실행 `20261116T112508546Z-5416f64e`에서 23개 확인 지점과 설정 복구를 통과했습니다. [개발 기록](book/chapters/06e-talkback-accessibility.md)과 해당 커밋의 보고서가 당시 근거입니다.
 
-이번 단계는 같은 앱 코드를 **꼬마 시장 읽기 검사** APK로 빌드하고 현재 태블릿에서 오프라인 첫 실행·통신 복구·설치형 앱 TalkBack을 검사합니다. 새 APK의 출처와 실제 실행 결과는 [빌드 기록](book/chapters/06f-talkback-offline-apk.md) 및 검사 시작 HEAD `c949154`인 [자동 보고서](book/verification/latest-android.md)로 확인합니다. DB·가격·화면 배율 검사·iOS·음성 청취 평가를 추가하는 단계는 아닙니다. 아래의 과거 단계 기록은 당시 결과입니다.
+**꼬마 시장 읽기 검사** APK의 태블릿 오프라인 첫 실행·TalkBack·설정 복구는 `97b00ff`로 완료했고 사용자가 GitHub 업로드를 확인했습니다. 실행 `20261116T222305411Z-db74af27`의 PASS 보고서와 [빌드 기록](book/chapters/06f-talkback-offline-apk.md)을 해당 커밋에 보존합니다. 앞으로는 Android 배포용 앱 설정과 Google Play 테스트를 준비합니다. 아래의 과거 단계 기록은 당시 결과입니다.
+
+이번 작업은 정식 앱 ID `com.ungjo.storeprice`, 검사 앱 ID `com.ungjo.storeprice.inspection`, 버전 `1.0.0`·코드 `1`, production AAB·inspection APK 설정을 정리합니다. 기존 오프라인 첫 실행용 preview와 iOS 중단 기록도 구분해 유지합니다. 설정 자동 검사와 Expo Go 전체 회귀의 실제 결과는 [7장](book/chapters/07-android-release-config.md) 및 검사 시작 HEAD `97b00ff`의 자동 보고서에서 확인합니다. 새 네이티브 빌드·Google Play 테스트 업로드·전용 아이콘과 심사 자료는 후속 작업입니다.
 
 장바구니는 `6009317`, 놀이돈 예산·잔액은 `281a5e9`, 돈 선택과 갤럭시 검사·기록·커밋 자동화는 `8309377`에서 구현하고 검증했습니다.
 
@@ -69,7 +73,7 @@ TalkBack 장보기·영수증 개선과 Expo Go 검증은 `c949154`에 포함했
 
 상품을 불러오는 동안에도 내장 예시를 직접 선택해 바로 놀이를 시작하는 흐름을 구현했습니다. 12초의 조회 제한 시간이나 오류를 기다리지 않고 선택할 수 있게 하고, 취소 후 늦게 도착한 응답이 놀이 목록·장바구니를 바꾸지 않게 했습니다. 새 검사 18개를 포함한 앱 검사 125개와 타입·ESLint·세 플랫폼 번들이 통과했습니다. DB 수정·실제 가격 공개·영구 캐시는 추가하지 않습니다. Expo Go의 오프라인 첫 실행은 이번 검증 범위에 포함하지 않습니다. [예시로 바로 시작하기의 개발 기록](book/chapters/05-offline-sample-play.md)
 
-예시 즉시 선택의 전체 검증과 기록은 `7b40957`에 포함했습니다. 매 단계에서 검사한 소스가 그대로 유지되고 모든 검사에 통과해야 로컬 커밋합니다. GitHub 업로드는 별도 요청에 따라 진행합니다. 놀이 영수증은 메모리에만 남습니다. 로컬 SQL 검사, 비공개 DB 적재·재조회, 공개 HTTP 조회, 앱·실기기 검증은 각각의 실행 근거로 구분합니다. iPhone 실기기 검증과 허용된 실제 가격의 앱 공개·자동 갱신은 후속 단계입니다.
+예시 즉시 선택의 전체 검증과 기록은 `7b40957`에 포함했습니다. 매 단계에서 검사한 소스가 그대로 유지되고 모든 검사에 통과해야 로컬 커밋합니다. GitHub 업로드는 별도 요청에 따라 진행합니다. 놀이 영수증은 메모리에만 남습니다. 로컬 SQL 검사, 비공개 DB 적재·재조회, 공개 HTTP 조회, 앱·실기기 검증은 각각의 실행 근거로 구분합니다. 허용된 실제 가격의 앱 공개·자동 갱신은 후속 단계입니다.
 
 ## 구성
 
@@ -87,12 +91,11 @@ TalkBack 장보기·영수증 개선과 Expo Go 검증은 `c949154`에 포함했
 
 ## 출시 전에 준비할 것
 
-- Android·iPhone 실제 기기의 화면, 터치, 읽기 쉬운 크기와 네트워크 오류 확인
-- 개인정보처리방침, 실제 SDK 동작에 맞는 Apple 개인정보 / Google Data safety 신고
+- Android 실제 기기의 화면, 터치, 읽기 쉬운 크기와 네트워크 오류 확인
+- 개인정보처리방침, 실제 SDK 동작에 맞는 Google Play Data safety 신고
 - 대상 연령과 Google Families 정책 검토
-- Apple Kids Category의 외부 링크·구매 등 보호자 게이트 적용
 - 앱 아이콘·스크린샷·소개·연락처·이용권한 자료 준비
 
 2023-11-13 이후 생성된 개인 Google Play 개발자 계정에는 최소 12명이 연속 14일 참여하는 비공개 테스트 요건이 있습니다. 대상 계정과 최신 요건은 출시 시 다시 확인하며, 테스트 조건 충족이 자동 승인을 뜻하지는 않습니다.
 
-[Google 테스트 요건](https://support.google.com/googleplay/android-developer/answer/14151465?hl=en) · [Families 정책](https://support.google.com/googleplay/android-developer/answer/9893335?hl=en) · [Apple Kids 지침](https://developer.apple.com/app-store/review/guidelines/#kids-category)
+[Google 테스트 요건](https://support.google.com/googleplay/android-developer/answer/14151465?hl=en) · [Families 정책](https://support.google.com/googleplay/android-developer/answer/9893335?hl=en)

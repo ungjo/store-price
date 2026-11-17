@@ -2,13 +2,10 @@
   "expo": {
     "name": "꼬마 시장",
     "slug": "store-price",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "ios": {
-      "supportsTablet": true
-    },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -16,7 +13,10 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.ungjo.storeprice",
+      "versionCode": 1,
+      "allowBackup": false
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -29,6 +29,10 @@
         "projectId": "f216e8cc-25c4-4c1b-9a6a-8e5826bb4f1f"
       }
     },
-    "owner": "juj_chroma"
+    "owner": "juj_chroma",
+    "platforms": [
+      "android",
+      "web"
+    ]
   }
 }

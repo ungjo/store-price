@@ -1,6 +1,8 @@
-# 꼬마 시장 — 모바일 앱
+# 꼬마 시장 — Android 앱
 
 Expo SDK 58 / React Native / TypeScript 앱입니다. 자체 예시 상품 12개와 분류별 선택·장바구니를 구현했습니다. 전체 / 과일·채소 / 유제품·달걀 / 빵·간식으로 목록을 바꿀 수 있으며, 분류를 바꿔도 담은 물건·선택한 돈·퀴즈는 유지됩니다. 담기·수량 조절·품목 삭제·전체 비우기·합계를 확인할 수 있습니다. 한 종류에 최대 9개이며, 새로고침하면 장바구니가 초기화됩니다. 오늘의 놀이돈 10,000원을 기준으로 남을 돈과 부족한 돈을 표시합니다. 낼 놀이돈 1,000원·5,000원·10,000원 중 하나를 고르고 물건값에 충분한지 확인할 수 있습니다. 충분한 돈을 고르면 거스름돈을 입력해 맞히는 문제가 나옵니다. 정답을 맞히면 받을 거스름돈과 계산식을 공개하고, 딱 맞게 낸 경우에도 0원을 답으로 입력합니다. Supabase에서 자체 예시 목록을 읽으며, 원격 조회가 실패하면 재시도하거나 내장 예시를 직접 선택할 수 있습니다. 실제 가격의 비공개 기록을 살펴보는 개발용 미리보기와 일반 사용자에게 공개하는 단계는 구분합니다.
+
+2026-11-17 사용자 요청으로 iOS 개발을 중단했습니다. 앞으로 Android 앱과 Google Play 배포를 준비하며 웹은 개발 중 미리보기·검사용으로 사용합니다. 아래 과거 검증 기록의 iOS 번들 결과와 미확인 항목은 당시 사실로 보존합니다.
 
 ## Windows Git Bash에서 실행
 
@@ -59,23 +61,13 @@ npm run start:price-preview
 
 2026-11-13 코드 검사에서 새 검사 18개를 포함한 앱 검사 125개와 타입·ESLint·세 플랫폼 번들이 통과했습니다. 최초 연결 점검은 USB 디버깅 승인 부족으로 멈췄고, 이후 사용자가 승인해 연결과 잠금 해제를 확인했습니다. 전체 실기기 결과는 [검증 기록](../../docs/book/verification/latest-android.md)의 검사 시작 HEAD `f6f4ccb`와 두 검사 단계의 실제 결과로 확인합니다. 연결 확인만으로 실기기 성공을 뜻하지 않습니다.
 
-## iPhone에서 보기
-
-PC와 같은 Wi-Fi에서 iPhone 카메라로 QR을 읽습니다. 현재 공식 안내에 따르면 iPhone 실기기는 Expo CLI와 Expo Go에 같은 Expo 계정으로 로그인해야 합니다.
-
-```bash
-npx expo login
-```
-
-로그인은 사용자가 직접 수행합니다. [공식 iPhone 로그인 안내](https://docs.expo.dev/troubleshooting/expo-go-sign-in-required/)
-
 ## PC 브라우저와 코드 검사
 
 ```bash
 npm run web
 ```
 
-브라우저 미리보기는 실제 Android·iPhone 테스트를 대신하지 않습니다.
+브라우저는 개발용 미리보기이며 실제 Android 실기기 검사를 대신하지 않습니다.
 
 ```bash
 npm test
@@ -85,7 +77,7 @@ npm run export:check
 npx expo-doctor
 ```
 
-export:check는 Android·iOS·웹의 JavaScript 번들을 생성합니다. APK/AAB/IPA 생성이나 스토어 제출은 아닙니다.
+`export:check`는 `expo export --platform android --platform web`을 실행해 Android와 개발용 웹의 JavaScript 번들을 생성합니다. APK/AAB 생성이나 Google Play 제출은 아닙니다. 출시 대상은 Android이며 웹은 PC에서 미리보기와 검사를 하기 위해 유지합니다.
 
 ## 장바구니 확인
 
@@ -191,9 +183,19 @@ Samsung TalkBack 14.5.00.14로 Expo Go의 장보기·영수증을 검사하고 �
 
 ## TalkBack 개선을 담은 새 APK
 
-이번 단계는 위 개선을 **꼬마 시장 읽기 검사**라는 별도 APK로 빌드합니다. 기존 **꼬마 시장 화면 검사**에는 새 코드가 자동 반영되지 않으며 두 앱의 패키지와 빌드 표시를 구분합니다. 새 APK의 오프라인 첫 실행 뒤 통신을 복구하고 같은 APK에서 공개 상품 12개와 TalkBack 장보기·영수증을 검사합니다.
+위 개선을 **꼬마 시장 읽기 검사**라는 별도 APK로 빌드하고 실제 오프라인 첫 실행·TalkBack·설정 복구를 통과해 `97b00ff`에 포함했습니다. 사용자가 GitHub 업로드를 확인했습니다. 기존 **꼬마 시장 화면 검사**에는 새 코드가 자동 반영되지 않으며 두 앱의 패키지와 빌드 표시를 구분합니다.
 
-[빌드·검사 기록](../../docs/book/chapters/06f-talkback-offline-apk.md)과 검사 시작 HEAD `c949154`인 자동 보고서가 새 APK의 근거입니다. 이번 검사는 실제 터치·native 접근성 정보·발화 표시 텍스트를 확인하며 iOS VoiceOver나 스피커 음성을 사람이 청취한 평가는 포함하지 않습니다. 화면 배율 검사는 이번 TalkBack 실행과 결합하지 않습니다.
+[빌드·검사 기록](../../docs/book/chapters/06f-talkback-offline-apk.md)과 `97b00ff`에 포함된 실행 `20261116T222305411Z-db74af27`의 자동 보고서가 근거입니다. 이 검사는 실제 터치·native 접근성 정보·발화 표시 텍스트를 확인했으며 스피커 음성을 사람이 청취한 평가는 포함하지 않았습니다. 이후 개발·출시 준비는 Android·Google Play만 대상으로 합니다.
+
+## Android 배포 설정과 검사 앱 구분
+
+정식 Google Play 앱은 **꼬마 시장** / `com.ungjo.storeprice`, 반복 검사 앱은 **꼬마 시장 검사** / `com.ungjo.storeprice.inspection`으로 분리합니다. 정식 버전은 `1.0.0`, Android `versionCode`는 `1`부터 시작합니다. EAS의 `production`은 스토어용 AAB, `inspection`은 내부 검사 APK를 준비하는 프로필입니다. 기존 `preview`는 매번 새 패키지로 오프라인 첫 실행을 확인하는 별도 검사에 유지합니다.
+
+로컬 실행은 기본 검사 설정을 사용합니다. 정식 배포 환경에 개발용 미리보기·대기 응답·실행 표시 같은 검사 설정이 섞이면 구성을 거부합니다. 버전은 저장소에서 관리하고 자동 증가는 끄므로, 같은 정식 앱의 다음 Google Play 업로드를 준비할 때 `versionCode`를 올려 기록해야 합니다.
+
+이번 단계는 설정 자동 검사와 기존 Expo Go 전체 놀이 회귀를 실행합니다. 신규 APK/AAB를 만들거나 스토어에 올리는 단계는 아닙니다. [배포 설정 개발 기록](../../docs/book/chapters/07-android-release-config.md)과 이 단계의 같은 커밋에 포함된 검사 시작 HEAD `97b00ff`의 자동 보고서로 결과를 확인합니다.
+
+production 프로필의 `production` 환경과 inspection 프로필의 `preview` 환경에 사용할 EAS 클라우드 공개 상품 연결 설정은 이번에 변경·검증하지 않습니다. 로컬 `.env.local`은 업로드에서 제외되므로 실제 APK/AAB 빌드 전에 각 환경의 공개 URL·publishable 키 설정을 별도로 확인해야 합니다.
 
 ## 개발 기준
 

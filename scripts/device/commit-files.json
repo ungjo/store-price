@@ -110,5 +110,8 @@
   "scripts/device/talkback-speech-ocr.ps1",
   "scripts/device/talkback-speech-ocr.mjs",
   "scripts/device/talkback-speech-ocr.test.mjs",
-  "docs/book/chapters/06f-talkback-offline-apk.md"
+  "docs/book/chapters/06f-talkback-offline-apk.md",
+  "apps/mobile/package-lock.json",
+  "scripts/build/app-config.test.mjs",
+  "docs/book/chapters/07-android-release-config.md"
 ]

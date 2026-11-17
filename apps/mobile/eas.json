@@ -12,10 +12,46 @@
         "EXPO_NO_DOTENV": "1",
         "EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW": "disabled",
         "EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW_TOKEN": "disabled",
-        "EXPO_PUBLIC_CATALOG_TEST_SCENARIO": "disabled"
+        "EXPO_PUBLIC_CATALOG_TEST_SCENARIO": "disabled",
+        "STORE_PRICE_APP_VARIANT": "inspection"
       },
       "android": {
         "buildType": "apk"
+      },
+      "autoIncrement": false
+    },
+    "inspection": {
+      "environment": "preview",
+      "developmentClient": false,
+      "distribution": "internal",
+      "autoIncrement": false,
+      "env": {
+        "EXPO_NO_DOTENV": "1",
+        "EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW": "disabled",
+        "EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW_TOKEN": "disabled",
+        "EXPO_PUBLIC_CATALOG_TEST_SCENARIO": "disabled",
+        "STORE_PRICE_APP_VARIANT": "inspection",
+        "STORE_PRICE_STANDALONE_BUILD": "0"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "environment": "production",
+      "developmentClient": false,
+      "distribution": "store",
+      "autoIncrement": false,
+      "env": {
+        "EXPO_NO_DOTENV": "1",
+        "EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW": "disabled",
+        "EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW_TOKEN": "disabled",
+        "EXPO_PUBLIC_CATALOG_TEST_SCENARIO": "disabled",
+        "STORE_PRICE_APP_VARIANT": "production",
+        "STORE_PRICE_STANDALONE_BUILD": "0"
+      },
+      "android": {
+        "buildType": "app-bundle"
       }
     }
   }

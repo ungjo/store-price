@@ -702,6 +702,7 @@ function writeReport(status, reason = '') {
     'node --experimental-strip-types --test scripts/device/catalog-http-check.test.mjs',
     'node --test scripts/device/private-price-preview.test.mjs',
     'node --test scripts/build/standalone.test.mjs',
+    'node --test scripts/build/app-config.test.mjs',
     'node --test scripts/device/standalone-device.test.mjs',
     'node --test scripts/device/display-settings.test.mjs',
     'node --test scripts/device/keyboard-layout.test.mjs',
@@ -844,14 +845,14 @@ function writeReport(status, reason = '') {
     '- 정답 전 계산 완료 차단, 영수증 상품별 가격·수량·합계·지불액·거스름돈·잔액을 확인한다.',
     '- 0원 거스름돈도 완료하며, 다시 장보기와 영수증 상태의 재실행으로 새 놀이를 시작한다.',
     '', '## 결과', '',
-    ...checks.filter((check) => check.label.startsWith('maestro-syntax-readability-') || /^readability-(?:standard|large-font|narrow-large-font)-(?:open|correct|finish)$/u.test(check.label) || ['display-settings-helpers', 'keyboard-layout-helpers', 'talkback-observer-tests', 'talkback-device-helpers', 'talkback-speech-ocr-tests', 'talkback-flow', 'maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'maestro-syntax-categories', 'maestro-syntax-standalone', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'build-helpers', 'standalone-device-helpers', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'catalog-http-after-apk', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow', 'standalone-offline', 'screen-awake-restore', 'screen-awake-restored-check'].includes(check.label))
+    ...checks.filter((check) => check.label.startsWith('maestro-syntax-readability-') || /^readability-(?:standard|large-font|narrow-large-font)-(?:open|correct|finish)$/u.test(check.label) || ['display-settings-helpers', 'keyboard-layout-helpers', 'talkback-observer-tests', 'talkback-device-helpers', 'talkback-speech-ocr-tests', 'talkback-flow', 'maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'maestro-syntax-categories', 'maestro-syntax-standalone', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'build-helpers', 'app-config-tests', 'standalone-device-helpers', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'catalog-http-after-apk', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow', 'standalone-offline', 'screen-awake-restore', 'screen-awake-restored-check'].includes(check.label))
       .map((check) => '- ' + check.label + ': 종료 코드 ' + check.exitCode),
     '- JUnit: ' + (junit ? `${junit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
     '- 예시 선택 JUnit: ' + (loadingJunit ? `${loadingJunit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
     ...(standalonePath ? ['- 설치형 APK JUnit: ' + (standaloneJunit ? `${standaloneJunit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함')] : []),
     '', '원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/' + runId + '/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.',
     '', '이 기록은 해당 Android 실기기·검사 시점의 결과다. '
-      + (standaloneJunit ? '설치형 APK는 위에 기록한 빌드만 검증했다. iPhone, 스토어 제출용 AAB/IPA 및 실제 이마트 가격의 앱 공개 표시는 검증하지 않았다.' : 'iPhone, 스토어용 APK/AAB/IPA 및 실제 이마트 가격의 앱 공개 표시는 검증하지 않았다.')
+      + (standaloneJunit ? '설치형 APK는 위에 기록한 빌드만 검증했다. Google Play 제출용 AAB 및 실제 이마트 가격의 앱 공개 표시는 검증하지 않았다.' : '새 설치형 APK·Google Play 제출용 AAB 및 실제 이마트 가격의 앱 공개 표시는 검증하지 않았다.')
       + ' 앱은 공개 예시 상품 12개로 검사한다.', '',
   ];
   fs.mkdirSync(path.dirname(path.join(repoRoot, reportPath)), { recursive: true });
@@ -928,6 +929,7 @@ try {
       say('설치형 APK만 부분 진단합니다. 전체 코드·온라인 검사는 생략하며 공개 기록과 커밋은 만들지 않습니다.');
       await run('maestro-syntax-standalone', tools.maestro, ['check-syntax', 'apps/mobile/.maestro/standalone-offline.yaml'], { timeout: 60_000 });
       await run('build-helpers', process.execPath, ['--test', 'scripts/build/standalone.test.mjs'], { timeout: timeout.check });
+      await run('app-config-tests', process.execPath, ['--test', 'scripts/build/app-config.test.mjs'], { timeout: timeout.check });
       await run('standalone-device-helpers', process.execPath, ['--test', 'scripts/device/standalone-device.test.mjs'], { timeout: timeout.check });
       if (readabilityRequested) {
         for (const phase of ['open', 'correct', 'finish']) {
@@ -960,6 +962,7 @@ try {
       await run('catalog-http-check-tests', process.execPath, ['--experimental-strip-types', '--test', 'scripts/device/catalog-http-check.test.mjs'], { timeout: timeout.check });
       await run('private-preview-tests', process.execPath, ['--test', 'scripts/device/private-price-preview.test.mjs'], { timeout: timeout.check });
       await run('build-helpers', process.execPath, ['--test', 'scripts/build/standalone.test.mjs'], { timeout: timeout.check });
+      await run('app-config-tests', process.execPath, ['--test', 'scripts/build/app-config.test.mjs'], { timeout: timeout.check });
       await run('standalone-device-helpers', process.execPath, ['--test', 'scripts/device/standalone-device.test.mjs'], { timeout: timeout.check });
       await run('display-settings-helpers', process.execPath, ['--test', 'scripts/device/display-settings.test.mjs'], { timeout: timeout.check });
       await run('keyboard-layout-helpers', process.execPath, ['--test', 'scripts/device/keyboard-layout.test.mjs'], { timeout: timeout.check });

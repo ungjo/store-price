@@ -587,3 +587,12 @@ test('Wi-Fi 전용 후속 검사는 Wi-Fi 복구와 mobile_data 원문 보존을
   assert.equal(result.network.restoration.verified, true);
   assertNoMobileWrites(h);
 });
+
+for (const applicationId of ['com.ungjo.storeprice', 'com.ungjo.storeprice.inspection']) {
+  test('첫 실행 검사에 고정 앱을 넘기면 기기 조작 전에 거부한다: ' + applicationId, async (t) => {
+    const h = harness(t);
+    h.apkState.applicationId = applicationId;
+    await assert.rejects(h.execute(), /검증된 APK 정보/u);
+    assert.equal(h.calls.length, 0);
+  });
+}

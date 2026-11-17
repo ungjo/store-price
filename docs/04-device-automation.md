@@ -2,6 +2,8 @@
 
 2026-11-12부터 반복적인 휴대전화 확인을 자동화한다. 앱 기능을 개발한 뒤 한 번의 명령으로 코드 검사 → 갤럭시 화면 조작·검증 → 결과 기록 → 로컬 커밋을 수행하도록 구성한다.
 
+2026-11-17 사용자 요청으로 iOS 개발을 중단했다. 이후 실기기·출시 검사는 Android·Google Play를 대상으로 하고 웹은 개발 중 미리보기·검사용으로 유지한다. 이전 세 플랫폼 번들 검사 결과와 자동 보고서는 당시 기록 그대로 보존한다.
+
 ## 한 번만 준비할 것
 
 - PC: Java 17 이상, Android SDK Platform-Tools의 ADB, Maestro CLI. 이 PC는 Java 21.0.11, ADB 37.0.1, Maestro 2.12.1을 사용한다. 재현성을 위해 프로젝트 실행기는 JDK 21과 Maestro 2.12.1을 확인한다.
@@ -81,8 +83,10 @@ node scripts/device/verify.mjs --talkback --message "feat: TalkBack 장보기와
 
 ## 검사와 기록
 
+- Android 배포 설정 단계에서는 정식 앱·검사 앱·오프라인 전용 preview의 구분과 잘못된 검사 환경 혼입 차단도 확인한다. 설정 검사와 Expo Go 회귀는 신규 APK/AAB의 설치·서명·스토어 검증을 대신하지 않는다.
+- 설정 검사는 저장소 루트의 `node --test scripts/build/app-config.test.mjs`로도 실행할 수 있다. 기존 `--standalone-apk`는 nonce를 쓰는 첫 실행용 preview만 허용하며 정식·고정 inspection 앱은 ADB 작업 전에 거부한다.
 - PGlite의 메모리 PostgreSQL에서 상품·가격 이력·예시 데이터·공개 조건·역할별 권한을 검사한다. 실제 Supabase 클라우드/HTTP 검증과 구분한다.
-- 기존 장바구니·예산·놀이돈 단위 테스트, 타입 검사, ESLint, 세 플랫폼 번들을 검사한다.
+- 기존 장바구니·예산·놀이돈 단위 테스트, 타입 검사, ESLint, Android·개발용 웹 번들을 검사한다. `npm run export:check`는 `expo export --platform android --platform web`을 실행한다.
 - 별도 PC 서버에서 이번 실행의 식별자를 앱에 넣고, 갤럭시에서도 같은 값을 읽어 최신 소스를 실행 중인지 확인한다.
 - 실제 화면에서 담기·수량 변경·합계·금액 선택·부족 안내·선택 취소·예산 초과 차단·회복·전체 비우기·다시 열기 초기화를 검사한다.
 - 거스름돈 맞히기·정답 전 계산 완료 차단·상품별 영수증·거스름돈과 잔액 구분·새 놀이와 영수증 재실행 초기화를 함께 검사한다.
@@ -104,11 +108,17 @@ node scripts/device/verify.mjs --talkback --message "feat: TalkBack 장보기와
 
 ## 현재 확인 범위
 
+Android 배포 설정·검사 앱 분리 단계의 전체 명령은 다음과 같다. 이번에는 기본 Expo Go 전체 놀이 회귀를 실행하며 `--standalone-apk`나 `--talkback`을 추가하지 않는다. 결과는 [개발 기록](book/chapters/07-android-release-config.md)과 같은 커밋의 검사 시작 HEAD `97b00ff`인 보고서로 확인한다.
+
+```bash
+node scripts/device/verify.mjs --message "chore: Android 배포 설정과 검사 앱 분리"
+```
+
 검사 도구 설치와 첫 전체 검증은 `8309377`, 예시 6개가 포함된 설치형 APK의 인터넷 없는 첫 실행 검증은 `4fbe035`, 상품 분류와 예시 12개의 Expo Go 검증은 `479f6f5`에 기록했다. **꼬마 시장 검사 12** APK의 빌드·실제 오프라인 첫 실행·분류 검사와 설정 복구는 `125d852`에 포함했으며 사용자가 GitHub 업로드를 확인했다. 이전 단계의 결과는 해당 커밋에 포함된 보고서로 확인한다.
 
 큰 글자·작은 화면·키보드 개선과 Expo Go 전체 검증은 `e15dac6`으로 완료했고 사용자가 GitHub 업로드를 확인했다. 실행 `20261115T161955875Z-724b31ea`에서 기존 놀이·세 화면 조건·각 두 번의 열린 키보드 실측·설정 복구가 모두 통과했다. [당시 개발 기록](book/chapters/06b-readable-layout.md)과 `e15dac6`에 포함된 자동 보고서로 확인한다.
 
-**꼬마 시장 화면 검사** APK의 스마트폰 검증은 `f0b408d`, 같은 APK의 SIM 없는 SM-X710 태블릿 검증은 `0e008b9`로 완료했고 사용자가 GitHub 업로드를 확인했다. 태블릿 실행 `20261116T081042192Z-86a428d9`에서 실제 오프라인·화면·설정 복구가 통과했다. 각 커밋의 보고서를 당시 근거로 보존한다. Expo Go의 TalkBack 검증은 `c949154`에 포함했으며 이번 **꼬마 시장 읽기 검사** APK의 새 검증과 구분한다.
+**꼬마 시장 화면 검사** APK의 스마트폰 검증은 `f0b408d`, 같은 APK의 SIM 없는 SM-X710 태블릿 검증은 `0e008b9`로 완료했고 사용자가 GitHub 업로드를 확인했다. 태블릿 실행 `20261116T081042192Z-86a428d9`에서 실제 오프라인·화면·설정 복구가 통과했다. Expo Go의 TalkBack 검증은 `c949154`, **꼬마 시장 읽기 검사** APK의 오프라인·TalkBack·복구 검증은 `97b00ff`에 포함했고 사용자가 `97b00ff`의 GitHub 업로드를 확인했다. APK 최종 실행은 `20261116T222305411Z-db74af27`이다. 각 커밋의 보고서를 당시 근거로 보존한다.
 
 사전 연결 확인인 device:doctor는 실기기 시나리오를 실행하거나 커밋하지 않는다. 실제 화면 조건을 적용한 검사와 설정 복구가 완료돼야 그 범위의 성공으로 기록한다.
 
@@ -186,7 +196,7 @@ node scripts/device/verify.mjs --standalone-apk .artifacts/build/standalone-edc2
 node scripts/device/verify.mjs --standalone-only --standalone-apk .artifacts/build/standalone-edc2c57143e6fb27/provenance.json --talkback
 ```
 
-`--talkback-only`는 Expo Go용으로 남긴다. TalkBack은 화면 배율 검사(`--readability`, `--readability-only`)·영수증 부분 검사·비공개 가격 미리보기와 함께 실행하지 않는다. 이번 APK의 실제 결과는 [개발 기록](book/chapters/06f-talkback-offline-apk.md)과 이 단계의 같은 커밋에 포함된 검사 시작 HEAD `c949154`의 자동 보고서로 확인한다.
+`--talkback-only`는 Expo Go용으로 남긴다. TalkBack은 화면 배율 검사(`--readability`, `--readability-only`)·영수증 부분 검사·비공개 가격 미리보기와 함께 실행하지 않는다. 이 APK의 실제 성공은 [개발 기록](book/chapters/06f-talkback-offline-apk.md)과 `97b00ff`에 포함된 검사 시작 HEAD `c949154`의 자동 보고서로 확인한다.
 
 ## 공식 자료
 

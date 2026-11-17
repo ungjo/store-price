@@ -1,6 +1,6 @@
 {
   "name": "market-play-mobile",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
     "expo": "~58.0.23",
@@ -21,11 +21,10 @@
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
-    "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
-    "export:check": "expo export --platform all",
+    "export:check": "expo export --platform android --platform web",
     "test": "node --experimental-strip-types --test src/features/cart/cart.test.ts src/features/budget/budget.test.ts src/features/payment/payment.test.ts src/features/payment/change-quiz.test.ts src/features/payment/receipt.test.ts src/features/catalog/catalog.test.ts src/features/catalog/real-price-preview.test.ts src/features/catalog/catalog-session.test.ts src/features/catalog/catalog-device-fixture.test.ts src/features/catalog/categories.test.ts src/features/accessibility/focus-request.test.ts",
     "start:price-preview": "node ../../scripts/device/start-price-preview.mjs",
     "verify:device": "node ../../scripts/device/verify.mjs",

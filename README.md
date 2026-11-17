@@ -1,6 +1,8 @@
 # 시장놀이 — store-price
 
-초등학교 1~3학년 아이들이 상품을 고르고 놀이돈으로 계산하며 거스름돈을 배우는 Android·iOS 앱입니다.
+초등학교 1~3학년 아이들이 상품을 고르고 놀이돈으로 계산하며 거스름돈을 배우는 Android 앱입니다. 출시 대상은 Google Play입니다.
+
+2026-11-17 사용자 요청으로 iOS 개발을 중단했습니다. 앞으로 Android 개발·검증·출시를 진행하며, 과거 iOS 번들 검사 결과와 당시 계획이 담긴 기존 개발 기록은 보존합니다.
 
 실제 가격의 목표 출처는 **SSG.COM 이마트 온라인 상품 가격**입니다. 오프라인 이마트 점포의 현재 가격을 의미하지 않습니다. 데이터 이용 범위가 확인되기 전에는 일반 사용자에게 직접 만든 **연습용 예시 가격**만 공개합니다. 실제 페이지에서 확인한 비공개 관측은 본인 갤럭시의 개발용 읽기 전용 미리보기로 살펴봅니다. 이마트·SSG 공식 앱 또는 제휴 앱이 아닙니다.
 
@@ -8,7 +10,7 @@
 
 - 앱: Expo + React Native + TypeScript
 - DB: Supabase PostgreSQL·공개 카탈로그 읽기, 로컬 SQL 검사는 PGlite
-- 출시 빌드 계획: Expo EAS Build / Submit
+- 출시 빌드 계획: Expo EAS Build / Submit을 통한 Android·Google Play 배포
 - 기록: 기능 단계별 Git 커밋 + 책 원고
 - 저장소: https://github.com/ungjo/store-price
 
@@ -50,12 +52,13 @@
 - [x] 화면 개선 APK의 스마트폰 오프라인·키보드 검증 (`f0b408d`) — [개발 기록](docs/book/chapters/06c-readable-offline-apk.md)
 - [x] SIM 없는 태블릿 실기기·기존 스마트폰 검사 경로 검증 (`0e008b9`) — [개발 기록](docs/book/chapters/06d-tablet-and-phone-verification.md)
 - [x] TalkBack 장보기·영수증 개선과 Expo Go 검증 (`c949154`) — [개발 기록](docs/book/chapters/06e-talkback-accessibility.md)
-- TalkBack 개선 APK의 빌드·오프라인·접근성 검사는 [개발 기록](docs/book/chapters/06f-talkback-offline-apk.md), 최종 결과는 [자동 보고서](docs/book/verification/latest-android.md) 참조
+- [x] TalkBack 개선 APK의 빌드·오프라인·접근성 검증 (`97b00ff`) — [개발 기록](docs/book/chapters/06f-talkback-offline-apk.md)
+- Android 배포 설정과 검사 앱 분리는 [개발 기록](docs/book/chapters/07-android-release-config.md)과 이 단계의 자동 보고서 참조
 - [ ] 허용된 실제 가격의 앱 공개·자동 갱신
-- [ ] Android·iPhone 실기기 검증
-- [ ] 스토어 제출
+- [ ] Google Play 테스트
+- [ ] Google Play 제출
 
-TalkBack 개선과 Expo Go의 23개 확인 지점·설정 복구 검증은 `c949154`에 포함했습니다. 이번 단계는 같은 코드를 **꼬마 시장 읽기 검사** APK로 만들어 SM-X710에서 오프라인 첫 실행과 통신 복구 뒤의 TalkBack 동선을 검사합니다. 기존 설치 앱은 보존하며 새 APK의 실제 결과는 [개발 기록](docs/book/chapters/06f-talkback-offline-apk.md) 및 검사 시작 HEAD `c949154`인 [자동 보고서](docs/book/verification/latest-android.md)로 구분합니다.
+**꼬마 시장 읽기 검사** APK의 SM-X710 오프라인 첫 실행·TalkBack·설정 복구 검증은 `97b00ff`로 완료했고 사용자가 GitHub 업로드를 확인했습니다. 실제 실행 `20261116T222305411Z-db74af27`의 PASS 보고서는 해당 커밋에 보존합니다. 이번 단계는 정식 앱 `com.ungjo.storeprice`와 검사 앱 `com.ungjo.storeprice.inspection`의 설정을 분리하고, iOS 중단 변경을 함께 검증·기록합니다. 설정 검사와 기존 Expo Go 전체 회귀의 결과는 검사 시작 HEAD `97b00ff`인 보고서로 확인합니다. 새 APK/AAB 빌드·Google Play 업로드와 실제 가격 공개·자동 갱신은 후속 단계입니다.
 
 ## 첫 화면 실행
 
