@@ -15,7 +15,8 @@ import { PREVIEW_PORT, capturePrivatePreview, assertPrivatePreviewUnchanged,
   scanReleaseForPrivateData, writePreviewExpectations } from './private-price-preview.mjs';
 import { captureStandaloneApk, assertStandaloneApkUnchanged } from '../build/standalone.mjs';
 import { requireOffline, runStandaloneOffline } from './standalone-device.mjs';
-import { captureInspectionApk, assertInspectionApkUnchanged } from '../build/inspection.mjs';
+import { captureInspectionApk, assertInspectionApkUnchanged, captureHistoricalInspectionApk, assertHistoricalInspectionApkUnchanged } from '../build/inspection.mjs';
+import { readInspectionReport } from './inspection-report.mjs';
 import { runInspectionInstalled } from './inspection-device.mjs';
 import { captureDisplaySettings, restoreDisplaySettings, serializeDisplaySettings } from './display-settings.mjs';
 import { runReadability } from './readability-device.mjs';
@@ -41,6 +42,10 @@ let standalonePath;
 let inspectionPath;
 let inspectionApkState;
 let inspectionResult;
+let inspectionUpdatePath;
+let inspectionUpdateCommit;
+let inspectionUpdateState;
+let inspectionUpdateReport;
 let message = 'test: 갤럭시 자동 검증 결과와 확인한 변경 기록';
 
 for (let index = 0; index < args.length; index += 1) {
@@ -55,10 +60,15 @@ for (let index = 0; index < args.length; index += 1) {
   else if (args[index] === '--private-price-preview' && args[index + 1]) previewPath = args[++index];
   else if (args[index] === '--standalone-apk' && args[index + 1]) standalonePath = args[++index];
   else if (args[index] === '--inspection-apk' && args[index + 1]) inspectionPath = args[++index];
+  else if (args[index] === '--inspection-update-from' && args[index + 1]) inspectionUpdatePath = args[++index];
+  else if (args[index] === '--inspection-update-commit' && args[index + 1]) inspectionUpdateCommit = args[++index];
   else if (args[index] === '--message' && args[index + 1]) message = args[++index];
-  else throw new Error('지원 옵션: --no-commit, --receipt-only, --standalone-only, --readability, --readability-only, --talkback, --talkback-only, --doctor, --private-price-preview <원본 경로>, --standalone-apk <빌드 검증 파일>, --inspection-apk <검사 APK 출처 파일>, --message "커밋 메시지"');
+  else throw new Error('지원 옵션: --no-commit, --receipt-only, --standalone-only, --readability, --readability-only, --talkback, --talkback-only, --doctor, --private-price-preview <원본 경로>, --standalone-apk <빌드 검증 파일>, --inspection-apk <검사 APK 출처 파일>, --inspection-update-from <이전 APK 출처>, --inspection-update-commit <이전 PASS 커밋>, --message "커밋 메시지"');
 }
 if (!message.trim() || /[\r\n\0]/u.test(message)) throw new Error('커밋 메시지는 한 줄로 입력해 주세요.');
+if ((inspectionUpdatePath || inspectionUpdateCommit) && (!inspectionPath || !inspectionUpdatePath || !inspectionUpdateCommit)) {
+  throw new Error('검사 앱 업데이트에는 --inspection-apk, --inspection-update-from, --inspection-update-commit을 함께 지정해 주세요.');
+}
 if (inspectionPath && (standalonePath || standaloneOnly || receiptOnly || readabilityRequested || talkbackRequested || previewPath)) {
   throw new Error('고정 검사 APK는 기본 전체 검사와 함께 사용합니다. 오프라인·접근성·부분 검사 옵션은 별도 실행해 주세요.');
 }
@@ -430,12 +440,13 @@ async function stopOwnDevelopmentConnections() {
 async function verifyInspectionInstalled() {
   const started = Date.now();
   assertInspectionApkUnchanged(inspectionApkState);
+  if (inspectionUpdateState) assertHistoricalInspectionApkUnchanged(inspectionUpdateState);
   await stopOwnDevelopmentConnections();
   await wakeScreenForUi();
   say('검증한 꼬마 시장 검사 APK를 설치하고 같은 앱에서 전체 놀이를 검사합니다.');
   try {
     inspectionResult = await runInspectionInstalled({
-      adb, apkState: inspectionApkState, allowMatchingInstall: true,
+      adb, apkState: inspectionApkState, allowMatchingInstall: true, updateFrom: inspectionUpdateState,
       verifyInstalled: async () => {
         assertInspectionApkUnchanged(inspectionApkState);
         assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
@@ -461,7 +472,7 @@ async function verifyInspectionInstalled() {
       || inspectionResult.versionName !== inspectionApkState.versionName
       || inspectionResult.versionCode !== Number(inspectionApkState.versionCode)
       || inspectionResult.installationScope !== 'current-android-user'
-      || !['fresh', 'reused-exact'].includes(inspectionResult.installationMode)
+      || !['fresh', 'reused-exact', 'updated-verified'].includes(inspectionResult.installationMode)
       || inspectionResult.installedHashVerified !== true
       || inspectionResult.installStatus !== 'verified'
       || inspectionResult.verifyInstalledStatus !== 'passed'
@@ -469,6 +480,14 @@ async function verifyInspectionInstalled() {
       || inspectionResult.networkSettingsChanged !== false) {
       throw new Error('설치한 검사 APK와 전체 놀이 검증의 근거가 일치하지 않습니다.');
     }
+    if (inspectionResult.installationMode === 'updated-verified' && (!inspectionUpdateState
+      || inspectionResult.installedUpdated !== true || inspectionResult.updateAuthorized !== true
+      || inspectionResult.previousApkSha256 !== inspectionUpdateState.sha256
+      || inspectionResult.signerCertificateSHA256 !== inspectionApkState.signerCertificateSHA256
+      || inspectionResult.packageCodeScope !== 'shared-package-update' || inspectionResult.dataPreserved !== true)) {
+      throw new Error('명시한 이전 APK와 데이터 삭제 없는 업데이트 근거가 일치하지 않습니다.');
+    }
+    if (inspectionUpdateState) assertHistoricalInspectionApkUnchanged(inspectionUpdateState);
     assertInspectionApkUnchanged(inspectionApkState);
     checks.push({ label: 'inspection-installed', exitCode: 0, milliseconds: Date.now() - started });
   } catch (error) {
@@ -766,6 +785,7 @@ function writeReport(status, reason = '') {
     'node --test scripts/build/app-config.test.mjs',
     'node --test scripts/build/inspection.test.mjs',
     'node --test scripts/device/inspection-device.test.mjs',
+    'node --test scripts/device/inspection-report.test.mjs',
     'node --test scripts/device/standalone-device.test.mjs',
     'node --test scripts/device/display-settings.test.mjs',
     'node --test scripts/device/keyboard-layout.test.mjs',
@@ -788,7 +808,7 @@ function writeReport(status, reason = '') {
     ...(screenAwake.wakeRequested ? ['adb -s <선택한 실기기> shell input keyevent 224'] : []),
     'maestro --device <선택한 실기기> test -e EXPO_URL=exp://127.0.0.1:8091 -e RUN_ID=<실행 ID>-loading --format junit --output <검사폴더>/loading-result.xml --test-output-dir <검사폴더>/maestro-loading --debug-output <검사폴더>/maestro-loading apps/mobile/.maestro/catalog-loading-choice.yaml',
     ...(inspectionPath ? [
-      ...(inspectionResult?.installationMode === 'fresh' ? ['adb -s <선택한 실기기> install -R --user <현재 Android 사용자> <검증한 검사 APK>'] : ['# 이미 설치한 검사 APK의 해시·버전이 이번 빌드와 정확히 같은지 검증해 재사용']),
+      ...(inspectionResult?.installationMode === 'fresh' ? ['adb -s <선택한 실기기> install -R --user <현재 Android 사용자> <검증한 검사 APK>'] : inspectionResult?.installationMode === 'updated-verified' ? ['adb -s <선택한 실기기> install -r --user <현재 Android 사용자> <동일 서명의 새 검사 APK>'] : ['# 이미 설치한 검사 APK의 해시·버전이 이번 빌드와 정확히 같은지 검증해 재사용']),
       'maestro --device <선택한 실기기> test -e APP_ID=com.ungjo.storeprice.inspection -e TARGET_MODE=inspection -e RUN_ID=<APK 빌드 확인 번호> -e PRIVATE_PREVIEW_ENABLED=0 --format junit --output <검사폴더>/result.xml --test-output-dir <검사폴더>/maestro --debug-output <검사폴더>/maestro apps/mobile/.maestro/payment.yaml',
     ] : ['maestro --device <선택한 실기기> test -e EXPO_URL=exp://127.0.0.1:8091 -e RUN_ID=<실행 ID> --format junit --output <검사폴더>/result.xml --test-output-dir <검사폴더>/maestro --debug-output <검사폴더>/maestro apps/mobile/.maestro/payment.yaml']),
     ...(standaloneJunit ? [
@@ -887,7 +907,9 @@ function writeReport(status, reason = '') {
       '- APK SHA-256: `' + inspectionApkState.sha256 + '` (원본과 실제 설치 파일을 검사 전후 대조)',
       '- 빌드 소스 SHA-256: `' + inspectionApkState.sourceFingerprint + '`',
       '- 서명 인증서 SHA-256: `' + inspectionApkState.signerCertificateSHA256 + '`',
-      '- 설치: `' + inspectionResult.installationMode + '` / 현재 Android 사용자에 한정. 기존 다른 앱과 데이터를 보존했다.',
+      '- 설치: `' + inspectionResult.installationMode + '`. 다른 패키지를 변경하거나 앱 데이터를 삭제하지 않았다.',
+      ...(inspectionUpdateReport ? ['- 업데이트 근거: 과거 PASS 커밋 `' + inspectionUpdateReport.commit + '`, 이전 APK SHA-256 `' + inspectionUpdateState.sha256 + '`. ' + (inspectionResult.installationMode === 'updated-verified' ? '동일 서명과 이전 설치 파일을 대조한 뒤 업데이트했다.' : '과거 PASS·동일 서명을 확인하고 현재 설치된 새 APK 파일을 대조했다.') + '',
+        '- 설치 코드 영향: `' + inspectionResult.packageCodeScope + '`. 데이터 보존은 삭제·초기화 명령 없이 설치했다는 뜻이며 데이터 전체의 바이트 비교를 뜻하지 않는다.'] : []),
       '- 디버그 모드 비활성·백업 복원 비활성·내장 번들·고정 공개 상품 설정·빌드 표시를 검증했다.',
       '- 개발 서버를 종료한 뒤 설치한 동일 APK에서 전체 놀이를 검사했다. 성공한 검사 앱은 기기에 남겼다.',
       '- Wi-Fi·모바일 데이터를 변경하지 않았으며 오프라인 첫 실행·TalkBack 검증을 주장하지 않는다.',
@@ -930,7 +952,7 @@ function writeReport(status, reason = '') {
     '- 정답 전 계산 완료 차단, 영수증 상품별 가격·수량·합계·지불액·거스름돈·잔액을 확인한다.',
     '- 0원 거스름돈도 완료하며, 다시 장보기와 영수증 상태의 재실행으로 새 놀이를 시작한다.',
     '', '## 결과', '',
-    ...checks.filter((check) => check.label.startsWith('maestro-syntax-readability-') || /^readability-(?:standard|large-font|narrow-large-font)-(?:open|correct|finish)$/u.test(check.label) || ['display-settings-helpers', 'keyboard-layout-helpers', 'talkback-observer-tests', 'talkback-device-helpers', 'talkback-speech-ocr-tests', 'talkback-flow', 'maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'maestro-syntax-categories', 'maestro-syntax-standalone', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'build-helpers', 'app-config-tests', 'inspection-build-helpers', 'inspection-device-helpers', 'inspection-installed', 'standalone-device-helpers', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'catalog-http-after-apk', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow', 'standalone-offline', 'screen-awake-restore', 'screen-awake-restored-check'].includes(check.label))
+    ...checks.filter((check) => check.label.startsWith('maestro-syntax-readability-') || /^readability-(?:standard|large-font|narrow-large-font)-(?:open|correct|finish)$/u.test(check.label) || ['display-settings-helpers', 'keyboard-layout-helpers', 'talkback-observer-tests', 'talkback-device-helpers', 'talkback-speech-ocr-tests', 'talkback-flow', 'maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'maestro-syntax-categories', 'maestro-syntax-standalone', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'build-helpers', 'app-config-tests', 'inspection-build-helpers', 'inspection-device-helpers', 'inspection-report-tests', 'inspection-installed', 'standalone-device-helpers', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'catalog-http-after-apk', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow', 'standalone-offline', 'screen-awake-restore', 'screen-awake-restored-check'].includes(check.label))
       .map((check) => '- ' + check.label + ': 종료 코드 ' + check.exitCode),
     '- JUnit: ' + (junit ? `${junit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
     '- 예시 선택 JUnit: ' + (loadingJunit ? `${loadingJunit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
@@ -1008,6 +1030,11 @@ try {
     if (inspectionPath) {
       say('고정 검사 APK의 출처·서명·앱 이름·버전과 파일 지문을 확인합니다.');
       inspectionApkState = await captureInspectionApk({ repoRoot, provenancePath: inspectionPath, run, tools });
+      if (inspectionUpdatePath) {
+        inspectionUpdateReport = readInspectionReport(repoRoot, inspectionUpdateCommit);
+        inspectionUpdateState = await captureHistoricalInspectionApk({ repoRoot, provenancePath: inspectionUpdatePath,
+          run, tools, expected: inspectionUpdateReport.expected });
+      }
     }
     if (standalonePath) {
       say('설치형 APK의 빌드 출처·파일 지문·앱 정보를 먼저 확인합니다.');
@@ -1021,6 +1048,7 @@ try {
       await run('app-config-tests', process.execPath, ['--test', 'scripts/build/app-config.test.mjs'], { timeout: timeout.check });
       await run('inspection-build-helpers', process.execPath, ['--test', 'scripts/build/inspection.test.mjs'], { timeout: timeout.check });
       await run('inspection-device-helpers', process.execPath, ['--test', 'scripts/device/inspection-device.test.mjs'], { timeout: timeout.check });
+      await run('inspection-report-tests', process.execPath, ['--test', 'scripts/device/inspection-report.test.mjs'], { timeout: timeout.check });
       await run('standalone-device-helpers', process.execPath, ['--test', 'scripts/device/standalone-device.test.mjs'], { timeout: timeout.check });
       if (readabilityRequested) {
         for (const phase of ['open', 'correct', 'finish']) {
@@ -1056,6 +1084,7 @@ try {
       await run('app-config-tests', process.execPath, ['--test', 'scripts/build/app-config.test.mjs'], { timeout: timeout.check });
       await run('inspection-build-helpers', process.execPath, ['--test', 'scripts/build/inspection.test.mjs'], { timeout: timeout.check });
       await run('inspection-device-helpers', process.execPath, ['--test', 'scripts/device/inspection-device.test.mjs'], { timeout: timeout.check });
+      await run('inspection-report-tests', process.execPath, ['--test', 'scripts/device/inspection-report.test.mjs'], { timeout: timeout.check });
       await run('standalone-device-helpers', process.execPath, ['--test', 'scripts/device/standalone-device.test.mjs'], { timeout: timeout.check });
       await run('display-settings-helpers', process.execPath, ['--test', 'scripts/device/display-settings.test.mjs'], { timeout: timeout.check });
       await run('keyboard-layout-helpers', process.execPath, ['--test', 'scripts/device/keyboard-layout.test.mjs'], { timeout: timeout.check });
@@ -1073,6 +1102,7 @@ try {
       assertPreviewUnchanged();
       if (apkState) assertStandaloneApkUnchanged(apkState);
       if (inspectionApkState) assertInspectionApkUnchanged(inspectionApkState);
+      if (inspectionUpdateState) assertHistoricalInspectionApkUnchanged(inspectionUpdateState);
       if (previewSession) {
         const started = Date.now();
         releaseScan = scanReleaseForPrivateData(path.join(mobileRoot, 'dist'), previewState, previewSession.token);
@@ -1144,6 +1174,7 @@ try {
     assertCatalogEnvironmentUnchanged(catalogEnvironment);
     if (apkState) assertStandaloneApkUnchanged(apkState);
     if (inspectionApkState) assertInspectionApkUnchanged(inspectionApkState);
+      if (inspectionUpdateState) assertHistoricalInspectionApkUnchanged(inspectionUpdateState);
     // 부분 검사 성공은 전체 회귀 검증을 대신하지 않으므로 공개 보고서와 커밋을 만들지 않습니다.
     if (!receiptOnly && !standaloneOnly && !readabilityOnly && !talkbackOnly) {
       if (inspectionApkState && (!junit || inspectionResult?.verifyInstalledStatus !== 'passed')) throw new Error('설치한 검사 APK의 전체 검사를 완료하지 않아 커밋하지 않습니다.');
@@ -1157,11 +1188,13 @@ try {
       if (talkbackRequested) assertTalkBackEvidence();
       if (apkState) assertStandaloneApkUnchanged(apkState);
       if (inspectionApkState) assertInspectionApkUnchanged(inspectionApkState);
+      if (inspectionUpdateState) assertHistoricalInspectionApkUnchanged(inspectionUpdateState);
       writeReport('PASS');
       assertCatalogEnvironmentUnchanged(catalogEnvironment);
       assertPreviewUnchanged();
       if (apkState) assertStandaloneApkUnchanged(apkState);
       if (inspectionApkState) assertInspectionApkUnchanged(inspectionApkState);
+      if (inspectionUpdateState) assertHistoricalInspectionApkUnchanged(inspectionUpdateState);
       if (!noCommit) {
         const result = commitVerifiedChange({ repoRoot, state: gitState, reportPath, message });
         commit = result.commit;
@@ -1192,7 +1225,7 @@ try {
       catalog: { environmentFingerprint: catalogEnvironment?.fingerprint, before: catalogBefore, after: catalogAfter },
       privatePreview: { sourceFingerprint: previewState?.fingerprint, before: previewBefore, after: previewAfter, releaseScan },
       standalone: standaloneEvidence(),
-      inspection: { requested: Boolean(inspectionPath), apk: inspectionApkState ? { ...inspectionApkState, apkPath: path.relative(repoRoot, inspectionApkState.apkPath).replaceAll('\\', '/') } : undefined, result: inspectionResult },
+      inspection: { requested: Boolean(inspectionPath), apk: inspectionApkState ? { ...inspectionApkState, apkPath: path.relative(repoRoot, inspectionApkState.apkPath).replaceAll('\\', '/') } : undefined, result: inspectionResult, updateFromCommit: inspectionUpdateReport?.commit },
       readability: { requested: readabilityRequested, result: readabilityResult, display: displayState ? serializeDisplaySettings(displayState) : undefined },
       talkback: { requested: talkbackRequested, result: talkbackResult },
     }, null, 2) + '\n');

@@ -50,7 +50,60 @@ function identity(config) {
   };
 }
 
-const commonIdentity = { version: '1.0.0', versionCode: 1, allowBackup: false, platforms: ['android', 'web'] };
+const commonIdentity = { version: '1.0.0', versionCode: 2, allowBackup: false, platforms: ['android', 'web'] };
+
+
+function assertBranding(config, brand) {
+  assert.equal(config.icon, './assets/brand/' + brand + '-icon.png');
+  assert.deepEqual(config.android.adaptiveIcon, {
+    backgroundColor: '#FAF8EF',
+    foregroundImage: './assets/brand/' + brand + '-foreground.png',
+    monochromeImage: './assets/brand/' + brand + '-monochrome.png',
+  });
+  const splashPlugins = config.plugins.filter((plugin) =>
+    (Array.isArray(plugin) ? plugin[0] : plugin) === 'expo-splash-screen');
+  assert.deepEqual(splashPlugins, [['expo-splash-screen', {
+    backgroundColor: '#FAF8EF', image: './assets/brand/' + brand + '-foreground.png',
+    imageWidth: 200, resizeMode: 'contain',
+  }]]);
+}
+
+test('production artwork is isolated from both inspection package modes', () => {
+  assertBranding(evaluate({ STORE_PRICE_APP_VARIANT: 'production' }), 'market');
+  assertBranding(evaluate(), 'inspection');
+  assertBranding(evaluate(standaloneEnv), 'inspection');
+});
+
+test('static config is production artwork while dynamic defaults stay inspection', () => {
+  assertBranding(baseConfig, 'market');
+  assert.equal(baseConfig.android.versionCode, 2);
+  assertBranding(evaluate(), 'inspection');
+});
+
+test('stale splash settings and template adaptive background cannot leak into a variant', () => {
+  const input = structuredClone(baseConfig);
+  input.android.adaptiveIcon.backgroundImage = './assets/android-icon-background.png';
+  input.plugins.push('expo-splash-screen', ['expo-splash-screen', {
+    image: './assets/splash-icon.png', dark: { backgroundColor: '#000000' },
+  }], ['other-example-plugin', { retained: true }]);
+  const before = structuredClone(input);
+  const resolved = evaluate({}, input);
+  assertBranding(resolved, 'inspection');
+  assert.deepEqual(resolved.plugins.at(-2), ['other-example-plugin', { retained: true }]);
+  assert.deepEqual(input, before);
+});
+
+test('splash dependency uses the installed Expo SDK compatible version and lockfile', () => {
+  const pkg = readJson('package.json');
+  const lock = readJson('package-lock.json');
+  const supported = readJson('node_modules/expo/bundledNativeModules.json')['expo-splash-screen'];
+  const installed = readJson('node_modules/expo-splash-screen/package.json').version;
+  // Expo 온라인 호환 목록은 로컬 SDK의 권장 patch보다 앞설 수 있어 호환 범위로 검사합니다.
+  const semver = createRequire(path.join(mobileRoot, 'package.json'))('semver');
+  assert.equal(semver.satisfies(installed, supported), true);
+  assert.equal(semver.satisfies(installed, pkg.dependencies['expo-splash-screen']), true);
+  assert.equal(lock.packages['node_modules/expo-splash-screen'].version, installed);
+});
 
 test('local default is the fixed inspection app, not the production package', () => {
   assert.deepEqual(identity(evaluate()), {
@@ -66,7 +119,7 @@ test('explicit production resolves the stable Google Play identity', () => {
 
 test('existing standalone preview keeps a separate nonce package and metadata', () => {
   const config = evaluate(standaloneEnv);
-  assert.deepEqual(identity(config), { name: '꼬마 시장 읽기 검사', package: offlinePackage, ...commonIdentity });
+  assert.deepEqual(identity(config), { name: '꼬마 시장 읽기 검사', package: offlinePackage, ...commonIdentity, versionCode: 1 });
   assert.deepEqual(config.extra.standaloneBuild, { schemaVersion: 1, nonce, androidPackage: offlinePackage });
   assert.equal(evaluate({ ...standaloneEnv, STORE_PRICE_APP_VARIANT: undefined }).android.package, offlinePackage);
 });
@@ -154,9 +207,8 @@ test('resolution preserves EAS connection, plugins and Android metadata without 
     const resolved = evaluate(env, input);
     assert.deepEqual(resolved.extra.eas, before.extra.eas);
     assert.deepEqual(resolved.extra.custom, before.extra.custom);
-    assert.deepEqual(resolved.android.adaptiveIcon, before.android.adaptiveIcon);
     assert.equal(resolved.android.predictiveBackGestureEnabled, false);
-    assert.deepEqual(resolved.plugins, before.plugins);
+    assert.deepEqual(resolved.plugins.filter((plugin) => typeof plugin === 'string'), ['expo-status-bar']);
     assert.equal(resolved.owner, before.owner);
     if (env !== standaloneEnv) assert.equal(Object.hasOwn(resolved.extra, 'standaloneBuild'), false);
   }
@@ -165,9 +217,9 @@ test('resolution preserves EAS connection, plugins and Android metadata without 
 
 test('ordinary version codes come from app.json while fresh standalone stays at one', () => {
   const config = structuredClone(baseConfig);
-  config.android.versionCode = 2;
-  assert.equal(evaluate({}, config).android.versionCode, 2);
-  assert.equal(evaluate({ STORE_PRICE_APP_VARIANT: 'production' }, config).android.versionCode, 2);
+  config.android.versionCode = 3;
+  assert.equal(evaluate({}, config).android.versionCode, 3);
+  assert.equal(evaluate({ STORE_PRICE_APP_VARIANT: 'production' }, config).android.versionCode, 3);
   assert.equal(evaluate(standaloneEnv, config).android.versionCode, 1);
 });
 
@@ -229,7 +281,11 @@ for (const [profileName, expectedName, expectedPackage] of [
     let config;
     try { config = JSON.parse(result.stdout); }
     catch { assert.fail('Expo CLI did not return public config JSON.'); }
-    assert.deepEqual(identity(config), { name: expectedName, package: expectedPackage, ...commonIdentity });
+    assert.deepEqual(identity(config), {
+      name: expectedName, package: expectedPackage, ...commonIdentity,
+      versionCode: profileName === 'preview' ? 1 : 2,
+    });
+    assertBranding(config, profileName === 'production' ? 'market' : 'inspection');
     assert.deepEqual(config.extra.eas, baseConfig.extra.eas);
     assert.equal(config.owner, baseConfig.owner);
     assert.equal(config.slug, baseConfig.slug);

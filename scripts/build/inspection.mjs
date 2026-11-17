@@ -9,14 +9,25 @@ import { captureCatalogEnvironment, pinnedCatalogEnvironment } from '../device/c
 const sha = (data) => createHash('sha256').update(data).digest('hex');
 export const INSPECTION_APPLICATION_ID = 'com.ungjo.storeprice.inspection';
 const applicationName = '꼬마 시장 검사';
-const versionName = '1.0.0';
-const versionCode = '1';
 const states = new WeakMap();
+const historicalStates = new WeakMap();
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u;
 
 const digestPattern = /^[a-f0-9]{64}$/u;
 const matches = (pattern, value) => typeof value === 'string' && pattern.exec(value)?.[0] === value;
 const disabledKeys = ['EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW', 'EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW_TOKEN', 'EXPO_PUBLIC_CATALOG_TEST_SCENARIO'];
+const versionPattern = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/u;
+const validVersionCode = (value) => Number.isSafeInteger(value) && value > 0 && value <= 2_100_000_000;
+
+// 버전은 도우미의 고정 상수가 아니라 이번 빌드의 앱 설정에서 정합니다.
+// Android 코드의 문자열 변환은 검증 뒤 한 번만 해 과거 입력 기록과 같은 형식을 유지합니다.
+function readAppVersion(config) {
+  const versionName = config?.android?.version ?? config?.version;
+  if (!matches(versionPattern, versionName) || !validVersionCode(config?.android?.versionCode)) {
+    throw new Error('앱 버전은 숫자 세 부분, Android versionCode는 1~2100000000의 정수여야 합니다.');
+  }
+  return { versionName, versionCode: String(config.android.versionCode) };
+}
 
 // 마지막 파일뿐 아니라 부모 폴더의 junction도 확인해 허용 경로 밖의 자료를 따라가지 않습니다.
 function checkedPath(file, { allowMissing = false } = {}) {
@@ -101,9 +112,7 @@ export function prepareInspectionSnapshot(repoRoot) {
   const mobileRoot = path.join(repoRoot, 'apps/mobile');
   const config = loadJson(path.join(mobileRoot, 'app.json')).expo;
   if (!matches(uuid, config?.extra?.eas?.projectId)) throw new Error('먼저 Expo 계정 로그인과 EAS 프로젝트 연결을 완료해 주세요.');
-  if (config.version !== versionName || String(config.android?.versionCode) !== versionCode) {
-    throw new Error('이번 검사 앱의 버전은 1.0.0 / 1이어야 합니다.');
-  }
+  const { versionName, versionCode } = readAppVersion(config);
   const eas = loadJson(path.join(mobileRoot, 'eas.json'));
   const profile = validateProfile(eas);
   const input = captureBuildInputs(mobileRoot);
@@ -154,17 +163,37 @@ function validIdentity(manifest) {
     && matches(/^inspection-[a-f0-9]{16}$/u, manifest.buildNonce)
     && manifest.applicationId === INSPECTION_APPLICATION_ID
     && manifest.applicationName === applicationName
-    && manifest.versionName === versionName && manifest.versionCode === versionCode;
+    && matches(versionPattern, manifest.versionName)
+    && matches(/^[1-9]\d*$/u, manifest.versionCode) && validVersionCode(Number(manifest.versionCode));
 }
 
-function assertInputs(repoRoot, buildRoot, manifest) {
+function assertInputs(repoRoot, buildRoot, manifest, { historical = false } = {}) {
   checkedBuildRoot(repoRoot, buildRoot);
   if (!validIdentity(manifest) || path.basename(buildRoot) !== manifest.buildNonce
     || !matches(/^[a-f0-9]{40,64}$/u, manifest.gitHead)
     || !matches(digestPattern, manifest.snapshotFingerprint)
     || !matches(digestPattern, manifest.catalogEnvFingerprint)) throw new Error('일반 검사 APK 입력 기록 형식이 올바르지 않습니다.');
-  const actual = captureBuildInputs(path.join(repoRoot, 'apps/mobile'));
-  if (actual.fingerprint !== manifest.sourceFingerprint || JSON.stringify(actual.entries) !== JSON.stringify(manifest.sourceEntries)) throw new Error('APK 빌드 이후 앱 소스가 바뀌었습니다. 새 APK를 만들어 주세요.');
+  if (historical) {
+    // 과거 APK는 현재 소스와 다를 수 있지만, 당시 파일 목록과 업로드 복사본은 여전히 같아야 합니다.
+    const original = manifest.sourceEntries;
+    const snapshot = captureBuildInputs(path.join(buildRoot, 'project'));
+    if (!Array.isArray(original) || original.length !== snapshot.entries.length
+      || !matches(digestPattern, manifest.sourceFingerprint) || sha(JSON.stringify(original)) !== manifest.sourceFingerprint
+      || original.some((entry, index) => !entry || entry.name !== snapshot.entries[index].name
+        || !matches(digestPattern, entry.sha256)
+        // eas.json만 공개 설정·빌드 표시를 준비 과정에서 주입합니다. 복사본 전체 지문으로 따로 고정합니다.
+        || (entry.name !== 'eas.json' && entry.sha256 !== snapshot.entries[index].sha256))) {
+      throw new Error('과거 APK의 원본 입력과 업로드 복사본이 일치하지 않습니다.');
+    }
+  } else {
+    const actual = captureBuildInputs(path.join(repoRoot, 'apps/mobile'));
+    if (actual.fingerprint !== manifest.sourceFingerprint || JSON.stringify(actual.entries) !== JSON.stringify(manifest.sourceEntries)) throw new Error('APK 빌드 이후 앱 소스가 바뀌었습니다. 새 APK를 만들어 주세요.');
+  }
+  // 입력 기록의 버전만 바꿔 다른 APK를 끼워 넣지 못하도록 지문으로 확인한 원본 설정에도 연결합니다.
+  const configuredVersion = readAppVersion(loadJson(path.join(historical ? path.join(buildRoot, 'project') : path.join(repoRoot, 'apps/mobile'), 'app.json')).expo);
+  if (configuredVersion.versionName !== manifest.versionName || configuredVersion.versionCode !== manifest.versionCode) {
+    throw new Error('빌드 입력 기록의 버전이 앱 설정과 다릅니다.');
+  }
   if (captureCatalogEnvironment(path.join(repoRoot, 'apps/mobile')).fingerprint !== manifest.catalogEnvFingerprint) throw new Error('APK 빌드 이후 공개 상품 연결 설정이 바뀌었습니다.');
   if (snapshotFiles(path.join(buildRoot, 'project')) !== manifest.snapshotFingerprint) throw new Error('업로드한 앱 복사본이 바뀌었습니다.');
 }
@@ -186,7 +215,7 @@ export function validateInspectionBuildRecord(record, manifest) {
     || record.buildProfile !== 'inspection' || record.distribution !== 'INTERNAL'
     || record.app?.id !== manifest.projectId || record.message !== manifest.buildNonce
     || record.appIdentifier !== INSPECTION_APPLICATION_ID
-    || record.appVersion !== versionName || String(record.appBuildVersion) !== versionCode) {
+    || record.appVersion !== manifest.versionName || String(record.appBuildVersion) !== manifest.versionCode) {
     throw new Error('완료된 고정 검사 앱의 Android 빌드 기록이 필요합니다.');
   }
   return officialArtifactUrl(record.artifacts?.applicationArchiveUrl ?? record.artifacts?.buildUrl);
@@ -244,11 +273,41 @@ export function assertInspectionApkUnchanged(state) {
   for (const [file, fingerprint] of details.files) if (sha(ordinary(file)) !== fingerprint) throw new Error('검사 중 APK 또는 빌드 기록이 바뀌었습니다.');
 }
 
+function historicalIdentity(expected) {
+  if (!expected || expected.applicationId !== INSPECTION_APPLICATION_ID
+    || !matches(uuid, expected.buildId) || !matches(/^inspection-[a-f0-9]{16}$/u, expected.buildNonce)
+    || !matches(digestPattern, expected.sha256) || !matches(digestPattern, expected.sourceFingerprint)
+    || !matches(digestPattern, expected.signerCertificateSHA256)
+    || !matches(versionPattern, expected.versionName)
+    || !matches(/^[1-9]\d*$/u, expected.versionCode) || !validVersionCode(Number(expected.versionCode))) {
+    throw new Error('과거 통과 기록에서 확인한 APK 식별 정보가 필요합니다.');
+  }
+  return Object.freeze(Object.fromEntries([
+    'applicationId', 'buildId', 'buildNonce', 'sha256', 'sourceFingerprint',
+    'versionName', 'versionCode', 'signerCertificateSHA256',
+  ].map((key) => [key, expected[key]])));
+}
+
+function assertHistoricalIdentity(actual, expected, { beforeSignature = false } = {}) {
+  if (Object.keys(expected).some((key) => !(beforeSignature && key === 'signerCertificateSHA256') && actual[key] !== expected[key])) {
+    throw new Error('과거 통과 기록과 APK의 지문·서명·식별 정보가 다릅니다.');
+  }
+}
+
+export function assertHistoricalInspectionApkUnchanged(state) {
+  // 과거 상태를 현재 APK 검사에 넘기거나 객체를 복사해 검증을 건너뛰지 못하도록 저장소를 분리합니다.
+  const details = historicalStates.get(state);
+  if (!details) throw new Error('현재 검사에서 별도로 확인한 과거 APK 상태가 필요합니다.');
+  assertInputs(details.repoRoot, details.buildRoot, details.manifest, { historical: true });
+  assertHistoricalIdentity(state, details.expected);
+  for (const [file, fingerprint] of details.files) if (sha(ordinary(file)) !== fingerprint) throw new Error('검사 중 과거 APK 또는 빌드 기록이 바뀌었습니다.');
+}
+
 export function validateInspectionApkEvidence(evidence, expected) {
   if (!validIdentity(expected)) throw new Error('검사할 APK 식별 정보가 올바르지 않습니다.');
   const parts = evidence.summary?.trim().split(/\s+/u);
   if (parts?.length !== 3 || parts[0] !== INSPECTION_APPLICATION_ID
-    || parts[1] !== versionCode || parts[2] !== versionName) throw new Error('APK 식별자 또는 버전이 빌드 설정과 다릅니다.');
+    || parts[1] !== expected.versionCode || parts[2] !== expected.versionName) throw new Error('APK 식별자 또는 버전이 빌드 설정과 다릅니다.');
   if (evidence.debuggable?.trim() !== 'false') throw new Error('디버그 앱은 일반 검사 APK로 사용하지 않습니다.');
   const applicationTag = /<application\b[^>]*>/u.exec(evidence.manifestXml ?? '')?.[0];
   if (!applicationTag || !/\bandroid:allowBackup="false"/u.test(applicationTag)) throw new Error('APK 백업 복원이 차단되어 있지 않습니다.');
@@ -267,13 +326,23 @@ export function validateInspectionApkEvidence(evidence, expected) {
     throw new Error('APK의 공개 상품 연결 설정이 빌드 복사본과 다릅니다.');
   }
   return {
-    applicationId: INSPECTION_APPLICATION_ID, applicationName, versionCode, versionName,
+    applicationId: INSPECTION_APPLICATION_ID, applicationName,
+    versionCode: expected.versionCode, versionName: expected.versionName,
     signerCertificateSHA256: readSignerCertificateSHA256(evidence.signature),
     debuggable: false, embeddedBundle: true, backupDisabled: true,
   };
 }
 
-export async function captureInspectionApk({ repoRoot, provenancePath, run, tools }) {
+export function captureInspectionApk(options) {
+  return captureApk(options);
+}
+
+export function captureHistoricalInspectionApk(options) {
+  return captureApk(options, { historical: true });
+}
+
+async function captureApk({ repoRoot, provenancePath, run, tools, expected }, { historical = false } = {}) {
+  const historicalExpected = historical ? historicalIdentity(expected) : undefined;
   repoRoot = checkedPath(repoRoot);
   const absolute = path.resolve(repoRoot, provenancePath);
   const buildRoot = checkedBuildRoot(repoRoot, path.dirname(absolute));
@@ -282,7 +351,7 @@ export async function captureInspectionApk({ repoRoot, provenancePath, run, tool
   const provenance = loadJson(absolute);
   const buildFile = path.join(buildRoot, 'build.json');
   const build = loadJson(buildFile);
-  assertInputs(repoRoot, buildRoot, manifest);
+  assertInputs(repoRoot, buildRoot, manifest, { historical });
   validateInspectionBuildRecord(build, manifest);
   const apkPath = path.join(buildRoot, 'app.apk');
   if (!provenance || provenance.schemaVersion !== 1 || provenance.kind !== 'inspection'
@@ -291,18 +360,24 @@ export async function captureInspectionApk({ repoRoot, provenancePath, run, tool
     || provenance.sourceFingerprint !== manifest.sourceFingerprint
     || provenance.buildRecordSha256 !== sha(ordinary(buildFile))
     || sha(ordinary(apkPath)) !== provenance.sha256) throw new Error('APK 파일과 빌드 출처 기록이 일치하지 않습니다.');
+  if (historical) assertHistoricalIdentity({
+    applicationId: manifest.applicationId, buildNonce: manifest.buildNonce, buildId: build.id,
+    versionName: manifest.versionName, versionCode: manifest.versionCode,
+    sha256: provenance.sha256, sourceFingerprint: manifest.sourceFingerprint,
+  }, historicalExpected, { beforeSignature: true });
   const fingerprints = [absolute, apkPath, buildFile, path.join(buildRoot, 'inputs.json')].map((file) => [file, sha(ordinary(file))]);
   const toolRoot = path.join(process.env.LOCALAPPDATA || '', 'store-price-tools/android-inspection');
   const analyzer = process.env.STORE_PRICE_APKANALYZER || path.join(toolRoot, 'cmdline-tools/latest/bin/apkanalyzer.bat');
   const signer = process.env.STORE_PRICE_APKSIGNER || path.join(toolRoot, 'build-tools/37.0.0/apksigner.bat');
   const aapt = process.env.STORE_PRICE_AAPT2 || path.join(toolRoot, 'build-tools/37.0.0/aapt2.exe');
-  const inspect = async (name, args) => (await run('inspection-apk-' + name, analyzer, [...args, apkPath], { timeout: 120_000 })).stdout.trim();
+  const label = historical ? 'historical-inspection-apk-' : 'inspection-apk-';
+  const inspect = async (name, args) => (await run(label + name, analyzer, [...args, apkPath], { timeout: 120_000 })).stdout.trim();
   const evidence = {
     summary: await inspect('summary', ['apk', 'summary']),
     debuggable: await inspect('debuggable', ['manifest', 'debuggable']),
     manifestXml: await inspect('manifest', ['manifest', 'print']),
     files: await inspect('files', ['files', 'list']),
-    badging: (await run('inspection-apk-badging', aapt, ['dump', 'badging', apkPath], { timeout: 120_000 })).stdout,
+    badging: (await run(label + 'badging', aapt, ['dump', 'badging', apkPath], { timeout: 120_000 })).stdout,
   };
   // Hermes 번들은 공개 키를 포함하므로 바이너리를 검사 메모리에서만 읽고 원문 로그를 남기지 않습니다.
   const analyzerHome = path.resolve(path.dirname(analyzer), '..');
@@ -313,15 +388,22 @@ export async function captureInspectionApk({ repoRoot, provenancePath, run, tool
   { env: tools.env, windowsHide: true, maxBuffer: 100 * 1024 * 1024, timeout: 120_000 });
   if (command.status !== 0 || command.error) throw new Error('APK의 실행 번들을 안전하게 읽지 못했습니다.');
   evidence.bundle = command.stdout;
-  evidence.signature = (await run('inspection-apk-signature', signer, ['verify', '--verbose', '--print-certs', apkPath], { timeout: 120_000 })).stdout;
+  evidence.signature = (await run(label + 'signature', signer, ['verify', '--verbose', '--print-certs', apkPath], { timeout: 120_000 })).stdout;
   const env = loadJson(path.join(buildRoot, 'project/eas.json')).build.inspection.env;
   const checked = validateInspectionApkEvidence(evidence, { ...manifest, env });
   const state = Object.freeze({
     kind: 'inspection', apkPath, ...checked, buildNonce: manifest.buildNonce,
     sha256: provenance.sha256, buildId: build.id, sourceFingerprint: manifest.sourceFingerprint,
+    ...(historical ? { historical: true } : {}),
   });
-  states.set(state, { repoRoot, buildRoot, manifest, files: fingerprints });
-  assertInspectionApkUnchanged(state);
+  if (historical) {
+    assertHistoricalIdentity(state, historicalExpected);
+    historicalStates.set(state, { repoRoot, buildRoot, manifest, files: fingerprints, expected: historicalExpected });
+    assertHistoricalInspectionApkUnchanged(state);
+  } else {
+    states.set(state, { repoRoot, buildRoot, manifest, files: fingerprints });
+    assertInspectionApkUnchanged(state);
+  }
   return state;
 }
 

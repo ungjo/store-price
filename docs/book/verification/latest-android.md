@@ -1,14 +1,14 @@
 # Android 실기기 자동 검증 기록
 
-- 실행 시각: 2026-11-17 23:37:04 (Asia/Seoul)
+- 실행 시각: 2026-11-18 04:59:45 (Asia/Seoul)
 - 결과: **PASS**
-- 실행 ID: `20261117T141319521Z-de579384`
+- 실행 ID: `20261117T193545552Z-2508322f`
 - 기기: SM-X710 / Android 14
-- 검사 시작 HEAD: `a6d9bb48fb4d440cbf5689a78a8ad959a0086cba`
-- 검사 소스 SHA-256: `fe1fe702ac691f90cb5d5021f9012746baa879daa9bcf7fe085e30e23c139c09`
+- 검사 시작 HEAD: `bf1663e910492a5a06bacfc9079f810cf05f3e3b`
+- 검사 소스 SHA-256: `d2dfc0924c9f3422756593d22949ca865c68e85ef847320e6f3f602124481ee4`
 - 검사 설정 SHA-256: `f6e2d09f0fd1ba3294a79f473219297affc5854057c2da6a87abdd4318a6ea94` (설정 값은 기록하지 않음)
 - 공개 상품 SHA-256: `d8c79583dff9fc97e15e342b9834c7627c73020d07c54418e31af7a25f16536b` (실행 전후 일치)
-- 예시 선택 별도 실행 ID: `20261117T141319521Z-de579384-loading` (개발 검사 요청, 실제 통신 장애를 발생시키지 않음)
+- 예시 선택 별도 실행 ID: `20261117T193545552Z-2508322f-loading` (개발 검사 요청, 실제 통신 장애를 발생시키지 않음)
 - 도구: Maestro 2.12.1 / JDK 21 / USB 실기기 / Expo Go / 설치형 APK
 - 커밋 모드: 검사한 소스가 유지된 경우에만 자동 커밋. 실제 커밋 ID는 실행 요약 또는 git log에서 확인.
 
@@ -31,6 +31,7 @@ node --test scripts/build/standalone.test.mjs
 node --test scripts/build/app-config.test.mjs
 node --test scripts/build/inspection.test.mjs
 node --test scripts/device/inspection-device.test.mjs
+node --test scripts/device/inspection-report.test.mjs
 node --test scripts/device/standalone-device.test.mjs
 node --test scripts/device/display-settings.test.mjs
 node --test scripts/device/keyboard-layout.test.mjs
@@ -72,12 +73,14 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 ## 고정 검사 APK
 
 - 앱: 꼬마 시장 검사 / 앱 ID: `com.ungjo.storeprice.inspection`
-- 버전: `1.0.0` / 코드 `1`
-- 빌드 ID: `4bd89386-1016-4e9b-9ad3-75bd28fbcc93` / 빌드 확인 번호: `inspection-a8c0f5699d49d2cd`
-- APK SHA-256: `fcdf05069a64abbe6afefe4769e3b77a07761d1a983ab0f8e502cfcd74bfdb40` (원본과 실제 설치 파일을 검사 전후 대조)
-- 빌드 소스 SHA-256: `825d9c01df249ae6bd93110a62cc1628c4b0e299384353d3f4610fe521ce0a6a`
+- 버전: `1.0.0` / 코드 `2`
+- 빌드 ID: `01b33f87-a866-4244-80d6-e365184af0d5` / 빌드 확인 번호: `inspection-79c7e8590dc610f0`
+- APK SHA-256: `df541e490f0cc4269374de77de6f0114d2ed65bc5d725a9d5f408e3025dc4484` (원본과 실제 설치 파일을 검사 전후 대조)
+- 빌드 소스 SHA-256: `1bbf73aeeb2820ec74c3bb3b7ae5b818266c5fbf814fda53d5ba00bc4643b357`
 - 서명 인증서 SHA-256: `edaa623bf85baefadec02d92e2a40467630d838f20ca6aa1fe9e6594c1c93746`
-- 설치: `reused-exact` / 현재 Android 사용자에 한정. 기존 다른 앱과 데이터를 보존했다.
+- 설치: `reused-exact`. 다른 패키지를 변경하거나 앱 데이터를 삭제하지 않았다.
+- 업데이트 근거: 과거 PASS 커밋 `bf1663e910492a5a06bacfc9079f810cf05f3e3b`, 이전 APK SHA-256 `fcdf05069a64abbe6afefe4769e3b77a07761d1a983ab0f8e502cfcd74bfdb40`. 과거 PASS·동일 서명을 확인하고 현재 설치된 새 APK 파일을 대조했다.
+- 설치 코드 영향: `unchanged`. 데이터 보존은 삭제·초기화 명령 없이 설치했다는 뜻이며 데이터 전체의 바이트 비교를 뜻하지 않는다.
 - 디버그 모드 비활성·백업 복원 비활성·내장 번들·고정 공개 상품 설정·빌드 표시를 검증했다.
 - 개발 서버를 종료한 뒤 설치한 동일 APK에서 전체 놀이를 검사했다. 성공한 검사 앱은 기기에 남겼다.
 - Wi-Fi·모바일 데이터를 변경하지 않았으며 오프라인 첫 실행·TalkBack 검증을 주장하지 않는다.
@@ -129,6 +132,7 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 - app-config-tests: 종료 코드 0
 - inspection-build-helpers: 종료 코드 0
 - inspection-device-helpers: 종료 코드 0
+- inspection-report-tests: 종료 코드 0
 - standalone-device-helpers: 종료 코드 0
 - display-settings-helpers: 종료 코드 0
 - keyboard-layout-helpers: 종료 코드 0
@@ -150,6 +154,6 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 - JUnit: 1 testcase, 실패 0, 오류 0, 건너뜀 0
 - 예시 선택 JUnit: 1 testcase, 실패 0, 오류 0, 건너뜀 0
 
-원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/20261117T141319521Z-de579384/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.
+원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/20261117T193545552Z-2508322f/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.
 
 이 기록은 해당 Android 실기기·검사 시점의 결과다. 설치형 APK는 위에 기록한 빌드만 검증했다. Google Play 제출용 AAB 및 실제 이마트 가격의 앱 공개 표시는 검증하지 않았다. 앱은 공개 예시 상품 12개로 검사한다.

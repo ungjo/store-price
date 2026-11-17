@@ -138,13 +138,27 @@ node scripts/device/verify.mjs --standalone-apk .artifacts/build/standalone-cf5e
 
 ## 고정 검사 APK에서 전체 놀이 검사
 
-고정 패키지 **꼬마 시장 검사**의 새 APK 빌드·온라인 전체 놀이 검사는 [별도 개발 기록](book/chapters/07a-inspection-apk.md)을 따른다. 이번 고정 앱 검사는 APK에서 장바구니·계산·영수증·분류 전체 흐름을 직접 실행하고 Expo Go는 지연 응답 예시 선택에만 사용한다. 네트워크 차단과 TalkBack 재검사는 하지 않는다. 아래 nonce preview 절차와 대상 패키지를 혼용하지 않는다.
+고정 패키지 **꼬마 시장 검사**의 코드 `1` APK 빌드·온라인 전체 놀이 검증은 `bf1663e`로 완료했다. [별도 개발 기록](book/chapters/07a-inspection-apk.md)과 해당 커밋의 실행 `20261117T141319521Z-de579384` 보고서가 근거다. 이 검사는 APK에서 장바구니·계산·영수증·분류 전체 흐름을 직접 실행하고 Expo Go는 지연 응답 예시 선택에만 사용했다. 아래 nonce preview 절차와 대상 패키지를 혼용하지 않는다.
 
 ```bash
 node scripts/device/verify.mjs --inspection-apk .artifacts/build/inspection-a8c0f5699d49d2cd/provenance.json --message "test: 고정 검사 APK의 태블릿 설치와 전체 놀이 검증"
 ```
 
-앱이 없으면 새로 설치하고, 기존 설치가 있으면 같은 APK SHA-256·버전만 `reused-exact`로 재사용한다. 다른 파일이면 기존 앱·자료를 보존하고 중단한다. 고정 검사 앱은 성공·실패 뒤 자동 삭제하지 않는다. 최종 전체 결과는 검사 시작 HEAD `a6d9bb4`와 이번 APK 지문이 포함된 같은 커밋의 자동 보고서로 확인한다.
+기본 검사에서 앱이 없으면 새로 설치하고, 기존 설치가 있으면 같은 APK SHA-256·버전만 `reused-exact`로 재사용한다. 다른 파일이면 기존 앱·자료를 보존하고 중단한다. 고정 검사 앱은 성공·실패 뒤 자동 삭제하지 않는다.
+
+## 기존 고정 검사 앱을 확인하고 업데이트하기
+
+사용자가 승인한 코드 `1 → 2` 업데이트는 기존 APK 출처와 과거 PASS 커밋을 함께 지정한다. 과거 커밋이 현재 이력의 조상이고 그 커밋의 고정 검사 APK 보고서가 PASS인지 확인한 뒤, 원본 APK의 지문·버전·서명을 보고서와 대조한다. 과거 검증 상태와 현재 APK 상태는 별도로 보관한다. 실제 설치 파일이 과거 APK와 정확히 같고 새 APK 서명도 같아야 `adb install -r`를 허용하며, 확인하지 않은 기존 앱·하향 버전·다른 서명은 거부한다.
+
+```bash
+node scripts/device/verify.mjs --inspection-apk .artifacts/build/inspection-79c7e8590dc610f0/provenance.json --inspection-update-from .artifacts/build/inspection-a8c0f5699d49d2cd/provenance.json --inspection-update-commit bf1663e --message "feat: 꼬마 시장 전용 아이콘과 시작 화면 적용"
+```
+
+이 경로는 앱 삭제·데이터 초기화를 실행하지 않는다. 저장 자료 전체를 읽어 바이트 비교한 보존 검사와는 구분한다. 새 아이콘·검사 배지·시작 화면은 설치형 APK의 리소스와 실제 화면을 확인하고, 공개 상품 전체 놀이는 같은 APK에서 실행한다. Expo Go 대기 응답 검사는 별도로 유지한다. 인터넷 차단과 TalkBack 재검사는 포함하지 않는다. [개발 기록](book/chapters/07b-branding-apk.md)과 검사 시작 HEAD `bf1663e`인 같은 커밋의 자동 보고서에서 최종 결과를 확인한다.
+
+시각 확인을 위한 사전 업데이트 뒤 이미 같은 새 APK가 설치돼 있으면 전체 검사는 `reused-exact`로 재사용한다. 기존 설치의 과거 지문 대조는 실제 `updated` 경로의 근거에만 기록하며, 새 APK 재사용을 업데이트 전 상태의 확인으로 표시하지 않는다.
+
+이번 사전 설치는 `updated-verified`이며 실제 설치 APK 지문·버전 대조를 마쳤다. 별도의 `capture.json`은 원본 화면·영상 수집 기록, `visual-review.json`은 직접 시각 확인 기록이다. APK 내부 리소스 검사와 실제 화면 확인도 별개로 보관한다. 이 자료는 전체 놀이 JUnit 통과를 대신하지 않는다. 영상 프레임은 Windows PowerShell 5.1의 `scripts/device/video-frames.ps1`로 추출하며 원본 SHA 전후 일치·MIME·기존 출력 보호를 확인하고, 요청 시점과 실제 화면 이벤트 시각을 구분한다.
 
 ## 설치형 APK의 실제 오프라인 첫 실행
 

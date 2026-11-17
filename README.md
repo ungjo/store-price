@@ -54,12 +54,13 @@
 - [x] TalkBack 장보기·영수증 개선과 Expo Go 검증 (`c949154`) — [개발 기록](docs/book/chapters/06e-talkback-accessibility.md)
 - [x] TalkBack 개선 APK의 빌드·오프라인·접근성 검증 (`97b00ff`) — [개발 기록](docs/book/chapters/06f-talkback-offline-apk.md)
 - [x] Android 배포 설정과 검사 앱 분리 (`a6d9bb4`) — [개발 기록](docs/book/chapters/07-android-release-config.md)
-- 고정 검사 APK의 빌드·설치·전체 놀이 검사는 [개발 기록](docs/book/chapters/07a-inspection-apk.md)과 이 단계의 자동 보고서 참조
+- [x] 고정 검사 APK의 빌드·설치·전체 놀이 검증 (`bf1663e`) — [개발 기록](docs/book/chapters/07a-inspection-apk.md)
+- 전용 아이콘·검사 배지·시작 화면과 APK 업데이트는 [개발 기록](docs/book/chapters/07b-branding-apk.md)과 이 단계의 자동 보고서 참조
 - [ ] 허용된 실제 가격의 앱 공개·자동 갱신
 - [ ] Google Play 테스트
 - [ ] Google Play 제출
 
-Android 배포 설정과 검사 앱 분리는 `a6d9bb4`로 완료했고 사용자가 GitHub 업로드를 확인했습니다. 실행 `20261117T104522208Z-d7b5bd39`의 설정·Expo Go 회귀 PASS 보고서를 해당 커밋에 보존합니다. 이번 단계는 고정 패키지 `com.ungjo.storeprice.inspection`의 **꼬마 시장 검사** APK를 빌드하고 SM-X710에서 전체 놀이를 직접 검사합니다. 결과는 [개발 기록](docs/book/chapters/07a-inspection-apk.md)과 검사 시작 HEAD `a6d9bb4`인 자동 보고서로 확인합니다. Google Play 업로드와 실제 가격 공개·자동 갱신은 후속 단계입니다.
+고정 패키지 **꼬마 시장 검사**의 전체 놀이 검증은 `bf1663e`로 완료했고 사용자가 GitHub 업로드를 확인했습니다. 실행 `20261117T141319521Z-de579384`의 PASS 보고서는 해당 커밋에 보존합니다. 이번 단계에서는 전용 장바구니 아이콘과 주황색 **검사** 배지, 시작 화면을 적용한 코드 `2` APK를 만들어 사전 업데이트·리소스 검사·태블릿 시각 확인을 마쳤습니다. 전체 놀이의 최종 결과는 [개발 기록](docs/book/chapters/07b-branding-apk.md)과 검사 시작 HEAD `bf1663e`인 같은 커밋의 자동 보고서로 확인합니다. Google Play 업로드와 실제 가격 공개·자동 갱신은 후속 단계입니다.
 
 ## 첫 화면 실행
 

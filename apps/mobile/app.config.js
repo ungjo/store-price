@@ -40,12 +40,30 @@ module.exports = ({ config }) => {
   delete extra.standaloneBuild;
   if (standalone) extra.standaloneBuild = { schemaVersion: 1, nonce, androidPackage };
 
+  // 아이콘과 시작화면을 같은 용도로 묶어 검사 APK가 정식 앱처럼 보이지 않게 합니다.
+  const brand = variant === 'production' ? 'market' : 'inspection';
+  const backgroundColor = '#FAF8EF';
+  const foregroundImage = './assets/brand/' + brand + '-foreground.png';
+  // 정적 기본값이나 이전 설정에 plugin이 있어도 현재 variant 설정을 한 번만 적용합니다.
+  const plugins = (config.plugins ?? []).filter((plugin) =>
+    (Array.isArray(plugin) ? plugin[0] : plugin) !== 'expo-splash-screen');
+  plugins.push(['expo-splash-screen', {
+    backgroundColor, image: foregroundImage, imageWidth: 200, resizeMode: 'contain',
+  }]);
+
   return {
     ...config,
+    icon: './assets/brand/' + brand + '-icon.png',
+    plugins,
     name: standalone ? '꼬마 시장 읽기 검사' : variant === 'production' ? '꼬마 시장' : '꼬마 시장 검사',
     slug: 'store-price',
     android: {
       ...config.android,
+      // 템플릿 배경 이미지를 함께 남기면 단색 브랜드 배경이 가려지므로 레이어를 교체합니다.
+      adaptiveIcon: {
+        backgroundColor, foregroundImage,
+        monochromeImage: './assets/brand/' + brand + '-monochrome.png',
+      },
       package: standalone ? androidPackage : variant === 'production'
         ? 'com.ungjo.storeprice' : 'com.ungjo.storeprice.inspection',
       allowBackup: false,

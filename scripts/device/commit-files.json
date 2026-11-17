@@ -118,5 +118,16 @@
   "scripts/build/inspection.test.mjs",
   "scripts/device/inspection-device.mjs",
   "scripts/device/inspection-device.test.mjs",
-  "docs/book/chapters/07a-inspection-apk.md"
+  "docs/book/chapters/07a-inspection-apk.md",
+  "apps/mobile/assets/brand/market-foreground.png",
+  "apps/mobile/assets/brand/market-icon.png",
+  "apps/mobile/assets/brand/market-monochrome.png",
+  "apps/mobile/assets/brand/inspection-foreground.png",
+  "apps/mobile/assets/brand/inspection-icon.png",
+  "apps/mobile/assets/brand/inspection-monochrome.png",
+  "scripts/device/inspection-report.mjs",
+  "scripts/device/inspection-report.test.mjs",
+  "docs/06-brand-assets.md",
+  "docs/book/chapters/07b-branding-apk.md",
+  "scripts/device/video-frames.ps1"
 ]

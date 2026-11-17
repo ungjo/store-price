@@ -97,8 +97,7 @@ export function parseInspectionPackageMetadata(metadata, user) {
   return Object.freeze({ versionCode: normalizedVersionCode(code), versionName: name, installed: installed[0][1] === 'true' });
 }
 
-async function assertInstalled({ adb, apkState, user, label }) {
-  validateApkState(apkState);
+async function readInstalled({ adb, user, label }) {
   if (await currentUser(adb, label + '-user') !== user) throw bad('검사 중 Android 사용자 프로필이 바뀌었습니다.');
   const location = checkedOutput(await adb(label + '-path',
     ['shell', 'pm', 'path', '--user', user, applicationId]), '설치한 검사 앱의 APK 위치를 확인하지 못했습니다.');
@@ -107,42 +106,107 @@ async function assertInstalled({ adb, apkState, user, label }) {
   const installedPath = location.slice('package:'.length);
   const hashOutput = checkedOutput(await adb(label + '-hash', ['shell', 'sha256sum', installedPath]),
     '설치한 검사 앱의 해시를 확인하지 못했습니다.');
-  const expectedHash = apkState.sha256 + '  ' + installedPath;
-  if (hashOutput !== expectedHash && hashOutput !== apkState.sha256 + ' ' + installedPath) {
-    throw bad('현재 설치된 앱과 이번 검사 APK가 다릅니다. 기존 앱을 보존합니다.');
+  const sha256 = /^[a-f0-9]{64}/u.exec(hashOutput)?.[0];
+  if (!sha256 || (hashOutput !== sha256 + '  ' + installedPath && hashOutput !== sha256 + ' ' + installedPath)) {
+    throw bad('설치한 검사 앱의 해시 응답이 올바르지 않습니다.');
   }
   const metadata = checkedOutput(await adb(label + '-metadata',
     ['shell', 'dumpsys', 'package', applicationId]), '설치한 검사 앱의 버전을 확인하지 못했습니다.');
-  const installed = parseInspectionPackageMetadata(metadata, user);
-  if (installed.versionCode !== normalizedVersionCode(apkState.versionCode)
-    || installed.versionName !== apkState.versionName || !installed.installed) {
+  return { sha256, ...parseInspectionPackageMetadata(metadata, user) };
+}
+
+function matchesInstalled(installed, apkState) {
+  return installed.sha256 === apkState.sha256
+    && installed.versionCode === normalizedVersionCode(apkState.versionCode)
+    && installed.versionName === apkState.versionName && installed.installed;
+}
+
+async function assertInstalled({ adb, apkState, user, label }) {
+  validateApkState(apkState);
+  const installed = await readInstalled({ adb, user, label });
+  if (installed.sha256 !== apkState.sha256) {
+    throw bad('현재 설치된 앱과 이번 검사 APK가 다릅니다. 기존 앱을 보존합니다.');
+  }
+  if (!matchesInstalled(installed, apkState)) {
     throw bad('설치된 검사 앱의 버전 또는 현재 프로필 설치 상태가 일치하지 않습니다.');
   }
   validateApkState(apkState);
 }
 
-// 새 설치와 정확히 같은 APK의 재검사를 구분합니다. 실패해도 고정 앱의 데이터는 지우지 않습니다.
-export async function runInspectionInstalled({ adb, apkState, verifyInstalled, allowMatchingInstall = false }) {
+function validateUpdateFrom(previous, next) {
+  validateApkState(previous);
+  const signed = (state) => typeof state.signerCertificateSHA256 === 'string'
+    && /^[a-f0-9]{64}$/u.test(state.signerCertificateSHA256) && state.signerCertificateSHA256.length === 64;
+  // 과거 APK 검증 결과를 명시한 호출만 업데이트할 수 있습니다. 임의 앱 교체와 버전 하향은 허용하지 않습니다.
+  if (previous.historical !== true || !signed(previous) || !signed(next)
+    || previous.signerCertificateSHA256 !== next.signerCertificateSHA256
+    || previous.sha256 === next.sha256
+    || normalizedVersionCode(next.versionCode) < normalizedVersionCode(previous.versionCode)) {
+    throw bad('업데이트할 이전 검사 APK의 기록·서명·버전이 올바르지 않습니다.');
+  }
+}
+
+async function installApk({ adb, apkState, user, update = false }) {
+  const output = checkedOutput(await adb(update ? 'inspection-update' : 'inspection-install',
+    ['install', update ? '-r' : '-R', '--user', user, apkState.apkPath], { timeout: 180_000 }),
+  '검사 APK 설치 완료를 확인하지 못했습니다. 설치 확인 창과 현재 기기 상태를 확인해 주세요.');
+  if (!/^Success\s*$/mu.test(output) || /(?:Error|Failure|Exception|INSTALL_FAILED)/u.test(output)) {
+    throw bad('검사 APK 설치 완료를 확인하지 못했습니다.');
+  }
+}
+
+// 새 설치·정확한 APK 재검사·명시한 이전 APK의 업데이트를 구분하고 실패해도 데이터는 지우지 않습니다.
+export async function runInspectionInstalled({ adb, apkState, verifyInstalled, allowMatchingInstall = false, updateFrom }) {
   validateApkState(apkState);
+  if (apkState.historical === true) throw bad('새 검사 대상에 과거 APK 검증 결과를 사용할 수 없습니다.');
   // 콜백이 넘겨받은 원본 객체를 바꾸더라도 검사 기준은 처음 확인한 APK로 고정합니다.
   apkState = Object.freeze({ ...apkState });
+  if (updateFrom !== undefined) {
+    validateUpdateFrom(updateFrom, apkState);
+    updateFrom = Object.freeze({ ...updateFrom });
+  }
   if (typeof adb !== 'function' || typeof verifyInstalled !== 'function'
     || typeof allowMatchingInstall !== 'boolean') throw bad('검사 앱의 기기 실행 옵션이 올바르지 않습니다.');
   const evidence = {
     applicationId, buildNonce: apkState.buildNonce, apkSha256: apkState.sha256,
     versionName: apkState.versionName, versionCode: normalizedVersionCode(apkState.versionCode),
     installationScope: 'current-android-user', installationMode: 'not-started',
-    installedFresh: false, installedHashVerified: false, installStatus: 'not-requested',
+    installedFresh: false, installedUpdated: false, installedHashVerified: false, installStatus: 'not-requested',
     verifyInstalledStatus: 'not-run', installationCleanup: 'preserved',
+    updateAuthorized: updateFrom !== undefined, dataPreserved: true, packageCodeScope: 'unchanged',
+    previousApkSha256: updateFrom?.sha256 ?? null,
+    previousVersionName: updateFrom?.versionName ?? null,
+    previousVersionCode: updateFrom ? normalizedVersionCode(updateFrom.versionCode) : null,
+    signerCertificateSHA256: updateFrom ? apkState.signerCertificateSHA256 : null,
     networkSettingsChanged: false, firstLaunchOffline: false,
   };
   try {
     const user = await currentUser(adb, 'inspection-current-user');
     if (await packageExists(adb, user)) {
       evidence.installationMode = 'existing-refused';
-      if (!allowMatchingInstall) throw bad('현재 프로필에 검사 앱이 이미 있습니다. 기존 앱을 보존하고 중단합니다.');
-      await assertInstalled({ adb, apkState, user, label: 'inspection-existing' });
-      evidence.installationMode = 'reused-exact';
+      if (!allowMatchingInstall && !updateFrom) {
+        throw bad('현재 프로필에 검사 앱이 이미 있습니다. 기존 앱을 보존하고 중단합니다.');
+      }
+      const installed = await readInstalled({ adb, user, label: 'inspection-existing' });
+      if (allowMatchingInstall && matchesInstalled(installed, apkState)) {
+        validateApkState(apkState);
+        evidence.installationMode = 'reused-exact';
+      } else if (updateFrom && matchesInstalled(installed, updateFrom)) {
+        // 새 파일뿐 아니라 실제 기기에 있는 이전 APK도 다시 대조한 뒤에만 데이터 보존 업데이트를 요청합니다.
+        validateUpdateFrom(updateFrom, apkState);
+        await assertInstalled({ adb, apkState: updateFrom, user, label: 'inspection-before-update' });
+        validateApkState(apkState);
+        evidence.installationMode = 'update-requested';
+        evidence.installStatus = 'requested';
+        // --user는 설치 대상이며 APK 코드는 같은 패키지가 공유하므로 영향 범위도 기록합니다.
+        evidence.packageCodeScope = 'shared-package-update';
+        await installApk({ adb, apkState, user, update: true });
+        await assertInstalled({ adb, apkState, user, label: 'inspection-updated' });
+        evidence.installedUpdated = true;
+        evidence.installationMode = 'updated-verified';
+      } else {
+        throw bad('현재 설치된 앱의 해시·버전이 재사용 또는 업데이트할 검사 APK 기록과 다릅니다. 기존 앱을 보존합니다.');
+      }
     } else {
       validateApkState(apkState);
       if (await currentUser(adb, 'inspection-before-install-user') !== user) {
@@ -150,11 +214,9 @@ export async function runInspectionInstalled({ adb, apkState, verifyInstalled, a
       }
       evidence.installationMode = 'fresh-requested';
       evidence.installStatus = 'requested';
-      // -R로 다른 사용자 프로필에 같은 패키지가 있어도 교체하지 않으며, -r이나 데이터 삭제를 사용하지 않습니다.
-      const output = checkedOutput(await adb('inspection-install',
-        ['install', '-R', '--user', user, apkState.apkPath], { timeout: 180_000 }),
-      '검사 APK 설치 완료를 확인하지 못했습니다. 설치 확인 창과 현재 기기 상태를 확인해 주세요.');
-      if (!/^Success\s*$/mu.test(output) || /(?:Error|Failure|Exception|INSTALL_FAILED)/u.test(output)) throw bad('검사 APK 설치 완료를 확인하지 못했습니다.');
+      // -R로 다른 사용자 프로필에 같은 패키지가 있어도 교체하지 않으며 데이터를 삭제하지 않습니다.
+      evidence.packageCodeScope = 'new-package';
+      await installApk({ adb, apkState, user });
       await assertInstalled({ adb, apkState, user, label: 'inspection-installed' });
       evidence.installedFresh = true;
       evidence.installationMode = 'fresh';
@@ -164,6 +226,7 @@ export async function runInspectionInstalled({ adb, apkState, verifyInstalled, a
     try {
       await verifyInstalled();
       await assertInstalled({ adb, apkState, user, label: 'inspection-after-flow' });
+      if (updateFrom) validateUpdateFrom(updateFrom, apkState);
       evidence.verifyInstalledStatus = 'passed';
     } catch (error) {
       evidence.verifyInstalledStatus = 'failed';
