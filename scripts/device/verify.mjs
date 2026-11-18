@@ -18,6 +18,10 @@ import { requireOffline, runStandaloneOffline } from './standalone-device.mjs';
 import { captureInspectionApk, assertInspectionApkUnchanged, captureHistoricalInspectionApk, assertHistoricalInspectionApkUnchanged } from '../build/inspection.mjs';
 import { readInspectionReport } from './inspection-report.mjs';
 import { runInspectionInstalled } from './inspection-device.mjs';
+import { captureProductionAab, assertProductionAabUnchanged } from '../build/production.mjs';
+import { inspectProductionApk } from '../build/production-apks.mjs';
+import { captureProductionBranding } from './production-branding.mjs';
+import { captureProductionApks, assertProductionApksUnchanged, runProductionInstalled, checkProductionBrandingReview } from './production-device.mjs';
 import { captureDisplaySettings, restoreDisplaySettings, serializeDisplaySettings } from './display-settings.mjs';
 import { runReadability } from './readability-device.mjs';
 import { runTalkBack, assertTalkBackResult } from './talkback-device.mjs';
@@ -39,6 +43,12 @@ let talkbackOnly = false;
 let doctor = false;
 let previewPath;
 let standalonePath;
+let productionPath;
+let productionAab;
+let productionApks;
+let productionResult;
+let brandingCapture;
+let brandingReview;
 let inspectionPath;
 let inspectionApkState;
 let inspectionResult;
@@ -59,13 +69,18 @@ for (let index = 0; index < args.length; index += 1) {
   else if (args[index] === '--doctor') doctor = true;
   else if (args[index] === '--private-price-preview' && args[index + 1]) previewPath = args[++index];
   else if (args[index] === '--standalone-apk' && args[index + 1]) standalonePath = args[++index];
+  else if (args[index] === '--production-aab' && args[index + 1]) productionPath = args[++index];
   else if (args[index] === '--inspection-apk' && args[index + 1]) inspectionPath = args[++index];
   else if (args[index] === '--inspection-update-from' && args[index + 1]) inspectionUpdatePath = args[++index];
   else if (args[index] === '--inspection-update-commit' && args[index + 1]) inspectionUpdateCommit = args[++index];
   else if (args[index] === '--message' && args[index + 1]) message = args[++index];
-  else throw new Error('지원 옵션: --no-commit, --receipt-only, --standalone-only, --readability, --readability-only, --talkback, --talkback-only, --doctor, --private-price-preview <원본 경로>, --standalone-apk <빌드 검증 파일>, --inspection-apk <검사 APK 출처 파일>, --inspection-update-from <이전 APK 출처>, --inspection-update-commit <이전 PASS 커밋>, --message "커밋 메시지"');
+  else throw new Error('지원 옵션: --no-commit, --receipt-only, --standalone-only, --readability, --readability-only, --talkback, --talkback-only, --doctor, --private-price-preview <원본 경로>, --standalone-apk <빌드 검증 파일>, --production-aab <정식 AAB 출처 파일>, --inspection-apk <검사 APK 출처 파일>, --inspection-update-from <이전 APK 출처>, --inspection-update-commit <이전 PASS 커밋>, --message "커밋 메시지"');
 }
 if (!message.trim() || /[\r\n\0]/u.test(message)) throw new Error('커밋 메시지는 한 줄로 입력해 주세요.');
+if (productionPath && (doctor || inspectionPath || inspectionUpdatePath || inspectionUpdateCommit || standalonePath
+  || standaloneOnly || receiptOnly || readabilityRequested || talkbackRequested || previewPath)) {
+  throw new Error('정식 AAB에는 --production-aab과 기본 전체 검사를 함께 사용해 주세요.');
+}
 if ((inspectionUpdatePath || inspectionUpdateCommit) && (!inspectionPath || !inspectionUpdatePath || !inspectionUpdateCommit)) {
   throw new Error('검사 앱 업데이트에는 --inspection-apk, --inspection-update-from, --inspection-update-commit을 함께 지정해 주세요.');
 }
@@ -436,6 +451,50 @@ async function stopOwnDevelopmentConnections() {
   }
 }
 
+function assertProductionUnchanged() {
+  if (!productionPath) return;
+  assertProductionAabUnchanged(productionAab);
+  assertProductionApksUnchanged(productionApks);
+  if (brandingReview) readBrandingReview();
+}
+
+function readBrandingReview() {
+  return checkProductionBrandingReview({ reviewPath: path.join(runDir, 'branding-review.json'), capture: brandingCapture,
+    runId, aabSha256: productionAab.sha256 });
+}
+
+
+async function verifyProductionInstalled() {
+  assertProductionUnchanged();
+  await stopOwnDevelopmentConnections();
+  await wakeScreenForUi();
+  say('정식 앱의 기기별 APK와 실제 설치 파일을 대조하고 장보기부터 영수증까지 검사합니다.');
+  productionResult = await runProductionInstalled({ adb, state: productionApks, verifyInstalled: async () => {
+    assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
+    assertCatalogEnvironmentUnchanged(catalogEnvironment);
+    const maestroDir = path.join(runDir, 'maestro');
+    const output = path.join(runDir, 'result.xml');
+    brandingCapture = await captureProductionBranding({ adb, run, directory: runDir });
+    const reviewPath = path.join(runDir, 'branding-review.json');
+    say('정식 앱 아이콘 ' + brandingCapture.appInfo + ' / 프레임 목록 ' + brandingCapture.framesManifest + ' / 첫 화면 ' + brandingCapture.afterStart);
+    say('확인한 프레임 이름과 함께 ' + reviewPath + '에 기록해 주세요. runId=' + runId + ' aabSha256=' + productionAab.sha256
+      + ' sourceSha256=' + brandingCapture.sourceSha256 + ' appInfoSha256=' + brandingCapture.appInfoSha256);
+    await run('production-play', tools.maestro, [
+      '--device', selectedSerial, 'test', '-e', 'APP_ID=' + productionAab.applicationId,
+      '--format', 'junit', '--output', output, '--test-output-dir', maestroDir, '--debug-output', maestroDir,
+      'apps/mobile/.maestro/production-play.yaml',
+    ], { timeout: timeout.flow });
+    junit = readJunit(output);
+    const deadline = Date.now() + 12 * 60_000;
+    while (!fs.existsSync(reviewPath)) {
+      if (interrupted || Date.now() >= deadline) throw new Error('이번 정식 앱의 아이콘·시작 화면 검토 기록을 받지 못했습니다.');
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+    brandingReview = readBrandingReview();
+  } });
+  assertProductionUnchanged();
+}
+
 // 설치형 검사 앱은 개발 서버를 쓰지 않고, 빌드 파일과 실제 설치 파일의 일치를 모두 확인합니다.
 async function verifyInspectionInstalled() {
   const started = Date.now();
@@ -742,11 +801,52 @@ function readJunit(file) {
   return { testcases: cases.length, failures: 0, errors: 0, skipped: 0 };
 }
 
+function productionReport(status, reason, seoul) {
+  const aab = productionAab;
+  const apk = productionApks;
+  const result = productionResult;
+  return [
+    '# Android 정식 앱 번들 실기기 검증 기록', '',
+    '- 실행 시각 ' + seoul + ' (Asia/Seoul)',
+    '- 결과 **' + status + '**',
+    '- 실행 ID `' + runId + '`',
+    '- 기기 ' + device.model + ' / Android ' + device.android,
+    '- 검사 시작 HEAD `' + gitState.head + '`',
+    '- 검사 소스 SHA-256 `' + gitState.sourceHash + '`',
+    ...(reason ? ['- 중단 이유 ' + reason.replace(/[\r\n]/gu, ' ')] : []),
+    '', '## 빌드와 설치 파일', '',
+    '- 정식 앱 ' + aab.applicationName + ' (`' + aab.applicationId + '`), 버전 ' + aab.versionName + ' (' + aab.versionCode + ')',
+    '- EAS 빌드 ID `' + aab.buildId + '`',
+    '- 빌드 소스 SHA-256 `' + aab.sourceFingerprint + '`',
+    '- 업로드용 AAB SHA-256 `' + aab.sha256 + '`',
+    '- AAB 업로드 서명 인증서 SHA-256 `' + aab.signerCertificateSHA256 + '`',
+    '- 앱 정보 화면에서 정식 아이콘을 확인했다. 화면 SHA-256 `' + brandingReview.appInfoSha256 + '`',
+    '- 콜드 시작 영상 SHA-256 `' + brandingReview.sourceSha256 + '`. 시작 화면을 확인한 프레임 `' + brandingReview.splashFrame + '` SHA-256 `' + brandingReview.frameSha256 + '`',
+    '- 기기 사양 SHA-256 `' + apk.deviceSpecSha256 + '`',
+    '- bundletool 기기용 APK 묶음 SHA-256 `' + apk.archiveSha256 + '`',
+    '- 로컬 설치용 임시 서명 인증서 SHA-256 `' + apk.signerCertificateSHA256 + '`',
+    '- 설치 방식 `' + result.installationMode + '`. 놀이 전후 현재 Android 사용자의 설치 버전과 APK ' + result.verifiedApks + '개 지문이 일치했다.',
+    '', '## 검사 명령과 결과', '', '```bash',
+    'node scripts/device/verify.mjs --production-aab ' + path.relative(repoRoot, path.resolve(repoRoot, productionPath)).split(path.sep).join('/'),
+    ...(result.installationMode === 'fresh' ? ['adb -s <기기> ' + (apk.apks.length > 1 ? 'install-multiple' : 'install') + ' -R --user <현재 사용자> <기기별 APK>'] : []),
+    'maestro --device <기기> test -e APP_ID=' + aab.applicationId + ' --format junit --output <검사폴더>/result.xml --test-output-dir <검사폴더>/maestro --debug-output <검사폴더>/maestro apps/mobile/.maestro/production-play.yaml',
+    '```', '',
+    '- Expo Go에서 상품 로딩 중 예시 선택을 별도로 확인했다. JUnit ' + loadingJunit.testcases + '건 통과.',
+    '- 정식 앱에 예시 상품 12개가 표시됐다. 사과 2개와 우유 1개(5,500원)를 골라 10,000원을 지불하고, 거스름돈 4,500원과 영수증을 확인한 뒤 다시 장보기를 시작했다. JUnit ' + junit.testcases + '건 통과.',
+    '- 검사 전후 공개 예시 상품 지문 `' + catalogAfter.fingerprint + '`',
+    '- 충전 중 화면 유지 설정의 최종 처리 `' + (screenAwake.restoreStatus || screenAwake.applyStatus) + '`',
+    ...checks.filter((check) => ['production-tests', 'maestro-syntax-production', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'catalog-http-before', 'catalog-http-after', 'maestro-loading-choice', 'production-play'].includes(check.label))
+      .map((check) => '- `' + check.label + '` 종료 코드 ' + check.exitCode),
+    '', 'Google Play에 제출하기 전에 업로드용 AAB를 기기 사양에 맞는 APK로 변환하고 로컬 검사 키로 서명해 설치했다. Play 배포와 Play 앱 서명 검증은 이후 단계다.',
+    '', '원본 로그와 JUnit은 `.artifacts/device/' + runId + '/`에 저장한다.', '',
+  ];
+}
+
 function writeReport(status, reason = '') {
   const seoul = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul', dateStyle: 'short', timeStyle: 'medium', hour12: false }).format(new Date());
   const standalone = standaloneEvidence();
   const display = displayState ? serializeDisplaySettings(displayState) : undefined;
-  const lines = [
+  const lines = productionResult ? productionReport(status, reason, seoul) : [
     '# Android 실기기 자동 검증 기록', '',
     '- 실행 시각: ' + seoul + ' (Asia/Seoul)',
     '- 결과: **' + status + '**',
@@ -952,7 +1052,7 @@ function writeReport(status, reason = '') {
     '- 정답 전 계산 완료 차단, 영수증 상품별 가격·수량·합계·지불액·거스름돈·잔액을 확인한다.',
     '- 0원 거스름돈도 완료하며, 다시 장보기와 영수증 상태의 재실행으로 새 놀이를 시작한다.',
     '', '## 결과', '',
-    ...checks.filter((check) => check.label.startsWith('maestro-syntax-readability-') || /^readability-(?:standard|large-font|narrow-large-font)-(?:open|correct|finish)$/u.test(check.label) || ['display-settings-helpers', 'keyboard-layout-helpers', 'talkback-observer-tests', 'talkback-device-helpers', 'talkback-speech-ocr-tests', 'talkback-flow', 'maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'maestro-syntax-categories', 'maestro-syntax-standalone', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'build-helpers', 'app-config-tests', 'inspection-build-helpers', 'inspection-device-helpers', 'inspection-report-tests', 'inspection-installed', 'standalone-device-helpers', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'catalog-http-after-apk', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow', 'standalone-offline', 'screen-awake-restore', 'screen-awake-restored-check'].includes(check.label))
+    ...checks.filter((check) => check.label.startsWith('maestro-syntax-readability-') || /^readability-(?:standard|large-font|narrow-large-font)-(?:open|correct|finish)$/u.test(check.label) || ['display-settings-helpers', 'keyboard-layout-helpers', 'talkback-observer-tests', 'talkback-device-helpers', 'talkback-speech-ocr-tests', 'talkback-flow', 'maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'maestro-syntax-categories', 'maestro-syntax-standalone', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'build-helpers', 'app-config-tests', 'inspection-build-helpers', 'inspection-device-helpers', 'inspection-report-tests', 'production-tests', 'inspection-installed', 'standalone-device-helpers', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'catalog-http-after-apk', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow', 'standalone-offline', 'screen-awake-restore', 'screen-awake-restored-check'].includes(check.label))
       .map((check) => '- ' + check.label + ': 종료 코드 ' + check.exitCode),
     '- JUnit: ' + (junit ? `${junit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
     '- 예시 선택 JUnit: ' + (loadingJunit ? `${loadingJunit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
@@ -1027,6 +1127,14 @@ try {
     verificationStarted = true;
     // APK 분석과 구문 검사가 길어져도 사용자가 풀어 둔 화면이 다시 잠기지 않게 먼저 적용합니다.
     await prepareScreenAwake();
+    if (productionPath) {
+      say('정식 AAB의 출처·서명과 이 기기에 설치할 APK 묶음을 확인합니다.');
+      productionAab = await captureProductionAab({ repoRoot, provenancePath: productionPath, run, tools });
+      const apkTools = { java: tools.java, buildTools: path.join(process.env.LOCALAPPDATA, 'store-price-tools/android-inspection/build-tools/37.0.0') };
+      productionApks = captureProductionApks({ provenancePath: path.resolve(repoRoot, productionPath), aab: productionAab,
+        inspectApk: (file) => inspectProductionApk(file, apkTools, productionAab) });
+      await run('maestro-syntax-production', tools.maestro, ['check-syntax', 'apps/mobile/.maestro/production-play.yaml'], { timeout: 60_000 });
+    }
     if (inspectionPath) {
       say('고정 검사 APK의 출처·서명·앱 이름·버전과 파일 지문을 확인합니다.');
       inspectionApkState = await captureInspectionApk({ repoRoot, provenancePath: inspectionPath, run, tools });
@@ -1048,6 +1156,7 @@ try {
       await run('app-config-tests', process.execPath, ['--test', 'scripts/build/app-config.test.mjs'], { timeout: timeout.check });
       await run('inspection-build-helpers', process.execPath, ['--test', 'scripts/build/inspection.test.mjs'], { timeout: timeout.check });
       await run('inspection-device-helpers', process.execPath, ['--test', 'scripts/device/inspection-device.test.mjs'], { timeout: timeout.check });
+
       await run('inspection-report-tests', process.execPath, ['--test', 'scripts/device/inspection-report.test.mjs'], { timeout: timeout.check });
       await run('standalone-device-helpers', process.execPath, ['--test', 'scripts/device/standalone-device.test.mjs'], { timeout: timeout.check });
       if (readabilityRequested) {
@@ -1084,6 +1193,7 @@ try {
       await run('app-config-tests', process.execPath, ['--test', 'scripts/build/app-config.test.mjs'], { timeout: timeout.check });
       await run('inspection-build-helpers', process.execPath, ['--test', 'scripts/build/inspection.test.mjs'], { timeout: timeout.check });
       await run('inspection-device-helpers', process.execPath, ['--test', 'scripts/device/inspection-device.test.mjs'], { timeout: timeout.check });
+      await run('production-tests', process.execPath, ['--test', 'scripts/build/production.test.mjs', 'scripts/device/production-device.test.mjs', 'scripts/device/production-branding.test.mjs'], { timeout: timeout.check });
       await run('inspection-report-tests', process.execPath, ['--test', 'scripts/device/inspection-report.test.mjs'], { timeout: timeout.check });
       await run('standalone-device-helpers', process.execPath, ['--test', 'scripts/device/standalone-device.test.mjs'], { timeout: timeout.check });
       await run('display-settings-helpers', process.execPath, ['--test', 'scripts/device/display-settings.test.mjs'], { timeout: timeout.check });
@@ -1114,7 +1224,9 @@ try {
       await ensurePortUnused();
       createdReverse = await prepareReverse();
       if (!receiptOnly && !readabilityOnly && !talkbackOnly) await verifyLoadingChoice();
-      if (inspectionApkState) {
+      if (productionAab) {
+        await verifyProductionInstalled();
+      } else if (inspectionApkState) {
         await verifyInspectionInstalled();
       } else {
         say('전용 Expo 서버와 새 실행 화면을 준비합니다.');
@@ -1177,6 +1289,10 @@ try {
       if (inspectionUpdateState) assertHistoricalInspectionApkUnchanged(inspectionUpdateState);
     // 부분 검사 성공은 전체 회귀 검증을 대신하지 않으므로 공개 보고서와 커밋을 만들지 않습니다.
     if (!receiptOnly && !standaloneOnly && !readabilityOnly && !talkbackOnly) {
+      if (productionAab && (!junit || productionResult?.verifyInstalledStatus !== 'passed'
+        || productionResult.aabSha256 !== productionAab.sha256 || productionResult.verifiedApks !== productionApks.apks.length)) {
+        throw new Error('정식 AAB에서 생성한 APK와 실제 설치 앱의 놀이 검사를 완료하지 못했습니다.');
+      }
       if (inspectionApkState && (!junit || inspectionResult?.verifyInstalledStatus !== 'passed')) throw new Error('설치한 검사 APK의 전체 검사를 완료하지 않아 커밋하지 않습니다.');
       if (!loadingJunit) throw new Error('예시 선택 실기기 검사를 완료하지 않아 기록과 커밋을 만들지 않습니다.');
       if (apkState && !standaloneJunit) throw new Error('설치형 APK의 오프라인 검사를 완료하지 않아 기록과 커밋을 만들지 않습니다.');
@@ -1189,12 +1305,14 @@ try {
       if (apkState) assertStandaloneApkUnchanged(apkState);
       if (inspectionApkState) assertInspectionApkUnchanged(inspectionApkState);
       if (inspectionUpdateState) assertHistoricalInspectionApkUnchanged(inspectionUpdateState);
+      assertProductionUnchanged();
       writeReport('PASS');
       assertCatalogEnvironmentUnchanged(catalogEnvironment);
       assertPreviewUnchanged();
       if (apkState) assertStandaloneApkUnchanged(apkState);
       if (inspectionApkState) assertInspectionApkUnchanged(inspectionApkState);
       if (inspectionUpdateState) assertHistoricalInspectionApkUnchanged(inspectionUpdateState);
+      assertProductionUnchanged();
       if (!noCommit) {
         const result = commitVerifiedChange({ repoRoot, state: gitState, reportPath, message });
         commit = result.commit;
@@ -1225,6 +1343,7 @@ try {
       catalog: { environmentFingerprint: catalogEnvironment?.fingerprint, before: catalogBefore, after: catalogAfter },
       privatePreview: { sourceFingerprint: previewState?.fingerprint, before: previewBefore, after: previewAfter, releaseScan },
       standalone: standaloneEvidence(),
+      production: productionPath ? { buildId: productionAab?.buildId, aabSha256: productionAab?.sha256, result: productionResult, branding: brandingReview } : undefined,
       inspection: { requested: Boolean(inspectionPath), apk: inspectionApkState ? { ...inspectionApkState, apkPath: path.relative(repoRoot, inspectionApkState.apkPath).replaceAll('\\', '/') } : undefined, result: inspectionResult, updateFromCommit: inspectionUpdateReport?.commit },
       readability: { requested: readabilityRequested, result: readabilityResult, display: displayState ? serializeDisplaySettings(displayState) : undefined },
       talkback: { requested: talkbackRequested, result: talkbackResult },

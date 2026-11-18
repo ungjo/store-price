@@ -1,0 +1,112 @@
+appId: com.ungjo.storeprice
+name: 정식 앱의 공개 상품·장보기·거스름돈·영수증
+---
+# 앱 데이터를 보존하고 새 프로세스로 시작해 사용자가 처음 여는 상품 화면부터 검사합니다.
+- stopApp
+- launchApp:
+    clearState: false
+    stopApp: false
+    permissions: {}
+- extendedWaitUntil:
+    visible: { id: market-title }
+    timeout: 90000
+
+# 이 표시들은 목록 맨 위와 미리보기 입구에 생기므로, 스크롤하기 전에 확인합니다.
+- assertNotVisible: { id: device-run-marker }
+- assertNotVisible: { id: catalog-source-marker }
+- assertNotVisible: { id: catalog-loaded-count }
+- assertNotVisible: { id: catalog-test-marker }
+- assertNotVisible: { id: preview-open }
+- assertNotVisible: { id: preview-modal }
+
+# 정식 앱은 사용자용 출처 문구로 서버 응답과 내장 예시 경로를 구분합니다.
+- scrollUntilVisible:
+    element: { text: '^연습용 예시 가격이에요$' }
+    direction: DOWN
+    timeout: 30000
+- scrollUntilVisible:
+    element: { id: catalog-origin, text: '^가게에서 불러온 상품이에요\.$' }
+    direction: DOWN
+    timeout: 30000
+- scrollUntilVisible:
+    element: { id: category-all, text: '^전체 상품 12개$', selected: true }
+    direction: DOWN
+    timeout: 30000
+- scrollUntilVisible:
+    element: { id: category-visible-count, text: '^보이는 상품 12개$' }
+    direction: DOWN
+    timeout: 30000
+- assertVisible:
+    id: cart-summary
+    text: '^장바구니 총 0개, 합계 0원\. 오늘의 놀이돈 10,000원\. 남을 돈 10,000원\. 놀이돈 안에서 장을 봐요\.$'
+- takeScreenshot: production-catalog
+
+- scrollUntilVisible:
+    element: { id: product-sample-apple-add }
+    direction: DOWN
+    timeout: 30000
+- tapOn: { id: product-sample-apple-add, enabled: true }
+- tapOn: { id: product-sample-apple-add, enabled: true }
+- scrollUntilVisible:
+    element: { id: product-sample-milk-add }
+    direction: DOWN
+    timeout: 30000
+- tapOn: { id: product-sample-milk-add, enabled: true }
+- assertVisible:
+    id: cart-summary
+    text: '^장바구니 총 3개, 합계 5,500원\. 오늘의 놀이돈 10,000원\. 남을 돈 4,500원\. 이대로 사면 남을 돈이에요\.$'
+- scrollUntilVisible:
+    element: { id: payment-option-10000 }
+    direction: DOWN
+    timeout: 30000
+- tapOn: { id: payment-option-10000, enabled: true }
+- assertVisible: { id: payment-option-10000, selected: true }
+- scrollUntilVisible:
+    element: { id: quiz-answer }
+    direction: DOWN
+    timeout: 30000
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      APP_ID: com.ungjo.storeprice
+      QUIZ_ANSWER: "4500"
+      CART_QUANTITY: "3"
+      CART_TOTAL: "5,500"
+- scrollUntilVisible:
+    element: { id: payment-change, text: '^받을 거스름돈 4,500원\. 낼 돈 10,000원 빼기 물건값 5,500원은 4,500원\.$' }
+    direction: DOWN
+    timeout: 30000
+- scrollUntilVisible:
+    element: { id: checkout-complete, enabled: true }
+    direction: DOWN
+    timeout: 30000
+- tapOn: { id: checkout-complete, enabled: true }
+
+# 영수증의 각 줄을 대조해 장바구니에서 고른 품목·수량·단가가 그대로 넘어왔는지 확인합니다.
+- assertVisible: { id: receipt-title, text: '^계산을 마쳤어요!$' }
+- scrollUntilVisible:
+    element: { id: receipt-item-sample-apple, text: '^사과, 1개\. 1,500원 × 2개, 3,000원\.$' }
+    direction: DOWN
+    timeout: 30000
+- scrollUntilVisible:
+    element: { id: receipt-item-sample-milk, text: '^우유, 1팩 · 1L\. 2,500원 × 1개, 2,500원\.$' }
+    direction: DOWN
+    timeout: 30000
+- scrollUntilVisible:
+    element: { id: receipt-total, text: '^총 3개, 합계 5,500원\.$' }
+    direction: DOWN
+    timeout: 30000
+- scrollUntilVisible:
+    element: { id: receipt-payment, text: '^낸 놀이돈 10,000원\. 받은 거스름돈 4,500원\. 계산 후 남은 놀이돈 4,500원\.$' }
+    direction: DOWN
+    timeout: 30000
+- takeScreenshot: production-receipt
+- scrollUntilVisible:
+    element: { id: receipt-new-round }
+    direction: DOWN
+    timeout: 30000
+- tapOn: { id: receipt-new-round, enabled: true }
+- extendedWaitUntil:
+    visible: { id: cart-summary, text: '^장바구니 총 0개, 합계 0원\. 오늘의 놀이돈 10,000원\. 남을 돈 10,000원\. 놀이돈 안에서 장을 봐요\.$' }
+    timeout: 30000
+- assertNotVisible: { id: receipt-screen }

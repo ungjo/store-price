@@ -59,7 +59,11 @@ async function packageExists(adb, user) {
 
 
 export function parseInspectionPackageMetadata(metadata, user) {
-  const invalid = () => bad('설치한 검사 앱의 Packages 정보를 정확히 확인하지 못했습니다.');
+  return parseAndroidPackageMetadata(metadata, user, applicationId);
+}
+
+export function parseAndroidPackageMetadata(metadata, user, targetApplicationId) {
+  const invalid = () => bad('설치한 앱의 Packages 정보를 정확히 확인하지 못했습니다.');
   if (typeof metadata !== 'string' || !/^(?:0|[1-9][0-9]{0,5})$/u.test(String(user))) throw invalid();
   const lines = metadata.split(/\r?\n/u);
   const starts = lines.flatMap((line, index) => /^Packages:[ \t]*$/u.test(line) ? [index] : []);
@@ -77,7 +81,7 @@ export function parseInspectionPackageMetadata(metadata, user) {
     if (!match) throw invalid();
     headers.push({ index, indent: match[1], name: match[2] });
   }
-  const targets = headers.filter((header) => header.name === applicationId);
+  const targets = headers.filter((header) => header.name === targetApplicationId);
   if (targets.length !== 1 || headers.some((header) => header.indent !== targets[0].indent)) throw invalid();
   const target = targets[0];
   const next = headers.find((header) => header.index > target.index)?.index ?? section.length;

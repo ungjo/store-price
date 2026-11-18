@@ -346,6 +346,7 @@ test('certificate parser supports observed Build Tools 37 output without accepti
   const digest = 'a'.repeat(64);
   const modern = 'Verifies\nVerified using v2 scheme (APK Signature Scheme v2): true\nV2 Signer: certificate SHA-256 digest: ' + digest + '\n';
   assert.equal(readSignerCertificateSHA256(modern), digest);
+  assert.equal(readSignerCertificateSHA256('Verifies\nNumber of signers: 1\nV3.0 Signer: certificate SHA-256 digest: ' + digest), digest);
   assert.equal(readSignerCertificateSHA256('Verifies\r\nSigner #1 certificate SHA-256 digest: ' + digest.toUpperCase() + '\r\n'), digest);
   assert.equal(readSignerCertificateSHA256(modern + 'Signer #1 certificate SHA-256 digest: ' + digest), digest);
   for (const output of [

@@ -232,7 +232,7 @@ export function readSignerCertificateSHA256(output) {
   // Build Tools 37은 실제 서명 방식을 이름에 표시합니다. 공개 키 지문과 인증서 지문을 혼동하지 않습니다.
   if (typeof output !== 'string' || !/^Verifies\r?$/mu.test(output)) throw new Error('APK 서명 성공을 확인하지 못했습니다.');
   const lines = output.split(/\r?\n/u).filter((line) => line.includes('certificate SHA-256 digest:'));
-  const certificates = lines.map((line) => /^(?:Signer #1|V2 Signer:) certificate SHA-256 digest: ([a-f0-9]{64})$/iu.exec(line)?.[1]?.toLowerCase());
+  const certificates = lines.map((line) => /^(?:Signer #1|V2 Signer:|V3\.0 Signer:) certificate SHA-256 digest: ([a-f0-9]{64})$/iu.exec(line)?.[1]?.toLowerCase());
   if (certificates.length === 0 || certificates.some((value) => !value) || new Set(certificates).size !== 1) throw new Error('APK 서명 인증서 지문을 확인하지 못했습니다.');
   return certificates[0];
 }

@@ -129,5 +129,14 @@
   "scripts/device/inspection-report.test.mjs",
   "docs/06-brand-assets.md",
   "docs/book/chapters/07b-branding-apk.md",
-  "scripts/device/video-frames.ps1"
+  "scripts/device/video-frames.ps1",
+  "apps/mobile/.maestro/production-play.yaml",
+  "scripts/build/production.mjs",
+  "scripts/build/production.test.mjs",
+  "scripts/build/production-apks.mjs",
+  "scripts/device/production-device.mjs",
+  "scripts/device/production-device.test.mjs",
+  "scripts/device/production-branding.mjs",
+  "scripts/device/production-branding.test.mjs",
+  "docs/book/chapters/07c-production-aab.md"
 ]

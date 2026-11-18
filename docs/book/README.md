@@ -97,6 +97,7 @@ git log --oneline --decorate
 - [07장: Android 배포 설정과 검사 앱 분리](chapters/07-android-release-config.md)
 - [07장 보충: 고정 검사 APK로 전체 놀이 확인하기](chapters/07a-inspection-apk.md)
 - [07장 보충: 전용 아이콘·시작 화면과 검사 APK 업데이트](chapters/07b-branding-apk.md)
+- [07장 보충: 정식 Android App Bundle로 설치 검사하기](chapters/07c-production-aab.md)
 
 개발용 실제 가격 미리보기는 `f6f4ccb`로 로컬 커밋했습니다. 2026-11-13에는 상품 조회 중 내장 예시를 선택하는 흐름을 구현하고 코드 검사를 통과했습니다. 최초 연결 점검이 USB 승인 부족으로 멈춘 뒤 사용자가 승인을 완료했고 전체 실기기 검사를 준비했습니다. 최종 결과는 `verification/latest-android.md`의 검사 시작 HEAD `f6f4ccb`와 실제 단계 결과로 확인하며, 앞 커밋의 성공 기록과 구분합니다. 로컬 커밋을 GitHub 업로드 완료로 기록하지 않습니다.
 
