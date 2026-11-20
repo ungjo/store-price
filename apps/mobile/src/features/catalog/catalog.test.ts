@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { getEventListeners } from 'node:events';
 import test from 'node:test';
+import { sampleProducts } from '../../data/sample-products.ts';
 
 import {
   CATALOG_TIMEOUT_MS,
@@ -176,27 +177,37 @@ test('최대 1000개까지 확인하며 한도를 넘으면 일부만 반환하�
   assert.throws(() => parseCatalogRows([...rows, row()]), /너무 많아/u);
 });
 
-test('공개 뷰에 GET으로 필요한 열·정렬·전체 개수를 요청하고 Bearer 헤더를 보내지 않는다', async () => {
+test('모든 사용자가 같은 예시 12개만 요청하며 본문·쿠키·사용자 인증 정보를 보내지 않는다', async () => {
   let calls = 0;
   const fakeFetch: typeof globalThis.fetch = async (input, init) => {
     calls += 1;
     const url = new URL(String(input));
     assert.equal(url.origin, config.url);
     assert.equal(url.pathname, '/rest/v1/play_catalog');
-    assert.equal(url.searchParams.get('order'), 'sort_order.asc,id.asc');
-    assert.equal(url.searchParams.get('limit'), '1000');
-    assert.equal(url.searchParams.get('select'), 'id,name,unit_label,category_id,source_price_krw,play_price_krw,play_price_rule,is_sample,emoji,color,price_observation_id');
+    assert.equal(sampleProducts.length, 12);
+    assert.deepEqual(Array.from(url.searchParams), [
+      ['select', 'id,name,unit_label,category_id,source_price_krw,play_price_krw,play_price_rule,is_sample,emoji,color,price_observation_id'],
+      ['is_sample', 'eq.true'],
+      ['id', 'in.(' + sampleProducts.map((product) => product.id).join(',') + ')'],
+      ['order', 'sort_order.asc,id.asc'],
+      ['limit', '12'],
+    ]);
     assert.equal(init?.method, 'GET');
-    const headers = new Headers(init?.headers);
-    assert.equal(headers.get('apikey'), config.publishableKey);
-    assert.equal(headers.get('Authorization'), null);
-    assert.equal(headers.get('Prefer'), 'count=exact');
-    assert.equal(headers.get('Accept'), 'application/json');
+    assert.equal(init?.body, undefined);
+    assert.equal(init?.credentials, 'omit');
+    assert.deepEqual(init?.headers, { apikey: config.publishableKey, Accept: 'application/json', Prefer: 'count=exact' });
     assert.ok(init?.signal);
     return jsonResponse([row()]);
   };
   assert.deepEqual(await loadCatalog(config, { fetch: fakeFetch }), parseCatalogRows([row()]));
   assert.equal(calls, 1);
+});
+
+test('서버가 필터를 무시해 실제 가격이나 대상 밖의 예시를 섞으면 전체 응답을 거부한다', async () => {
+  for (const fields of [{ id: 'sample-milk', is_sample: false }, { id: 'sample-pear', is_sample: true }]) {
+    const unexpected = row({ ...fields, price_observation_id: '00000000-0000-4000-8000-000000000002' });
+    await assert.rejects(loadCatalog(config, { fetch: fetchRows([row(), unexpected]) }), /상품 목록 정보/u);
+  }
 });
 
 test('HTTP 성공과 전체 개수 0인 빈 목록도 성공으로 반환한다', async () => {

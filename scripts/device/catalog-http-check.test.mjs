@@ -39,9 +39,12 @@ function rows() {
   }));
 }
 
-function responder({ products = rows(), privateResponse, notesResponse, seen = [] } = {}) {
+function responder({ products = rows(), countResponse, privateResponse, notesResponse, seen = [] } = {}) {
   return async (url, options) => {
     seen.push({ url, options });
+    if (options.method === 'HEAD') {
+      return countResponse?.() ?? new Response(null, { headers: { 'Content-Range': '0-0/' + products.length } });
+    }
     if (options.headers['Accept-Profile'] === 'catalog_private') {
       return privateResponse?.() ?? Response.json({ code: 'PGRST106' }, { status: 406 });
     }
@@ -115,7 +118,7 @@ test('key redaction survives split output chunks and preserves Korean text', (t)
   assert.equal(redactCatalogText(state, testKey).includes(testKey), false);
 });
 
-test('HTTP verification uses only anonymous GET and returns safe evidence for twelve categorized examples', async (t) => {
+test('HTTP verification uses anonymous GET and a separate HEAD count and returns safe evidence for twelve categorized examples', async (t) => {
   const state = captureCatalogEnvironment(fixture(t), {});
   const seen = [];
   const result = await checkCatalogHttp(state, { fetch: responder({ seen }) });
@@ -125,15 +128,33 @@ test('HTTP verification uses only anonymous GET and returns safe evidence for tw
   assert.equal(result.approvalNotesBlocked, true);
   assert.match(result.fingerprint, /^[a-f0-9]{64}$/u);
   assert.equal(JSON.stringify(result).includes(testKey), false);
-  assert.equal(seen.length, 3);
+  assert.deepEqual(seen.map((request) => request.options.method), ['GET', 'HEAD', 'GET', 'GET']);
+  assert.equal(seen[1].url, testUrl + '/rest/v1/play_catalog?select=id&limit=1');
+  assert.equal(seen[1].options.headers.Prefer, 'count=exact');
   for (const request of seen) {
-    assert.equal(request.options.method, 'GET');
     assert.equal(request.options.headers.apikey, testKey);
     assert.equal(Object.keys(request.options.headers).some((name) => name.toLowerCase() === 'authorization'), false);
     assert.equal(request.url.includes(testKey), false);
   }
   const after = await checkCatalogHttp(state, { fetch: responder(), previous: result });
   assert.equal(after.fingerprint, result.fingerprint);
+});
+
+test('extra public rows hidden by the release filter or unverifiable counts fail the check', async (t) => {
+  const state = captureCatalogEnvironment(fixture(t), {});
+  for (const range of ['0-0/13', '0-0/11', '0-0/*', '0-5/12', 'missing']) {
+    const headers = range === 'missing' ? {} : { 'Content-Range': range };
+    await assert.rejects(checkCatalogHttp(state, {
+      fetch: responder({ countResponse: () => new Response(null, { headers }) }),
+    }), /전체 개수/u);
+  }
+  await assert.rejects(checkCatalogHttp(state, {
+    fetch: responder({ countResponse: () => new Response(null, { status: 403, headers: { 'Content-Range': '0-0/12' } }) }),
+  }), /전체 개수/u);
+  const result = await checkCatalogHttp(state, {
+    fetch: responder({ countResponse: () => new Response(null, { headers: { 'Content-Range': '*/12' } }) }),
+  });
+  assert.equal(result.productCount, 12);
 });
 
 test('an accessible private schema or notes column cannot count as denied', async (t) => {

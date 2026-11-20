@@ -108,6 +108,23 @@ function fixtureFields(product) {
   return { id, name, unit, priceKrw, emoji, color, isSample, categoryId };
 }
 
+async function assertPublicCount(config, fetchImpl, expectedCount) {
+  // 앱의 예시 필터와 별도로 전체 공개 행 수를 확인합니다. HEAD는 상품 데이터 본문을 받지 않습니다.
+  let response;
+  try {
+    response = await fetchImpl(config.url + '/rest/v1/play_catalog?select=id&limit=1', {
+      method: 'HEAD', redirect: 'error', credentials: 'omit', signal: AbortSignal.timeout(12_000),
+      headers: { apikey: config.publishableKey, Prefer: 'count=exact' },
+    });
+  } catch {
+    throw new Error('공개 상품 전체 개수를 확인하지 못했습니다. 연결과 공개 읽기 설정을 확인해 주세요.');
+  }
+  const range = response.headers.get('Content-Range');
+  if (!response.ok || (range !== '0-0/' + expectedCount && range !== '*/' + expectedCount)) {
+    throw new Error('공개 상품 전체 개수가 검사한 예시 상품 수와 일치하지 않습니다.');
+  }
+}
+
 async function assertReadDenied(config, fetchImpl, endpoint, profile, allowed) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 12_000);
@@ -133,6 +150,7 @@ export async function checkCatalogHttp(state, { fetch: fetchImpl = globalThis.fe
   if (JSON.stringify(products.map(fixtureFields)) !== JSON.stringify(sampleProducts.map(fixtureFields))) {
     throw new Error('공개 상품이 실기기 회귀 검사에 필요한 예시 12개의 이름·단위·가격·분류·표시 정보와 다릅니다.');
   }
+  await assertPublicCount(config, fetchImpl, products.length);
   await assertReadDenied(config, fetchImpl, '/rest/v1/price_observations?select=id&limit=1', 'catalog_private', [
     [406, 'PGRST106'], [401, '42501'], [403, '42501'],
   ]);

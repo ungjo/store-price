@@ -1,8 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
-import { type ComponentRef, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { type ComponentRef, type ReactNode, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { FlatList, Keyboard, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
+import { PrivacyPolicyButton, PrivacyPolicyDialog } from './src/components/privacy-policy-dialog';
 import { CategorySelector } from './src/components/category-selector';
 import { filterProductsByCategory, getCategoryCounts, type CatalogFilter } from './src/features/catalog/categories';
 import { PaymentSelector } from './src/components/payment-selector';
@@ -23,17 +24,40 @@ const won = new Intl.NumberFormat('ko-KR');
 const deviceRunId = process.env.EXPO_PUBLIC_DEVICE_RUN_ID;
 
 export default function App() {
+  const [policyVisible, setPolicyVisible] = useState(false);
+  const openerRef = useRef<ComponentRef<typeof View>>(null);
+  const focusOpener = useAccessibilityFocus(openerRef);
+  const openPolicy = () => {
+    Keyboard.dismiss();
+    setPolicyVisible(true);
+  };
+  const closePolicy = () => {
+    setPolicyVisible(false);
+    focusOpener();
+  };
+  const privacyButton = <PrivacyPolicyButton openerRef={openerRef} onPress={openPolicy} />;
+
+  // 로딩 중 상품이 도착해도 열린 방침을 유지하고, 닫으면 기존 장바구니와 영수증으로 돌아갑니다.
   return (
-    <CatalogLoader>
-      {(products, source, reload) => <MarketScreen products={products} source={source} reload={reload} />}
-    </CatalogLoader>
+    <>
+      <View style={styles.keyboardArea} importantForAccessibility={policyVisible ? 'no-hide-descendants' : 'auto'}
+        accessibilityElementsHidden={policyVisible}>
+        <CatalogLoader privacyButton={privacyButton}>
+          {(products, source, reload) => (
+            <MarketScreen products={products} source={source} reload={reload} privacyButton={privacyButton} />
+          )}
+        </CatalogLoader>
+      </View>
+      {policyVisible && <PrivacyPolicyDialog onClose={closePolicy} />}
+    </>
   );
 }
 
-function MarketScreen({ products, source, reload }: {
+function MarketScreen({ products, source, reload, privacyButton }: {
   products: readonly CatalogProduct[];
   source: CatalogSource;
   reload: () => void;
+  privacyButton: ReactNode;
 }) {
   // 불러온 목록을 한 번의 놀이 동안 고정해 장바구니와 영수증의 가격이 중간에 달라지지 않게 합니다.
   const shoppingReducer = useMemo(() => createShoppingReducer(products), [products]);
@@ -152,7 +176,7 @@ function MarketScreen({ products, source, reload }: {
       <SafeAreaProvider>
         <SafeAreaView style={styles.screen}>
           <StatusBar style="dark" />
-          <ShoppingReceipt receipt={shopping.receipt} onNewRound={startNewRound} />
+          <ShoppingReceipt receipt={shopping.receipt} onNewRound={startNewRound} privacyButton={privacyButton} />
         </SafeAreaView>
       </SafeAreaProvider>
     );
@@ -207,6 +231,7 @@ function MarketScreen({ products, source, reload }: {
                     <View style={styles.badge}>
                       <Text style={styles.badgeText}>시장놀이</Text>
                     </View>
+                    {privacyButton}
                   </View>
 
                   <View style={styles.welcome}>

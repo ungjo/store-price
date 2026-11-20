@@ -24,6 +24,18 @@ name: 상품을 기다리는 중 예시 놀이 선택과 늦은 응답 무시
     enabled: true
 - assertNotVisible:
     id: catalog-retry
+# 서버 응답이 대기 중이어도 번들에 있는 방침 끝까지 읽고 같은 화면으로 돌아옵니다.
+- scrollUntilVisible:
+    element: { id: privacy-open }
+    direction: DOWN
+    timeout: 30000
+- runFlow:
+    file: privacy-policy.yaml
+    env: { POLICY_DISMISS: back }
+- scrollUntilVisible:
+    element: { id: catalog-use-samples }
+    direction: UP
+    timeout: 30000
 - tapOn:
     id: catalog-use-samples
     enabled: true
@@ -130,6 +142,21 @@ name: 상품을 기다리는 중 예시 놀이 선택과 늦은 응답 무시
     id: receipt-payment
     text: '^낸 놀이돈 10,000원\. 받은 거스름돈 8,500원\. 계산 후 남은 놀이돈 8,500원\.$'
 - takeScreenshot: catalog-sample-receipt
+# 예시 상품 영수증에서 방침을 닫아도 현재 거래와 새 놀이 버튼이 유지됩니다.
+- scrollUntilVisible:
+    element: { id: privacy-open }
+    direction: DOWN
+    timeout: 30000
+- runFlow:
+    file: privacy-policy.yaml
+    env: { POLICY_DISMISS: button }
+- scrollUntilVisible:
+    element:
+      id: receipt-payment
+      text: '^낸 놀이돈 10,000원\. 받은 거스름돈 8,500원\. 계산 후 남은 놀이돈 8,500원\.$'
+    direction: UP
+    timeout: 30000
+    centerElement: false
 - scrollUntilVisible:
     element:
       id: receipt-new-round

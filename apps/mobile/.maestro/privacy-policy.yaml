@@ -1,0 +1,30 @@
+appId: ${APP_ID || 'host.exp.exponent'}
+name: 앱 안에서 개인정보처리방침 열기와 닫기
+---
+- tapOn: { id: privacy-open, enabled: true }
+- extendedWaitUntil:
+    visible: { id: privacy-title }
+    timeout: 10000
+- assertVisible: { id: privacy-date }
+- scrollUntilVisible:
+    element: { id: privacy-last-heading }
+    direction: DOWN
+    timeout: 30000
+- assertVisible: { id: privacy-last-heading }
+# 문의 절차 제목뿐만 아니라 보호자가 사용할 실제 이메일이나 문의 주소가 본문에 보여야 합니다.
+- scrollUntilVisible:
+    element: { text: '.*(@|https?://).+' }
+    direction: DOWN
+    timeout: 30000
+    centerElement: false
+- runFlow:
+    when:
+      true: ${POLICY_DISMISS === 'back'}
+    commands:
+      - back
+- runFlow:
+    when:
+      true: ${POLICY_DISMISS === 'button'}
+    commands:
+      - tapOn: { id: privacy-close, enabled: true }
+- assertNotVisible: { id: privacy-body }

@@ -835,7 +835,7 @@ function productionReport(status, reason, seoul) {
     '- 정식 앱에 예시 상품 12개가 표시됐다. 사과 2개와 우유 1개(5,500원)를 골라 10,000원을 지불하고, 거스름돈 4,500원과 영수증을 확인한 뒤 다시 장보기를 시작했다. JUnit ' + junit.testcases + '건 통과.',
     '- 검사 전후 공개 예시 상품 지문 `' + catalogAfter.fingerprint + '`',
     '- 충전 중 화면 유지 설정의 최종 처리 `' + (screenAwake.restoreStatus || screenAwake.applyStatus) + '`',
-    ...checks.filter((check) => ['production-tests', 'maestro-syntax-production', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'catalog-http-before', 'catalog-http-after', 'maestro-loading-choice', 'production-play'].includes(check.label))
+    ...checks.filter((check) => ['privacy-page', 'production-tests', 'maestro-syntax-production', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'catalog-http-before', 'catalog-http-after', 'maestro-loading-choice', 'production-play'].includes(check.label))
       .map((check) => '- `' + check.label + '` 종료 코드 ' + check.exitCode),
     '', 'Google Play에 제출하기 전에 업로드용 AAB를 기기 사양에 맞는 APK로 변환하고 로컬 검사 키로 서명해 설치했다. Play 배포와 Play 앱 서명 검증은 이후 단계다.',
     '', '원본 로그와 JUnit은 `.artifacts/device/' + runId + '/`에 저장한다.', '',
@@ -895,6 +895,7 @@ function writeReport(status, reason = '') {
     'maestro check-syntax apps/mobile/.maestro/readability-open.yaml',
     'maestro check-syntax apps/mobile/.maestro/readability-correct.yaml',
     'maestro check-syntax apps/mobile/.maestro/readability-finish.yaml',
+    'node --experimental-strip-types scripts/build/privacy-page.mjs --check',
     'npm --prefix scripts/database test',
     'cd apps/mobile', 'npm test', 'npm run typecheck', 'npm run lint', 'npm run export:check',
     'EXPO_PUBLIC_DEVICE_RUN_ID=<실행 ID>-loading EXPO_PUBLIC_CATALOG_TEST_SCENARIO=pending-choice node node_modules/expo/bin/cli start --localhost --port 8091 --clear',
@@ -1052,7 +1053,7 @@ function writeReport(status, reason = '') {
     '- 정답 전 계산 완료 차단, 영수증 상품별 가격·수량·합계·지불액·거스름돈·잔액을 확인한다.',
     '- 0원 거스름돈도 완료하며, 다시 장보기와 영수증 상태의 재실행으로 새 놀이를 시작한다.',
     '', '## 결과', '',
-    ...checks.filter((check) => check.label.startsWith('maestro-syntax-readability-') || /^readability-(?:standard|large-font|narrow-large-font)-(?:open|correct|finish)$/u.test(check.label) || ['display-settings-helpers', 'keyboard-layout-helpers', 'talkback-observer-tests', 'talkback-device-helpers', 'talkback-speech-ocr-tests', 'talkback-flow', 'maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'maestro-syntax-categories', 'maestro-syntax-standalone', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'build-helpers', 'app-config-tests', 'inspection-build-helpers', 'inspection-device-helpers', 'inspection-report-tests', 'production-tests', 'inspection-installed', 'standalone-device-helpers', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'catalog-http-after-apk', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow', 'standalone-offline', 'screen-awake-restore', 'screen-awake-restored-check'].includes(check.label))
+    ...checks.filter((check) => check.label.startsWith('maestro-syntax-readability-') || /^readability-(?:standard|large-font|narrow-large-font)-(?:open|correct|finish)$/u.test(check.label) || ['privacy-page', 'display-settings-helpers', 'keyboard-layout-helpers', 'talkback-observer-tests', 'talkback-device-helpers', 'talkback-speech-ocr-tests', 'talkback-flow', 'maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'maestro-syntax-categories', 'maestro-syntax-standalone', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'build-helpers', 'app-config-tests', 'inspection-build-helpers', 'inspection-device-helpers', 'inspection-report-tests', 'production-tests', 'inspection-installed', 'standalone-device-helpers', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'catalog-http-after-apk', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow', 'standalone-offline', 'screen-awake-restore', 'screen-awake-restored-check'].includes(check.label))
       .map((check) => '- ' + check.label + ': 종료 코드 ' + check.exitCode),
     '- JUnit: ' + (junit ? `${junit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
     '- 예시 선택 JUnit: ' + (loadingJunit ? `${loadingJunit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
@@ -1125,6 +1126,8 @@ try {
     say('준비 확인 완료. 실제 화면 검사와 커밋은 실행하지 않았습니다.');
   } else {
     verificationStarted = true;
+    // 검사한 앱 본문과 배포용 웹 문서가 다르면 커밋 전에 중단합니다.
+    await run('privacy-page', process.execPath, ['--experimental-strip-types', 'scripts/build/privacy-page.mjs', '--check'], { timeout: timeout.check });
     // APK 분석과 구문 검사가 길어져도 사용자가 풀어 둔 화면이 다시 잠기지 않게 먼저 적용합니다.
     await prepareScreenAwake();
     if (productionPath) {

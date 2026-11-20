@@ -138,5 +138,11 @@
   "scripts/device/production-device.test.mjs",
   "scripts/device/production-branding.mjs",
   "scripts/device/production-branding.test.mjs",
-  "docs/book/chapters/07c-production-aab.md"
+  "docs/book/chapters/07c-production-aab.md",
+  "apps/mobile/src/features/privacy/privacy-policy.ts",
+  "apps/mobile/src/components/privacy-policy-dialog.tsx",
+  "apps/mobile/.maestro/privacy-policy.yaml",
+  "scripts/build/privacy-page.mjs",
+  "docs/privacy/index.html",
+  "docs/book/chapters/08-privacy-policy.md"
 ]

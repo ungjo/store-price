@@ -1,3 +1,4 @@
+import { sampleProducts } from '../../data/sample-products.ts';
 import { isProductCategoryId, type ProductCategoryId } from './categories.ts';
 
 export type CatalogProduct = Readonly<{
@@ -20,6 +21,7 @@ export type CatalogConfig = Readonly<{
 export const MAX_CATALOG_PRODUCTS = 1000;
 export const CATALOG_TIMEOUT_MS = 12000;
 
+const sampleProductIds = new Set(sampleProducts.map((product) => product.id));
 const selectedColumns = [
   'id', 'name', 'unit_label', 'category_id', 'source_price_krw', 'play_price_krw',
   'play_price_rule', 'is_sample', 'emoji', 'color', 'price_observation_id',
@@ -184,9 +186,12 @@ export async function loadCatalog(
     const request = async () => {
       const response = await (options.fetch ?? globalThis.fetch)(
         checked.url + '/rest/v1/play_catalog?select=' + selectedColumns
-          + '&order=sort_order.asc,id.asc&limit=' + MAX_CATALOG_PRODUCTS,
+          // 모든 기기가 같은 예시 목록을 요청합니다. 고른 물건이나 장바구니 상태는 보내지 않습니다.
+          + '&is_sample=eq.true&id=in.(' + [...sampleProductIds].join(',') + ')'
+          + '&order=sort_order.asc,id.asc&limit=' + sampleProductIds.size,
         {
           method: 'GET',
+          credentials: 'omit',
           headers: {
             apikey: checked.publishableKey,
             Accept: 'application/json',
@@ -210,6 +215,10 @@ export async function loadCatalog(
       const products = parseCatalogRows(data);
       // 서버의 행 제한 때문에 일부만 내려온 목록을 전체 목록처럼 보여 주지 않습니다.
       verifyCompleteRange(response.headers.get('Content-Range'), products.length);
+      // 서버가 필터 조건을 무시해도 실제 가격이나 출시 범위 밖의 예시는 놀이 화면에 표시하지 않습니다.
+      if (products.some((product) => !product.isSample || !sampleProductIds.has(product.id))) {
+        throw invalidResponse();
+      }
       return products;
     };
 
