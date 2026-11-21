@@ -40,6 +40,7 @@ entries = {
     19: mobile + "eas.json",
     20: mobile + "src/components/shopping-receipt.tsx",
 }
+web_focus = mobile + "src/features/accessibility/use-accessibility-focus.web.ts"
 shortcut_path = mobile + "src/components/talkback-settings-button.tsx"
 # 각 장의 기준 커밋은 유지하고, 세 화면에 같은 Android 설정 버튼만 보강한다.
 shortcut_screens = {
@@ -101,7 +102,7 @@ with zipfile.ZipFile(temp, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=
         key = f"{number:02d}"
         if number in refs:
             sources = source_files(refs[number])
-            # 20장 완성본은 설정 버튼과 50,000원 예산·지불을 포함한 검증 커밋을 그대로 실습한다.
+            # 20장은 설정 버튼과 50,000원 예산·지불을 검증한 앱 소스를 바탕으로 한다.
             if 16 <= number <= 19:
                 previous = {n: put_object(archive, with_shortcut(n, b)) for n, b in sources}
                 shortcut = subprocess.check_output(["git", "show", "3487654:" + shortcut_path], cwd=book.parents[1])
@@ -114,6 +115,9 @@ with zipfile.ZipFile(temp, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=
             prefix = "" if number <= 3 else mobile
             for name, data in local_files(steps / key):
                 files[prefix + name] = put_object(archive, data)
+        # 초점 이동을 도입한 장에서만 Metro가 웹 전용 구현을 고르도록 꾸러미에 함께 넣는다.
+        if web_focus.replace(".web.ts", ".ts") in files:
+            files[web_focus] = put_object(archive, (book.parents[1] / web_focus).read_text("utf-8").encode("utf-8"))
         if entries[number] not in files:
             raise ValueError(f"{key}장의 대표 파일을 찾을 수 없습니다: {entries[number]}")
         chapters[key] = {"label": titles[number], "entry": entries[number], "files": dict(sorted(files.items()))}
