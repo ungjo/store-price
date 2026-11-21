@@ -1,27 +1,32 @@
 {
   "date": "2026-11-21",
-  "method": "The download card is cropped from the local copy of the published reader site in Chrome at 3x device scale. The three Windows figures are direct crops of supplied Korean VS Code screenshots. Lanczos resampling enlarges the crops 1.6x for print placement. No generated interface text.",
+  "method": "The download card capture is described in its own figure record. The three Windows figures are direct crops of supplied Korean VS Code screenshots. Lanczos resampling enlarges the crops 1.6x for print placement. No generated interface text.",
   "figures": [
     {
       "file": "02-reader-download.png",
       "dimensions": [
-        1140,
-        774
+        2170,
+        1770
       ],
-      "sha256": "41558336803bb98fa7773753a9510d71739e61c75c4af225bb1835addbe0d50b",
-      "source": "book/index.html on gh-pages",
-      "source_sha256": "117402416bd073da206e345ba49bc0fd144083dc886d282610066107d62948ad",
+      "sha256": "7814478b86eca9433f46200f66ad4601e68e165d34b0f94e00ce77cfd5df4df4",
+      "source": "https://ungjo.github.io/store-price/book/",
+      "source_sha256": "4a37718aafdd4ec50df1b11b057cfa22441caa7f6b8dcf51dc4a33d4e275a4ea",
       "viewport_css_px": [
-        862,
-        760
+        1000,
+        820
       ],
       "crop_css_xywh": [
-        43,
-        296,
-        380,
-        258
+        64,
+        303,
+        434,
+        354
       ],
-      "device_scale_factor": 3
+      "device_scale_factor": 5,
+      "date": "2026-11-22",
+      "browser": "Google Chrome 157.0.8103.79 on Windows",
+      "method": "Lossless crop of the ZIP download card opened on the public reader site in a fresh Korean Chrome context, rendered at native capture scale. The source hash records the full browser viewport. The HTML response matches the recorded Pages commit.",
+      "pages_commit": "b3ea668",
+      "html_sha256": "3124f56430e82cb7466b8cddebd2825a173c1e4587579f1134f413cb8e92601a"
     },
     {
       "file": "02-kit-opened.png",

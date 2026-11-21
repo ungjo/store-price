@@ -126,17 +126,18 @@ onPress={() => {
 
 ## 16.5 정답 결과와 영수증으로 초점 이동하기
 
-채점 뒤에는 새로 나타난 결과를 알려 주고, 영수증 화면을 열면 제목부터 읽게 한다. 그러나 아무 때나 초점을 옮기면 사용자의 현재 조작을 방해한다. 참고 코드는 화면 읽기가 켜져 있을 때만 요청하고, 요소가 배치된 뒤에 실행하며, 화면을 떠나면 예약을 취소한다.
+채점 뒤에는 새로 나타난 결과를 알려 주고, 영수증 화면을 열면 제목부터 읽게 한다. 그러나 아무 때나 초점을 옮기면 사용자의 현재 조작을 방해한다. Android 코드는 TalkBack 등 화면 읽기 기능이 켜져 있을 때 초점 이동을 요청하고, 요소가 배치된 뒤에 실행하며, 화면을 떠나면 예약을 취소한다.
 
-읽을 파일은 다음 세 개다.
+앱 폴더에서 다음 네 파일을 열어 비교한다.
 
 | 파일 | 책임 |
 |---|---|
 | `src/features/accessibility/focus-request.ts` | 비동기 확인·예약·취소 규칙 |
-| `src/features/accessibility/use-accessibility-focus.ts` | React ref와 실제 접근성 이벤트 연결 |
+| `src/features/accessibility/use-accessibility-focus.ts` | Android에서 화면 읽기 상태를 확인하고 초점 이벤트 보내기 |
+| `src/features/accessibility/use-accessibility-focus.web.ts` | PC 브라우저에서 새 화면의 제목·입력칸·결과 안내로 키보드 초점 옮기기 |
 | `src/components/change-quiz.tsx` | 채점 결과와 키보드 처리 연결 |
 
-핵심 흐름은 다음과 같다.
+Android에서 초점이 이동하는 순서는 다음과 같다.
 
 ```text
 읽기 초점 요청
@@ -173,6 +174,40 @@ useEffect(() => focusTitle(), [focusTitle]);
 ![TalkBack 초점이 정답 안내 문장에 놓인 실제 검사 화면](figures/16-talkback-correct-focus.png)
 
 그림 16-1. 2026-11-16, SM-X710·Android 14·Expo Go·TalkBack 검사에서 정답 안내 문장에 초점이 놓인 실제 화면. 낸 돈 10,000원, 물건값 5,500원, 답 4,500원이다. `c949154`에 반영된 접근성 개선 기록에서 앱 영역만 발췌했다. 파란 테두리는 초점 위치를 보여 주며 음성 내용을 증명하는 자료는 아니다.
+
+### PC 브라우저에서는 어디에 초점이 갈까?
+
+예시 상품을 골라 상품 12개가 떠도, 키보드가 새 화면의 제목으로 이동했는지는 따로 확인해야 한다. 이전 예제에서는 상품이 보인 뒤에도 초점이 웹 문서 전체를 뜻하는 `BODY`에 남았다. 브라우저에서 Android용 `sendAccessibilityEvent` 함수를 호출했기 때문이다.
+
+VS Code 왼쪽에서 **work → ch16 → apps → mobile → src → features → accessibility** 순서로 펼친다. `use-accessibility-focus.ts` 옆에 있는 **use-accessibility-focus.web.ts** 파일을 연다. 앱을 브라우저로 실행하면 Expo가 `.web.ts` 파일을 고르고, Android에서는 앞에서 본 `.ts` 파일을 고른다. 이번 ZIP의 16~20장에 이 두 파일이 함께 들어 있다. 예전에 꺼낸 폴더에 웹 파일이 없으면 이번 ZIP을 새 폴더에 풀고 그곳에서 `node start.mjs 16`을 입력한다. 기존 실습은 이전 폴더에서 계속 열 수 있다.
+
+다음은 웹 파일에서 실제로 초점을 옮기는 부분이다. `target.current`는 장보기 제목처럼 새 화면에서 가리킬 요소다.
+
+```ts
+const element = target.current;
+if (!(element instanceof HTMLElement) || !element.isConnected) return;
+
+// 제목과 결과 문구도 초점을 받을 수 있게 하되, 키보드의 Tab 이동 순서는 유지한다.
+if (element.tabIndex < 0 && !element.hasAttribute('tabindex')) {
+  element.tabIndex = -1;
+}
+element.focus();
+```
+
+`requestAnimationFrame`은 새 화면이 준비될 때까지 위 동작을 한 프레임 미룬다. `tabIndex = -1`인 제목은 코드로 초점을 받을 수 있고, Tab을 누르면 다음 조작 요소로 이어진다. 다른 요청이 들어오거나 화면을 떠나면 대기 중인 프레임을 취소한다.
+
+**키보드로 확인하기**
+
+1. 16장 앱 폴더(`work/ch16/apps/mobile`)에서 설치를 마쳤다면 VS Code의 PowerShell에 `npm.cmd run web`을 입력한다. 이미 같은 폴더에서 Expo가 실행 중이면 그 터미널을 클릭해 `w`를 눌러 웹을 연다.
+2. Chrome에서 Tab을 눌러 **예시 상품으로 바로 놀이하기** 버튼으로 이동하고 Enter를 누른다. 상품 12개가 열리고 **오늘은 무엇을 사 볼까요?** 제목이 초점을 받는다. Tab을 한 번 더 누르면 제목 다음의 조작 요소로 이동한다.
+3. 사과 두 개와 우유 한 개를 담고 10,000원권을 고른다. 거스름돈에 `1`을 넣어 정답을 확인한 뒤 **다시 풀기** 버튼을 누른다. 입력칸을 다시 클릭하지 않고 `4500`을 입력할 수 있으면 초점이 돌아온 것이다. 정답을 확인하고 **계산 완료** 버튼을 누르면 영수증의 **계산을 마쳤어요!** 제목으로, **다시 장보기** 버튼을 누르면 상품 화면 제목으로 초점이 이동한다.
+4. 테두리가 눈에 잘 보이지 않으면 각 동작 직후 Chrome에서 `Ctrl+Shift+J`로 콘솔을 열고 아래 한 줄을 입력한다. 영수증을 연 직후에는 `receipt-title`, 다시 장보기를 누른 직후에는 `market-title`이 출력된다. 콘솔을 닫고 다음 동작을 확인한다.
+
+```js
+document.activeElement?.getAttribute('data-testid')
+```
+
+브라우저에서 확인한 것은 키보드의 초점 위치다. Android에서 읽어 주는 이름과 순서는 다음 절에서 TalkBack을 켜고 확인한다.
 
 ## 16.6 앱에서 TalkBack 설정 열고 켜기·끄기
 

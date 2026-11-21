@@ -1,0 +1,87 @@
+{
+  "date": "2026-11-22",
+  "figures": [
+    {
+      "file": "02-kit-start-screen.png",
+      "source": "User-supplied Windows VS Code screenshot with start.mjs open.",
+      "sourcePixels": [
+        3840,
+        2160
+      ],
+      "sourceSHA256": "c4d280fd10c19655c519e2ac6b9636a887ad2b4ec1df8b800e4a042b771cf431",
+      "pixels": [
+        1060,
+        494
+      ],
+      "sha256": "ecc5716ad9d6aa37536def2a175b27e7a42d021cb2f5ed9611853bf11df129ab",
+      "cropXYXY": [
+        0,
+        0,
+        1060,
+        494
+      ]
+    },
+    {
+      "file": "02-kit-terminal-menu.png",
+      "pixels": [
+        1043,
+        350
+      ],
+      "sha256": "e27cf3f622391ae926197487a4f3b7eba8904685983d41965fe2e442e1b4fb08"
+    },
+    {
+      "file": "02-kit-ch20-restored.png",
+      "pixels": [
+        1563,
+        437
+      ],
+      "sha256": "60687b54cc79fb0c976023c5a65fb513a1549e439860beb55c87b7867c16051c"
+    },
+    {
+      "file": "02-kit-vscode-help.png",
+      "source": "Windows VS Code Insiders integrated terminal. Ran node start.mjs --help 20 in a fresh extraction of the local market-lab.zip, using an isolated editor profile. Original terminal glyphs retained.",
+      "sourceSHA256": "609272ec3a00846494bff3305b04b14850ce6125bf3296bf144f932939a63b64",
+      "sourcePixels": [
+        1368,
+        1472
+      ],
+      "cropXYXY": [
+        0,
+        0,
+        1368,
+        864
+      ],
+      "pixels": [
+        1368,
+        864
+      ],
+      "sha256": "dc07a9f7167c27f6b9b0b381a30dd551bcae820faa8d7a91a7a91ef6c665d8fb"
+    },
+    {
+      "file": "02-kit-vscode-help-menu.png",
+      "source": "The built-in Run Task picker in Windows VS Code Insiders, populated by the extracted ZIP workspace .vscode/tasks.json. Cropped to the three configured entries.",
+      "zipSHA256": "6f1ef7ce10ad9d7caac3ee7f10bdf16d25daa7e694400025fa9bd45ea84ade08",
+      "sourceSHA256": "da830e0d4fb2ca87f6998f34b1a86558aa5ba059dd7f3c248e212a64d2f53162",
+      "sourcePixels": [
+        902,
+        285
+      ],
+      "cropXYXY": [
+        0,
+        0,
+        902,
+        158
+      ],
+      "pixels": [
+        902,
+        158
+      ],
+      "sha256": "f495beef2eb79ec52f847acb5dcb429077c19e7ffe950afaf2131e572554a8ce"
+    }
+  ],
+  "capture": {
+    "app": "Visual Studio Code Insiders on Windows; isolated Electron workbench, dark theme, English menu. An unmodified public course ZIP from gh-pages 1cd0cad was extracted to market-lab (1). Both pictures were captured from the live window without resizing the saved screenshots. No interface or terminal output was redrawn.",
+    "menu": "Native workbench menu Terminal > New Terminal in the overflow menu beside the real steps tree expanded to 11, 13, 14.",
+    "terminal": "In the genuine integrated Windows command prompt for the isolated workbench, a temporary batch (echo on) ran node start.mjs 20 and cd work\\ch20\\apps\\mobile. The folder path is temporary and the prompt is cmd. The example is also valid in Windows PowerShell."
+  }
+}

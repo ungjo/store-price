@@ -125,3 +125,11 @@ hr { border:0; border-top:1px solid var(--rule); margin:4mm 0; }
  #ch20-s7 ~ pre { break-inside: avoid-page; }
  #ch20 img[data-name="figures/20-payment-50000.png"] { max-height: 125mm; }
 }
+
+@media print {
+ #ch02 img[data-name="figures/02-kit-vscode-help-menu.png"] { width:114mm; max-width:100%; }
+ #ch02 img[data-name="figures/02-kit-vscode-help.png"] { width:100%; max-width:100%; }
+ #ch02 img[data-name="figures/02-kit-start-screen.png"] { width:126mm; max-width:100%; }
+ #ch02 img[data-name="figures/02-kit-terminal-menu.png"],
+ #ch02 img[data-name="figures/02-kit-ch20-restored.png"] { width:100%; max-width:100%; }
+}
