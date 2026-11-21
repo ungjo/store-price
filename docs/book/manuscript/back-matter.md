@@ -16,6 +16,14 @@
 
 `cd`로 이동해도 VS Code 탐색기에 열린 폴더가 자동으로 바뀌지는 않는다. 탐색기에서 다른 장의 파일을 고치고 터미널에서 이전 장을 실행하는 일이 없도록 창 제목·탐색기·`pwd`를 함께 확인한다.
 
+### Git Bash와 VS Code의 도움말 읽기
+
+Git Bash에서 `help`를 입력하면 셸의 내장 명령 목록이 나온다. `help cd`로 폴더를 옮기는 방법을 읽어 보자. Git에서는 `git help`로 자주 쓰는 명령을, `git status -h`로 상태 조회 옵션을 확인한다.
+
+VS Code에서 **터미널 → 새 터미널**을 열고 `code --help`를 입력하면 편집기를 실행할 때 줄 수 있는 옵션이 나온다. `code`를 찾을 수 없다는 메시지가 떠도, 실습 명령은 VS Code에서 **F1**을 눌러 열 수 있다. [부록 C.1의 실습 도움말](#appC-s1)에서 원하는 장을 고른다.
+
+Git으로 실습을 기록하는 순서는 `git status`로 변경 확인 → `git add`로 파일 선택 → `git commit`으로 로컬 기록 → `git show`로 내용 확인 → `git push`로 업로드다. [부록 C.6에서 사과 가격 한 줄로 따라 한다](#appC-s6).
+
 ## A.2 패키지와 앱 실행
 
 | 위치 | 목적 | 명령 |
@@ -203,7 +211,7 @@ React Native만 따로 최신으로 바꾸거나 에러 메시지를 무시한 �
 
 ## C.1 배포 ZIP에서 시작하기
 
-2쪽의 독자 자료실에서 받는 `market-lab.zip`에는 **3장부터 20장까지의 장별 예제와 20장 기준 완성 앱 소스코드**가 들어 있다. 각 장을 독립된 폴더로 꺼낼 수 있으므로 20장을 먼저 열어도 된다. 1·2장은 기획과 개발 도구 준비를 다룬다.
+2쪽에서 안내하는 `market-lab.zip`의 1·2장에는 기획 활동지와 개발 도구 점검표, 3~20장에는 개발 예제가 들어 있다. 각 장은 독립된 폴더로 꺼낼 수 있다. 20장에는 완성 앱의 소스코드가 들어 있어 이 장부터 열어도 된다.
 
 ### 처음 푼 ZIP에서 완성 앱을 한 줄로 실행하기
 
@@ -215,9 +223,23 @@ cmd /c "node start.mjs 20 && cd work\ch20\apps\mobile && npm ci && npm run web"
 
 화면 너비에 따라 명령이 두 줄로 보일 수 있다. 마지막 큰따옴표까지 입력한 뒤 Enter를 한 번 누른다. Windows의 `cmd /c`가 따옴표 안의 명령을 차례대로 실행한다. 앞 명령이 성공하면 다음 명령으로 넘어가면서 **20장 꺼내기 → 앱 폴더로 이동 → 패키지 설치 → 브라우저 열기**까지 진행한다.
 
-브라우저에서 **예시 상품으로 바로 놀이하기**를 누른다. **우리 가게 물건 · 12가지**가 보이면 완성 앱을 연 것이다. 2.6절의 그림 2-23~2-26에서 터미널과 브라우저를 차례로 비교해 볼 수 있다.
+브라우저에서 **예시 상품으로 바로 놀이하기**를 누른다. **우리 가게 물건 · 12가지**가 보이면 완성 앱을 연 것이다. 2.6절의 그림 2-23~2-28에서 터미널과 브라우저를 차례로 비교해 볼 수 있다.
 
 **이미 20장 폴더를 열었다면** VS Code 탐색기에서 `work/ch20/apps/mobile`의 **mobile**을 오른쪽 클릭해 **통합 터미널에서 열기**를 누른다. 처음이면 PowerShell에서 `npm.cmd ci`를 한 번 실행한다. 설치가 끝난 뒤에는 **`npm.cmd run web` 한 줄**로 브라우저를 연다. Git Bash에서는 각각 `npm ci`, `npm run web`을 사용한다.
+
+### Git Bash와 VS Code에서 실습 도움말 열기
+
+압축을 풀고 `start.mjs`와 `index.json`이 보이는 폴더를 VS Code에서 연다. **F1 → 작업: 작업 실행 → 실습 명령어 도움말**을 누르면 전체 목록이 나온다. 직접 입력하는 경우에는 아래 표에서 **현재 터미널 폴더에 맞는 한 줄**을 고른다. [2.6절](#ch02-s6)에서 메뉴 선택부터 장별 대표 파일 열기까지 실습할 수 있다.
+
+| 지금 있는 폴더 | 원하는 결과 | 입력할 명령 |
+| --- | --- | --- |
+| 예제 최상위 폴더 | 모든 장의 명령 목록 | `node start.mjs --help` |
+| 예제 최상위 폴더 | 20장 실행·검사 순서 | `node start.mjs --help 20` |
+| 예제 최상위 폴더 | 20장 영수증 코드 열기 | `node start.mjs --open 20` |
+| 예제 최상위 폴더 | 1~20장의 대표 파일을 한 번에 열기 | `node start.mjs --open all` |
+| `work/ch20/apps/mobile` | 현재 앱 폴더에서 20장 도움말 읽기 | <code>node ../../../../start.mjs <span style="white-space: nowrap">--help 20</span></code> |
+
+VS Code 작업 목록에서 **전체 장의 실습 파일 한 번에 열기**를 골라도 같은 20개 파일이 열린다. 표의 첫 줄은 PowerShell에서 `npm.cmd run help`, Git Bash에서 `npm run help`로도 실행할 수 있다. 도움말을 읽는 데는 `npm ci`가 필요하지 않다. 20장 앱의 패키지 설치를 이미 마쳤다면, 예제 최상위 폴더에서 `npm.cmd --prefix ./work/ch20/apps/mobile run web` 한 줄로 앱을 다시 볼 수 있다.
 
 ### 20장 소스코드만 바로 열어 보기
 
@@ -259,7 +281,7 @@ node start.mjs 05
 
 | 장 | 소스의 역할과 기준 |
 | --- | --- |
-| 1~2 | 기획과 도구 준비. 책의 순서대로 실습 |
+| 1~2 | `work/ch01/market-plan.md` 기획 활동지와 `work/ch02/tool-checklist.md` 도구 점검표 |
 | 3 | `work/ch03`에 두 파일로 나누어 작성한 계산 예제 |
 | 4 | 첫 실행 기준 `adcfaab` |
 | 5~10 | 책의 학습 순서로 나눈 교육용 단계 소스 |
@@ -273,7 +295,7 @@ node start.mjs 05
 
 교육용 단계 소스는 역사 커밋을 기계적으로 번호만 바꾼 것이 아니다. 작은 파일을 직접 만들기 좋도록 나눈 예제다. 11장부터는 실제 개발에서 검증한 파일 구조와 비교하며 확장한다. 그 전환에서는 같은 5,500원·4,500원 놀이가 되는지 먼저 확인한다.
 
-이번 판 ZIP은 위 기준을 보존하면서 16~20장 Android 앱에 `3487654`의 **TalkBack 설정 열기**를 반영했다. 예를 들어 20장을 꺼내면 `work/ch20/apps/mobile/src/components/talkback-settings-button.tsx`가 보인다.
+이번 판 ZIP은 위 기준을 보존하면서 16~20장 Android 앱에 `3487654`의 **TalkBack 설정 열기**를 반영했다. 예를 들어 20장을 꺼내면 `work/ch20/apps/mobile/src/components/talkback-settings-button.tsx`가 보인다. 16~20장에는 PC 브라우저에서 화면이 바뀔 때 제목으로 초점을 옮기는 `use-accessibility-focus.web.ts`도 있다. 16장에서 Android와 웹의 동작을 함께 확인한다.
 
 **이전 ZIP으로 시작해 설정 버튼이 보이지 않을 때**
 
@@ -361,17 +383,68 @@ git diff c949154 97b00ff -- apps/mobile/App.tsx apps/mobile/src
 
 두 번째 명령에 차이가 없으면 앱 코드가 같은 것이지 두 커밋의 모든 파일이 같다는 뜻은 아니다. 검사 도구나 문서는 별도로 달라질 수 있다.
 
-## C.6 자신의 변경 기록하기
+## C.6 Git Bash에서 변경을 커밋하고 GitHub에 올리기
 
-커밋하기 전에는 작업한 파일 목록과 실제 검사 결과를 읽는다.
+Git Bash에서 [2.7절](#ch02-s7)의 연습 저장소로 이동한다. 두 번째 명령이 내 `market-book/market-notes` 폴더를 가리키는지 확인한다.
 
-```bash
-git status --short
-git diff --stat
-git diff
-```
+~~~bash
+cd ~/market-book/market-notes
+git rev-parse --show-toplevel
+~~~
 
-기록에는 다음을 남긴다.
+### 1. 변경 확인하고 커밋할 파일 고르기
+
+VS Code에서 원본 `prices.ts`의 사과 가격을 `1500`에서 `1800`으로 바꾸고 저장한다. Git Bash로 돌아와 다음 세 줄을 실행한다.
+
+~~~bash
+git status
+git diff -- prices.ts
+node prices.ts
+~~~
+
+`git status`에서 `modified: prices.ts`, 실행 결과에서 `사과 1800`을 확인한다. `git status --short`는 파일 상태를, `git diff --stat`은 스테이징 전 변경량을 짧게 보여 준다. 이제 다음 커밋에 넣을 파일을 고른다. 이렇게 골라 두는 것을 **스테이징**이라고 한다.
+
+~~~bash
+git add -- prices.ts
+git status
+git diff --cached
+~~~
+
+두 번째 `git status`에서는 `prices.ts`가 **Changes to be committed** 아래로 옮겨간다. 2.7절에서 만든 `prices-copy.ts`는 **Untracked files**에 그대로 둘 수 있다. `git diff --cached`로 이번에 기록할 변경이 사과 가격 한 줄인지 확인한다.
+
+### 2. 내 PC에 커밋하고 내용 읽기
+
+~~~bash
+git commit -m "연습용 사과 가격을 1800원으로 변경"
+git show HEAD
+~~~
+
+`git commit`은 스테이징한 내용을 메시지와 함께 내 PC에 기록한다. `HEAD`는 지금 보고 있는 커밋을 뜻한다. `git show HEAD`에서 커밋 번호와 메시지, `-` 줄의 이전 값 1500과 `+` 줄의 새 값 1800을 확인한다. 긴 출력 맨 아래에 `(END)`가 보이면 **q**를 눌러 터미널로 돌아온다.
+
+### 3. 내 GitHub 저장소에 올리기
+
+~~~bash
+git branch --show-current
+git remote -v
+~~~
+
+첫 줄에서 현재 브랜치 이름을 읽는다. 두 번째 줄에 `origin`이 보이면 `(push)` 옆 주소가 내가 올릴 GitHub 저장소인지 확인한다. 2.7절처럼 PC에서 `git init`만 했다면 보통 두 번째 줄의 출력이 비어 있다. 이 경우 GitHub에서 내 계정에 README·라이선스·.gitignore 없이 빈 `market-notes` 저장소를 만든다. 저장소의 HTTPS 주소를 복사해 아래 따옴표 안의 글자를 통째로 바꾼다. 이 연결은 한 번만 설정한다.
+
+~~~bash
+git remote add origin "복사한 HTTPS 주소"
+git remote -v
+~~~
+
+올릴 주소를 확인했으면 다음 명령을 실행한다.
+
+~~~bash
+git push -u origin HEAD
+git rev-parse --short HEAD
+~~~
+
+`git push`가 현재 브랜치의 커밋을 GitHub에 올린다. 첫 업로드의 `-u`는 로컬 브랜치와 원격 브랜치의 연결을 기억한다. 다음 커밋부터는 같은 브랜치에서 `git push`만 입력해도 된다. 브랜치 이름이 `main`이면 `git push origin main`처럼 대상을 직접 적을 수도 있다. GitHub에서 방금 올린 브랜치를 선택하고, 최신 커밋 번호의 앞부분과 메시지가 내 PC의 기록과 같은지 확인한다.
+
+### 개발 기록에 남길 내용
 
 - 바꾼 이유와 파일.
 - 실행한 명령과 실제 결과.
