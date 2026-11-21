@@ -629,9 +629,30 @@ test('historical capture retains snapshot, source-entry, catalog and provenance 
     await assert.rejects(captureHistoricalInspectionApk(options),expectedError);
     fs.writeFileSync(file,original);
   }
-  fs.appendFileSync(path.join(state.mobile,'.env.local'),'\n# altered current catalog config\n');
-  await assert.rejects(captureHistoricalInspectionApk(options), /연결 설정이 바뀌/u);
+  const envFile = path.join(state.mobile, '.env.local');
+  const original = fs.readFileSync(envFile, 'utf8');
+  for (const changed of [
+    original.replace('https://fixture.supabase.co', 'https://other.supabase.co'),
+    original.replace(fakeKey, fakeKey + 'changed'),
+  ]) {
+    fs.writeFileSync(envFile, changed);
+    await assert.rejects(captureHistoricalInspectionApk(options), /연결 설정이 바뀌/u);
+  }
   assert.equal(calls,0);
+});
+
+test('historical checks compare the pinned public connection across workspace copies', async (t) => {
+  const state = await historicalFixture(t);
+  const options = mockCaptureTools(t, state);
+  const envFile = path.join(state.mobile, '.env.local');
+  const original = fs.readFileSync(envFile, 'utf8');
+  fs.writeFileSync(envFile, '# local note\r\n' + original.replaceAll('\n', '\r\n'));
+  await assert.rejects(captureInspectionApk(options), /연결 설정이 바뀌/u);
+  const historical = await captureHistoricalInspectionApk(options);
+  assertHistoricalInspectionApkUnchanged(historical);
+
+  fs.writeFileSync(envFile, original.replace(fakeKey, fakeKey + 'new'));
+  assert.throws(() => assertHistoricalInspectionApkUnchanged(historical), /연결 설정이 바뀌/u);
 });
 
 test('changing a historical snapshot during native inspection prevents a verified state', async (t) => {

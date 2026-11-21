@@ -6,8 +6,8 @@ import { createTalkBackTouch } from './talkback-input.mjs';
 import { runTalkBackJourney } from './talkback-journey.mjs';
 import { readTalkBackSpeechOcr } from './talkback-speech-ocr.mjs';
 
-const TALKBACK_PACKAGE = 'com.samsung.android.accessibility.talkback';
-const TALKBACK_COMPONENT = TALKBACK_PACKAGE + '/com.samsung.android.marvin.talkback.TalkBackService';
+export const TALKBACK_PACKAGE = 'com.samsung.android.accessibility.talkback';
+export const TALKBACK_COMPONENT = TALKBACK_PACKAGE + '/com.samsung.android.marvin.talkback.TalkBackService';
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function talkBackLaunchKind({ mode, applicationId, runId }) {

@@ -194,8 +194,21 @@ function assertInputs(repoRoot, buildRoot, manifest, { historical = false } = {}
   if (configuredVersion.versionName !== manifest.versionName || configuredVersion.versionCode !== manifest.versionCode) {
     throw new Error('빌드 입력 기록의 버전이 앱 설정과 다릅니다.');
   }
-  if (captureCatalogEnvironment(path.join(repoRoot, 'apps/mobile')).fingerprint !== manifest.catalogEnvFingerprint) throw new Error('APK 빌드 이후 공개 상품 연결 설정이 바뀌었습니다.');
-  if (snapshotFiles(path.join(buildRoot, 'project')) !== manifest.snapshotFingerprint) throw new Error('업로드한 앱 복사본이 바뀌었습니다.');
+  const project = path.join(buildRoot, 'project');
+  if (snapshotFiles(project) !== manifest.snapshotFingerprint) throw new Error('업로드한 앱 복사본이 바뀌었습니다.');
+  const catalog = captureCatalogEnvironment(path.join(repoRoot, 'apps/mobile'));
+  if (historical) {
+    // 과거 APK는 업로드 복사본과 서명된 번들에 실제로 고정한 공개 URL·키로 대조합니다.
+    // 다른 작업 폴더에서 주석이나 줄바꿈만 달라져도 같은 접속 설정을 검증할 수 있습니다.
+    const saved = loadJson(path.join(project, 'eas.json')).build.inspection.env;
+    const active = pinnedCatalogEnvironment(catalog, {});
+    if (saved.EXPO_PUBLIC_SUPABASE_URL !== active.EXPO_PUBLIC_SUPABASE_URL
+      || saved.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY !== active.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
+      throw new Error('과거 APK와 현재 앱의 공개 상품 연결 설정이 바뀌었습니다.');
+    }
+  } else if (catalog.fingerprint !== manifest.catalogEnvFingerprint) {
+    throw new Error('APK 빌드 이후 공개 상품 연결 설정이 바뀌었습니다.');
+  }
 }
 
 function officialArtifactUrl(value, { finalResponse = false } = {}) {

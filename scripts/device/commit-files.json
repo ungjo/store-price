@@ -146,5 +146,8 @@
   "docs/privacy/index.html",
   "docs/book/chapters/08-privacy-policy.md",
   "apps/mobile/src/components/talkback-settings-button.tsx",
-  "docs/book/chapters/08a-talkback-settings.md"
+  "docs/book/chapters/08a-talkback-settings.md",
+  "docs/book/chapters/08b-inspection-talkback-settings.md",
+  "scripts/device/inspection-talkback-toggle.mjs",
+  "scripts/device/inspection-talkback-toggle.test.mjs"
 ]

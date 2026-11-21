@@ -8,11 +8,33 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 # Expo Go에서는 콜드 스타트와 주소 열기를 분리하고, 설치형 앱은 같은 앱 ID로 직접 시작합니다.
 # 빈 permissions는 기존 권한을 유지하고, clearState:false는 앱 데이터를 보존합니다.
 - stopApp
-- launchApp:
-    appId: ${APP_ID || 'host.exp.exponent'}
-    clearState: false
-    stopApp: false
-    permissions: {}
+- runFlow:
+    when:
+      true: ${typeof INSPECTION_FROM_HOME !== 'undefined' && INSPECTION_FROM_HOME == '1'}
+    commands:
+      # 실제 홈 아이콘으로 시작한 뒤 아래의 앱 고유 빌드 표시를 대조합니다.
+      - pressKey: home
+      - waitForAnimationToEnd
+      - extendedWaitUntil:
+          visible: { id: '^(com\.sec\.android\.app\.launcher:id/)?(workspace_pot_view|workspace_page_indicator)$' }
+          timeout: 10000
+      # 이 태블릿은 홈 두 페이지를 사용합니다. 이미 아이콘이 보이는 페이지라면 이동할 필요가 없습니다.
+      - runFlow:
+          when:
+            notVisible: { text: '^꼬마 시장 검사$' }
+          commands:
+            - swipe: { direction: LEFT, duration: 450 }
+            - waitForAnimationToEnd
+      - tapOn: { text: '^꼬마 시장 검사$' }
+- runFlow:
+    when:
+      true: ${typeof INSPECTION_FROM_HOME === 'undefined' || INSPECTION_FROM_HOME != '1'}
+    commands:
+      - launchApp:
+          appId: ${APP_ID || 'host.exp.exponent'}
+          clearState: false
+          stopApp: false
+          permissions: {}
 - waitForAnimationToEnd:
     timeout: 10000
 # 설치형 검사 앱은 내장 번들로 시작하며 Expo 개발 주소를 열지 않습니다.
@@ -132,7 +154,7 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
 # 이미 설치해 둔 이전 검사 APK와 구분해, 현재 앱 코드에서는 열기·뒤로가기·장바구니 보존을 모두 검사합니다.
 - runFlow:
     when:
-      true: ${typeof TARGET_MODE === 'undefined' || TARGET_MODE !== 'inspection'}
+      true: ${typeof TARGET_MODE === 'undefined' || TARGET_MODE !== 'inspection' || (typeof INSPECTION_FROM_HOME !== 'undefined' && INSPECTION_FROM_HOME == '1')}
     commands:
       # Android 접근성 설정을 실제로 다녀온 뒤 아래에서 장바구니 3개·5,500원을 다시 확인합니다.
       - scrollUntilVisible:
@@ -145,8 +167,17 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
           timeout: 15000
       - assertNotVisible: { id: talkback-settings }
       - back
+      - waitForAnimationToEnd
+      # 삼성 태블릿 설정은 두 패널을 차례로 닫기도 합니다. 여전히 설정이고 앱 버튼이 없을 때만 뒤로 갑니다.
+      - runFlow:
+          when:
+            visible: { id: '^com\.android\.settings:id/action_bar_root$' }
+            notVisible: { id: talkback-settings }
+          commands:
+            - back
+            - waitForAnimationToEnd
       - extendedWaitUntil:
-          visible: { id: talkback-settings }
+          visible: { id: talkback-settings, text: '^TalkBack 설정 열기, 화면 읽기 (켜짐|꺼짐)$' }
           timeout: 15000
       - scrollUntilVisible:
           element: { id: privacy-open }
