@@ -50,22 +50,27 @@ summary{cursor:pointer;font-weight:700;color:var(--accent)}details{margin:.65rem
 </section>
 <section class="guide" aria-labelledby="first"><h2 id="first">Windows에서 첫 예제 실행하기</h2>
 <ol>
-<li>책 2장을 따라 Node.js와 Git Bash를 준비합니다. 파일 탐색기의 <strong>다운로드</strong> 폴더에서 <strong>market-lab.zip</strong>을 마우스 오른쪽으로 클릭해 <strong>압축 풀기</strong>를 선택합니다.</li>
-<li>내 Windows 사용자 폴더 아래에 <code>market-book</code> 폴더를 만들고 그 안의 <code>kit</code>에 풉니다. <code>kit</code>을 열었을 때 <strong>start.mjs</strong>, <strong>index.json</strong>, <strong>objects</strong>가 보이면 준비가 끝났습니다.</li>
-<li>시작 메뉴에서 <strong>Git Bash</strong>를 열고 다음 명령을 한 줄씩 입력한 뒤 Enter를 누릅니다.
-<pre aria-label="Git Bash에 입력할 네 줄"><code>cd ~/market-book/kit
-node start.mjs 03
+<li>책 2장을 따라 Node.js와 VS Code를 준비합니다. 위의 <strong>장별 실습 예제 ZIP 받기</strong>를 누르고 Windows 파일 탐색기에서 <strong>다운로드</strong> 폴더를 엽니다.</li>
+<li><strong>압축을 풀 위치를 정합니다.</strong> 책에서 <code>kit</code>은 <strong>압축을 풀어 예제 파일을 담아 둔 폴더</strong>를 가리킵니다. <code>market-lab.zip</code>을 마우스 오른쪽 버튼으로 눌러 <strong>압축 풀기</strong>를 선택한 뒤, 제시된 폴더에 그대로 풀어도 됩니다. 이미 <code>다운로드 → market-lab (1)</code>에 풀었다면 그 이름 그대로 다음 단계로 가세요.
+<details><summary>책과 같은 이름으로 kit 폴더를 만들려면</summary><p>Windows 파일 탐색기 주소창에 <code>%USERPROFILE%</code>을 입력하고 Enter를 누르면 내 사용자 폴더가 열립니다. 여기에 <strong>새 폴더</strong>로 <code>market-book</code>을 만들고, 그 안에 <code>kit</code>을 만듭니다. ZIP의 압축 풀기 창에서 <strong>찾아보기</strong>를 눌러 방금 만든 <code>kit</code>을 선택한 뒤 압축을 풉니다.</p><p>예를 들어 Windows 사용자 이름이 <code>minji</code>라면 <code>C:\Users\minji\market-book\kit</code>입니다. 책의 Git Bash 명령에서 <code>~/market-book/kit</code>은 이 위치를 뜻합니다.</p></details></li>
+<li><strong>실제 파일이 보이는 폴더를 엽니다.</strong> 압축을 푼 폴더에서 <code>start.mjs</code>, <code>index.json</code>, <code>objects</code>가 나란히 보이는지 확인하세요. 안에 <code>market-lab</code> 같은 하위 폴더 하나만 보이면 한 단계 더 들어가세요. VS Code의 <strong>파일 → 폴더 열기</strong>에서 세 항목이 보인 바로 그 폴더를 선택합니다.</li>
+<li><strong>3장 예제를 실행합니다.</strong> VS Code 위쪽의 <strong>터미널 → 새 터미널</strong>을 누릅니다. 아래쪽에 열린 입력 칸에 다음 명령을 한 줄씩 입력하고 Enter를 누르세요.
+<pre aria-label="3장 예제를 실행하는 세 줄"><code>node start.mjs 03
 cd work/ch03
 node checkout.mts</code></pre>
-<p><strong>총 3개 / 5,500원</strong>이 나오면 성공입니다. <code>~</code>는 내 사용자 폴더를 뜻합니다. 다른 장도 <code>kit</code>에서 원하는 장 번호를 넣어 준비합니다.</p></li>
+<p>마지막 줄에 <strong>총 3개 / 5,500원</strong>이 보이면 성공입니다. 같은 터미널에서 다른 장을 꺼낼 때는 먼저 <code>cd ../..</code>를 입력합니다. 그러면 <code>work/ch03</code>에서 <code>start.mjs</code>가 있는 폴더로 돌아옵니다.</p></li>
 </ol></section>
 <section class="guide" aria-labelledby="final"><h2 id="final">20장 완성본에서 50,000원으로 장보기</h2>
-<p>위에서 받은 장별 ZIP을 새 폴더에 풀고 <code>start.mjs</code>가 있는 위치에서 <code>node start.mjs 20</code>을 입력합니다. VS Code에서 <code>work/ch20/apps/mobile</code>을 열고 PowerShell 터미널에서 <code>npm.cmd ci</code>, <code>npm.cmd run web</code>을 실행합니다.</p>
+<p><code>start.mjs</code>가 있는 폴더의 터미널에서 <code>node start.mjs 20</code>을 입력하세요. 왼쪽 탐색기에 <strong>work → ch20 → apps → mobile</strong>이 생깁니다. VS Code에서 그 폴더를 계속 보면서 아래 명령을 같은 터미널에 한 줄씩 입력합니다.</p>
+<pre aria-label="20장 완성 앱을 PC 브라우저에서 실행하는 세 줄"><code>cd work/ch20/apps/mobile
+npm.cmd ci
+npm.cmd run web</code></pre>
+<p>패키지 설치가 끝나 입력 칸이 돌아오면 마지막 줄을 실행하세요. 브라우저에서 예시 상품을 열어 <strong>오늘의 놀이돈</strong>을 50,000원으로 바꾸고, 사과 두 개와 우유 한 팩을 담아 <strong>낼 놀이돈 고르기</strong>에서도 50,000원을 선택해 보세요.</p>
 <p>이전 장별 ZIP으로 작업했다면 <a href="https://github.com/ungjo/store-price/archive/9f5fd1318294b2bc5a7cfd700952f3512835febd.zip">50,000원이 포함된 20장 완성 소스</a>를 별도 폴더에 풉니다. 압축 속 저장소 폴더에서 <code>apps/mobile</code>을 열어 같은 npm 명령을 실행합니다.</p></section>
 <section class="guide" aria-labelledby="data"><h2 id="data">11~13장의 데이터 찾기</h2>
 <p>가격표에는 책의 계산을 재현하기 위해 정한 예시 금액이 들어 있습니다. 사과 2개와 우유 1팩을 담으면 1,500 × 2 + 2,500 = 5,500원입니다.</p>
 <details><summary>11장 앱의 상품 목록과 데이터베이스 초기 파일</summary>
-<p>Git Bash에서 <code>cd ~/market-book/kit</code>, <code>node start.mjs 11</code>을 차례로 실행합니다. VS Code에서 <code>work/ch11</code> 폴더를 열어 다음 파일을 확인하세요.</p>
+<p><code>start.mjs</code>가 있는 폴더의 터미널에서 <code>node start.mjs 11</code>을 실행합니다. VS Code에서 <code>work/ch11</code> 폴더를 열어 다음 파일을 확인하세요.</p>
 <ul><li>앱에서 읽는 예시 상품과 가격은 <code>apps/mobile/src/data/sample-products.ts</code>에 있습니다.</li>
 <li>데이터베이스에 예시 상품과 가격을 채우는 파일은 <code>supabase/seed.sql</code>입니다. 테이블을 만드는 SQL 파일은 <code>supabase/migrations/</code>에 있습니다.</li></ul>
 <p><a href="https://github.com/ungjo/store-price/blob/b21a0a31ff71a7852f274f1bdc20f7c18e78fbdf/supabase/seed.sql">브라우저에서 같은 상품·가격 SQL 열기</a></p>
