@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="『처음부터 따라 만드는 꼬마 시장 Android 앱』의 표지 포함 410쪽 PDF와 장별 예제, 실습용 상품 데이터를 다운로드하세요.">
+<meta name="description" content="『처음부터 따라 만드는 꼬마 시장 Android 앱』의 책을 브라우저에서 읽고, 410쪽 PDF와 장별 실습 예제를 다운로드하세요.">
 <title>독자 자료실 · 꼬마 시장 Android 앱</title>
 <style>
 :root{color-scheme:light;--ink:#17352c;--body:#364942;--accent:#19634d;--line:#d6ded8;--paper:#fbfaf6;--card:#fff}
@@ -20,6 +20,7 @@ p{margin:0 0 .7rem}
 .downloads{display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:1.4rem 0 2.6rem}
 article{display:flex;flex-direction:column;align-items:flex-start;padding:1.35rem 1.4rem;background:var(--card);border:1px solid var(--line);border-radius:8px}
 .book-download{grid-column:1 / -1}
+.book-actions{display:flex;flex-wrap:wrap;gap:.65rem;width:100%}
 article h2{font-size:1.42rem;margin:0 0 .35rem}
 article p{margin-bottom:1rem} article .meta{margin-top:auto;margin-bottom:.6rem;color:#4b5e53;font-size:.88rem}
 .button:link,.button:visited{display:inline-block;background:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:.52rem .9rem;color:white;font-weight:700;text-decoration:none;text-align:center}
@@ -37,14 +38,17 @@ summary{cursor:pointer;font-weight:700;color:var(--accent)}details{margin:.65rem
 <header>
 <p class="book">처음부터 따라 만드는 꼬마 시장 Android 앱</p>
 <h1>독자 자료실</h1>
-<p class="intro">실습서를 PDF로 읽고, Windows PC에서 장별 예제를 따라 해 보세요. 휴대전화로 열었다면 이 페이지의 주소를 복사해 실습할 PC에서 열 수 있습니다.</p>
+<p class="intro">실습서를 읽고 Windows PC에서 장별 예제를 따라 해 보세요. 휴대전화로 열었다면 이 페이지의 주소를 복사해 실습할 PC에서 열 수 있습니다.</p>
 <p><a href="#errata-398">398쪽 정정 안내 · PC에서 20장 실행하기</a></p>
 </header>
-<section class="downloads" aria-label="다운로드 파일">
-<article class="book-download"><h2>표지 포함 실습서</h2>
-<p>‘시장 지도’ 앞뒤 표지와 1~20장, 부록 A~D를 한 권에 담았습니다.</p>
-<p class="meta">정웅조 지음 · 410쪽 · PDF 22 MB</p>
-<a class="button" href="https://ungjo.github.io/store-price/book/market-play-book-complete.pdf" download="market-play-book-complete.pdf">410쪽 완성본 PDF 받기</a></article>
+<section class="downloads" aria-label="책 읽기와 파일 다운로드">
+<article class="book-download"><h2>실습서 읽기</h2>
+<p>브라우저에서 그림을 눌러 확대하고, 16.6절의 파일 전체 코드를 복사할 수 있습니다.</p>
+<p class="meta">정웅조 지음 · 1~20장과 부록 A~D · 표지 포함 PDF 22 MB</p>
+<div class="book-actions">
+<a class="button" href="https://ungjo.github.io/store-price/book/market-play-book.html">브라우저에서 책 읽기</a>
+<a class="button secondary" href="https://ungjo.github.io/store-price/book/market-play-book-complete.pdf" download="market-play-book-complete.pdf">410쪽 완성본 PDF 받기</a>
+</div></article>
 <article><h2>장별 실습 예제</h2>
 <p>1장 기획 활동지, 2장 도구 점검표, 3~20장의 예제와 장별 파일을 여는 <code>start.mjs</code>가 들어 있습니다. 20장 완성본에서 예산과 낼 돈을 각각 50,000원으로 고를 수 있습니다. 16~20장의 Android 앱에서는 ‘TalkBack 설정 열기’로 기기 접근성 설정에 들어갈 수 있습니다.</p>
 <p class="meta"><code>market-lab.zip</code> · 4.70 MB</p>
