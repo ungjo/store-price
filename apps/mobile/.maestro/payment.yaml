@@ -134,6 +134,20 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     when:
       true: ${typeof TARGET_MODE === 'undefined' || TARGET_MODE !== 'inspection'}
     commands:
+      # Android 접근성 설정을 실제로 다녀온 뒤 아래에서 장바구니 3개·5,500원을 다시 확인합니다.
+      - scrollUntilVisible:
+          element: { id: talkback-settings }
+          direction: UP
+          timeout: 30000
+      - tapOn: { id: talkback-settings, text: '^TalkBack 설정 열기, 화면 읽기 (켜짐|꺼짐)$', enabled: true }
+      - extendedWaitUntil:
+          visible: { text: '^(접근성|Accessibility|TalkBack)$' }
+          timeout: 15000
+      - assertNotVisible: { id: talkback-settings }
+      - back
+      - extendedWaitUntil:
+          visible: { id: talkback-settings }
+          timeout: 15000
       - scrollUntilVisible:
           element: { id: privacy-open }
           direction: UP

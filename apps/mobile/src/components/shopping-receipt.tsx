@@ -8,12 +8,12 @@ import { type Receipt } from '../features/payment/receipt';
 type ShoppingReceiptProps = {
   receipt: Receipt;
   onNewRound: () => void;
-  privacyButton: ReactNode;
+  settingsButtons: ReactNode;
 };
 
 const won = new Intl.NumberFormat('ko-KR');
 
-export function ShoppingReceipt({ receipt, onNewRound, privacyButton }: ShoppingReceiptProps) {
+export function ShoppingReceipt({ receipt, onNewRound, settingsButtons }: ShoppingReceiptProps) {
   const titleRef = useRef<ComponentRef<typeof Text>>(null);
   const focusTitle = useAccessibilityFocus(titleRef);
   // 영수증은 새 화면이므로 제목부터 한 번 읽게 하고, 같은 제목의 live 알림을 겹쳐 보내지 않습니다.
@@ -96,7 +96,7 @@ export function ShoppingReceipt({ receipt, onNewRound, privacyButton }: Shopping
           이번 놀이의 영수증이에요. 다시 장보기를 누르거나 앱을 다시 시작하면 사라져요.
         </Text>
       </View>
-      {privacyButton}
+      {settingsButtons}
     </ScrollView>
   );
 }

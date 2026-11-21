@@ -327,6 +327,10 @@ export async function runTalkBack({ repoRoot, runDir, run, adb, tools, selectedS
       }
     };
     say('TalkBack 실제 쓸기·두 번 탭으로 장보기부터 영수증까지 확인합니다.');
+    // 과거에 만든 설치형 앱과 달리, 현재 소스의 Expo 검사에서는 설정 버튼의 실제 상태까지 확인합니다.
+    if (target.mode === 'expo-go') {
+      await checkpoint('settings-screen-reader-on', { nodeId: 'talkback-settings', textIncludes: '화면 읽기 켜짐', enabled: true });
+    }
     await runTalkBackJourney({ seek, activate, snapshot, checkpoint, typeDigits });
     await serviceState();
     result.status = 'passed';

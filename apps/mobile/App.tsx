@@ -3,6 +3,7 @@ import { type ComponentRef, type ReactNode, useCallback, useEffect, useMemo, use
 import { FlatList, Keyboard, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
+import { TalkBackSettingsButton } from './src/components/talkback-settings-button';
 import { PrivacyPolicyButton, PrivacyPolicyDialog } from './src/components/privacy-policy-dialog';
 import { CategorySelector } from './src/components/category-selector';
 import { filterProductsByCategory, getCategoryCounts, type CatalogFilter } from './src/features/catalog/categories';
@@ -35,16 +36,21 @@ export default function App() {
     setPolicyVisible(false);
     focusOpener();
   };
-  const privacyButton = <PrivacyPolicyButton openerRef={openerRef} onPress={openPolicy} />;
+  const settingsButtons = (
+    <>
+      <PrivacyPolicyButton openerRef={openerRef} onPress={openPolicy} />
+      {Platform.OS === 'android' && <TalkBackSettingsButton />}
+    </>
+  );
 
   // 로딩 중 상품이 도착해도 열린 방침을 유지하고, 닫으면 기존 장바구니와 영수증으로 돌아갑니다.
   return (
     <>
       <View style={styles.keyboardArea} importantForAccessibility={policyVisible ? 'no-hide-descendants' : 'auto'}
         accessibilityElementsHidden={policyVisible}>
-        <CatalogLoader privacyButton={privacyButton}>
+        <CatalogLoader settingsButtons={settingsButtons}>
           {(products, source, reload) => (
-            <MarketScreen products={products} source={source} reload={reload} privacyButton={privacyButton} />
+            <MarketScreen products={products} source={source} reload={reload} settingsButtons={settingsButtons} />
           )}
         </CatalogLoader>
       </View>
@@ -53,11 +59,11 @@ export default function App() {
   );
 }
 
-function MarketScreen({ products, source, reload, privacyButton }: {
+function MarketScreen({ products, source, reload, settingsButtons }: {
   products: readonly CatalogProduct[];
   source: CatalogSource;
   reload: () => void;
-  privacyButton: ReactNode;
+  settingsButtons: ReactNode;
 }) {
   // 불러온 목록을 한 번의 놀이 동안 고정해 장바구니와 영수증의 가격이 중간에 달라지지 않게 합니다.
   const shoppingReducer = useMemo(() => createShoppingReducer(products), [products]);
@@ -176,7 +182,7 @@ function MarketScreen({ products, source, reload, privacyButton }: {
       <SafeAreaProvider>
         <SafeAreaView style={styles.screen}>
           <StatusBar style="dark" />
-          <ShoppingReceipt receipt={shopping.receipt} onNewRound={startNewRound} privacyButton={privacyButton} />
+          <ShoppingReceipt receipt={shopping.receipt} onNewRound={startNewRound} settingsButtons={settingsButtons} />
         </SafeAreaView>
       </SafeAreaProvider>
     );
@@ -231,7 +237,7 @@ function MarketScreen({ products, source, reload, privacyButton }: {
                     <View style={styles.badge}>
                       <Text style={styles.badgeText}>시장놀이</Text>
                     </View>
-                    {privacyButton}
+                    {settingsButtons}
                   </View>
 
                   <View style={styles.welcome}>

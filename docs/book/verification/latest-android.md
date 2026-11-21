@@ -1,15 +1,15 @@
 # Android 실기기 자동 검증 기록
 
-- 실행 시각: 2026-11-21 07:43:05 (Asia/Seoul)
+- 실행 시각: 2026-11-21 20:40:13 (Asia/Seoul)
 - 결과: **PASS**
-- 실행 ID: `20261120T221726597Z-1277e256`
+- 실행 ID: `20261121T110805536Z-4ea4a1da`
 - 기기: SM-X710 / Android 14
-- 검사 시작 HEAD: `35b12e40de80e20a34941f250b511db426e34020`
-- 검사 소스 SHA-256: `5432d9e9680a7b403ae0b4af748757f97216376116dc009de0a78a5f274e20a1`
-- 검사 설정 SHA-256: `f6e2d09f0fd1ba3294a79f473219297affc5854057c2da6a87abdd4318a6ea94` (설정 값은 기록하지 않음)
+- 검사 시작 HEAD: `b21a0a31ff71a7852f274f1bdc20f7c18e78fbdf`
+- 검사 소스 SHA-256: `d7e1db8861d3787813bf21423659c05cd1773bee853891b4c26e01ad2ecfd604`
+- 검사 설정 SHA-256: `0ca9c8f25fe0cd28841ff8491faab120c877f64e2a1a49bd0f69950985b09caa` (설정 값은 기록하지 않음)
 - 공개 상품 SHA-256: `d8c79583dff9fc97e15e342b9834c7627c73020d07c54418e31af7a25f16536b` (실행 전후 일치)
-- 예시 선택 별도 실행 ID: `20261120T221726597Z-1277e256-loading` (개발 검사 요청, 실제 통신 장애를 발생시키지 않음)
-- 도구: Maestro 2.12.1 / JDK 21 / USB 실기기 / Expo Go
+- 예시 선택 별도 실행 ID: `20261121T110805536Z-4ea4a1da-loading` (개발 검사 요청, 실제 통신 장애를 발생시키지 않음)
+- 도구: Maestro 2.12.1 / JDK 21 / USB 실기기 / Expo Go / TalkBack
 - 커밋 모드: 검사한 소스가 유지된 경우에만 자동 커밋. 실제 커밋 ID는 실행 요약 또는 git log에서 확인.
 
 ## 실행한 명령
@@ -57,6 +57,8 @@ adb -s <선택한 실기기> reverse --no-rebind tcp:8091 tcp:8091
 adb -s <선택한 실기기> shell input keyevent 224
 maestro --device <선택한 실기기> test -e EXPO_URL=exp://127.0.0.1:8091 -e RUN_ID=<실행 ID>-loading --format junit --output <검사폴더>/loading-result.xml --test-output-dir <검사폴더>/maestro-loading --debug-output <검사폴더>/maestro-loading apps/mobile/.maestro/catalog-loading-choice.yaml
 maestro --device <선택한 실기기> test -e EXPO_URL=exp://127.0.0.1:8091 -e RUN_ID=<실행 ID> --format junit --output <검사폴더>/result.xml --test-output-dir <검사폴더>/maestro --debug-output <검사폴더>/maestro apps/mobile/.maestro/payment.yaml
+# 앞선 Maestro 검사 종료 후 --talkback 옵션으로 동일 Expo Go 번들의 읽기 흐름 검사
+# runTalkBack이 실제 읽기 초점·생성된 발화 텍스트·uinput 터치와 설정 복구를 확인
 adb -s <선택한 실기기> shell settings put global stay_on_while_plugged_in 0
 adb -s <선택한 실기기> shell settings get global stay_on_while_plugged_in
 ```
@@ -70,6 +72,16 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 - 성공 기록 전에 현재 값이 여전히 7일 때만 원래 값을 복구한다. 중간에 바뀐 값은 보존한다.
 - 복구 상태: restored. 복구 뒤 값: 0.
 - 임시 설정의 복구를 확인하지 못하면 성공 보고서와 자동 커밋을 만들지 않는다. 원본 summary.json에 실제 복구 결과와 실행한 명령의 종료 코드를 남긴다.
+
+## TalkBack 접근성 검사
+
+- 검사 대상: Expo Go / 앱 ID `host.exp.exponent`, 실행 표시 `20261121T110805536Z-4ea4a1da`.
+- 시작 방식: `expo-deep-link`. 현재 실행 표시의 개발 번들에서 확인했다.
+- TalkBack 버전: 14.5.00.14. 입력 방식: `uinput-touch`.
+- 읽기 초점·상품 선택·수량·지불·퀴즈·영수증 흐름에서 확인 지점 24개를 통과했다.
+- 접근성 서비스와 관련 설정 복구 확인: true.
+- 실제 읽기 초점과 화면에 표시된 TalkBack 발화 문구를 확인했다. 실제 스피커·이어폰 음성을 사람이 청취한 평가와는 구분한다.
+- 원본 화면·발화·입력 로그는 이번 실행의 비공개 .artifacts 폴더에만 보관한다.
 
 ## 확인한 항목
 
@@ -135,12 +147,13 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 - catalog-http-before: 종료 코드 0
 - maestro-loading-choice: 종료 코드 0
 - maestro-flow: 종료 코드 0
+- talkback-flow: 종료 코드 0
 - catalog-http-after: 종료 코드 0
 - screen-awake-restore: 종료 코드 0
 - screen-awake-restored-check: 종료 코드 0
 - JUnit: 1 testcase, 실패 0, 오류 0, 건너뜀 0
 - 예시 선택 JUnit: 1 testcase, 실패 0, 오류 0, 건너뜀 0
 
-원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/20261120T221726597Z-1277e256/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.
+원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/20261121T110805536Z-4ea4a1da/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.
 
 이 기록은 해당 Android 실기기·검사 시점의 결과다. 새 설치형 APK·Google Play 제출용 AAB 및 실제 이마트 가격의 앱 공개 표시는 검증하지 않았다. 앱은 공개 예시 상품 12개로 검사한다.

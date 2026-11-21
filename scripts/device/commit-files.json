@@ -144,5 +144,7 @@
   "apps/mobile/.maestro/privacy-policy.yaml",
   "scripts/build/privacy-page.mjs",
   "docs/privacy/index.html",
-  "docs/book/chapters/08-privacy-policy.md"
+  "docs/book/chapters/08-privacy-policy.md",
+  "apps/mobile/src/components/talkback-settings-button.tsx",
+  "docs/book/chapters/08a-talkback-settings.md"
 ]

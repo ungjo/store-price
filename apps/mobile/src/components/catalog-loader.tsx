@@ -16,8 +16,8 @@ const publishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const deviceRunId = process.env.EXPO_PUBLIC_DEVICE_RUN_ID;
 const catalogTestScenario = process.env.EXPO_PUBLIC_CATALOG_TEST_SCENARIO;
 
-export function CatalogLoader({ children, privacyButton }: {
-  privacyButton: ReactNode;
+export function CatalogLoader({ children, settingsButtons }: {
+  settingsButtons: ReactNode;
   children: (products: readonly CatalogProduct[], source: CatalogSource, reload: () => void) => ReactNode;
 }) {
   const [catalog, setCatalog] = useState(INITIAL_CATALOG_STATE);
@@ -81,7 +81,7 @@ export function CatalogLoader({ children, privacyButton }: {
               <Text style={styles.secondaryText}>예시 상품으로 바로 놀이하기</Text>
             </Pressable>
           </View>
-          {privacyButton}
+          {settingsButtons}
         </ScrollView>
       </SafeAreaView>
     </SafeAreaProvider>
