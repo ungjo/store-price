@@ -40,8 +40,8 @@ summary{cursor:pointer;font-weight:700;color:var(--accent)}details{margin:.65rem
 </header>
 <section class="downloads" aria-label="다운로드 파일">
 <article><h2>장별 실습 예제</h2>
-<p>3~20장의 예제와 <code>start.mjs</code>가 들어 있습니다. 20장 완성본에서 예산과 낼 돈을 각각 50,000원으로 고를 수 있습니다. 16~20장의 Android 앱에서는 ‘TalkBack 설정 열기’로 기기 접근성 설정에 들어갈 수 있습니다.</p>
-<p class="meta"><code>market-lab.zip</code> · 4.69 MB</p>
+<p>1장 기획 활동지, 2장 도구 점검표, 3~20장의 예제와 장별 파일을 여는 <code>start.mjs</code>가 들어 있습니다. 20장 완성본에서 예산과 낼 돈을 각각 50,000원으로 고를 수 있습니다. 16~20장의 Android 앱에서는 ‘TalkBack 설정 열기’로 기기 접근성 설정에 들어갈 수 있습니다.</p>
+<p class="meta"><code>market-lab.zip</code> · 4.70 MB</p>
 <a class="button" href="./market-lab.zip" download="market-lab.zip">장별 실습 예제 ZIP 받기</a></article>
 <article><h2>상품·가격표</h2>
 <p>11장에 나오는 상품 12개의 이름, 판매 단위, 실습용 기준가격을 Excel에서 확인할 수 있습니다.</p>
@@ -59,6 +59,10 @@ cd work/ch03
 node checkout.mts</code></pre>
 <p><strong>총 3개 / 5,500원</strong>이 나오면 성공입니다. <code>~</code>는 내 사용자 폴더를 뜻합니다. 다른 장도 <code>kit</code>에서 원하는 장 번호를 넣어 준비합니다.</p></li>
 </ol></section>
+<section class="guide" aria-labelledby="vscode-help"><h2 id="vscode-help">VS Code에서 명령어 도움말 열기</h2>
+<p>압축을 푼 뒤 <code>start.mjs</code>가 있는 폴더를 VS Code에서 여세요. <strong>F1 → 작업: 작업 실행 → 실습 명령어 도움말</strong>을 선택하면 1~20장의 제목과 여는 명령을 터미널에서 함께 볼 수 있습니다. 직접 <code>node start.mjs --help</code>를 입력해도 됩니다.</p>
+<p>작업 목록의 <strong>한 장의 실습 파일 열기</strong>에서 장 제목을 고르세요. <strong>전체 장의 실습 파일 한 번에 열기</strong>를 선택하면 왼쪽 탐색기의 <code>work</code> 폴더에 20개 장이 준비되고, 현재 창에 장별 대표 파일 20개가 열립니다. 터미널에서는 다음 명령 중 하나를 입력하세요.</p>
+<ul><li>6장 파일 열기 <code>node start.mjs --open 06</code></li><li>20장 완성본 열기 <code>node start.mjs --open 20</code></li><li>1~20장 전체 열기 <code>node start.mjs --open all</code></li></ul></section>
 <section class="guide" aria-labelledby="final"><h2 id="final">20장 완성본에서 50,000원으로 장보기</h2>
 <p>위에서 받은 장별 ZIP을 새 폴더에 풀고 <code>start.mjs</code>가 있는 위치에서 <code>node start.mjs 20</code>을 입력합니다. VS Code에서 <code>work/ch20/apps/mobile</code>을 열고 PowerShell 터미널에서 <code>npm.cmd ci</code>, <code>npm.cmd run web</code>을 실행합니다.</p>
 <p>이전 장별 ZIP으로 작업했다면 <a href="https://github.com/ungjo/store-price/archive/9f5fd1318294b2bc5a7cfd700952f3512835febd.zip">50,000원이 포함된 20장 완성 소스</a>를 별도 폴더에 풉니다. 압축 속 저장소 폴더에서 <code>apps/mobile</code>을 열어 같은 npm 명령을 실행합니다.</p></section>

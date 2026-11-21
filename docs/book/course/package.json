@@ -1,0 +1,7 @@
+{
+  "name": "market-lab",
+  "private": true,
+  "scripts": {
+    "help": "node start.mjs --help"
+  }
+}

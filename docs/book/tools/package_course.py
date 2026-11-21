@@ -3,6 +3,7 @@ import hashlib
 import io
 import json
 import re
+import shutil
 import subprocess
 import zipfile
 from pathlib import Path, PurePosixPath
@@ -18,6 +19,27 @@ titles = {int(n): name.strip() for n, name in re.findall(
 chapters = {}
 seen = set()
 mobile = "apps/mobile/"
+# 각 장을 열 때 먼저 읽을 파일은 해당 장의 실습 목표에 맞춰 고른다.
+entries = {
+    1: "market-plan.md", 2: "tool-checklist.md", 3: "checkout.mts",
+    4: mobile + "App.tsx",
+    5: mobile + "src/features/catalog/categories.ts",
+    6: mobile + "src/features/cart/cart.ts",
+    7: mobile + "src/features/budget/budget.ts",
+    8: mobile + "src/features/payment/payment.ts",
+    9: mobile + "src/features/payment/change-quiz.ts",
+    10: mobile + "src/features/payment/receipt.ts",
+    11: "supabase/migrations/20261112090000_catalog.sql",
+    12: mobile + "src/features/catalog/catalog.ts",
+    13: mobile + "src/features/catalog/real-price-preview.ts",
+    14: mobile + "src/features/catalog/catalog-session.ts",
+    15: mobile + "App.tsx",
+    16: mobile + "src/components/talkback-settings-button.tsx",
+    17: "scripts/device/verify.mjs",
+    18: mobile + "app.config.js",
+    19: mobile + "eas.json",
+    20: mobile + "src/components/shopping-receipt.tsx",
+}
 shortcut_path = mobile + "src/components/talkback-settings-button.tsx"
 # 각 장의 기준 커밋은 유지하고, 세 화면에 같은 Android 설정 버튼만 보강한다.
 shortcut_screens = {
@@ -75,7 +97,7 @@ output.parent.mkdir(exist_ok=True)
 temp = output.with_suffix(".partial")
 with zipfile.ZipFile(temp, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
     previous = {}
-    for number in range(3, 21):
+    for number in range(1, 21):
         key = f"{number:02d}"
         if number in refs:
             sources = source_files(refs[number])
@@ -86,16 +108,19 @@ with zipfile.ZipFile(temp, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=
                 previous[shortcut_path] = put_object(archive, shortcut)
             else:
                 previous = {n: put_object(archive, b) for n, b in sources}
-        files = previous.copy()
-        if number == 3 or 5 <= number <= 10:
-            prefix = "" if number == 3 else "apps/mobile/"
+        # 1~3장은 각각 독립된 실습이며 앞 장의 파일을 물려받지 않는다.
+        files = {} if number <= 3 else previous.copy()
+        if number <= 3 or 5 <= number <= 10:
+            prefix = "" if number <= 3 else mobile
             for name, data in local_files(steps / key):
                 files[prefix + name] = put_object(archive, data)
-        chapters[key] = {"label": titles[number], "files": dict(sorted(files.items()))}
+        if entries[number] not in files:
+            raise ValueError(f"{key}장의 대표 파일을 찾을 수 없습니다: {entries[number]}")
+        chapters[key] = {"label": titles[number], "entry": entries[number], "files": dict(sorted(files.items()))}
         if number >= 4 and "apps/mobile/package-lock.json" not in files:
             raise ValueError("앱 루트와 잠금 파일을 찾을 수 없습니다")
         previous = files
-    for name in ["start.mjs", "README.md"]:
+    for name in ["start.mjs", "open-editor.mjs", "README.md", "package.json", ".vscode/tasks.json"]:
         archive.write(course / name, name)
     for key in ["11", "13", "14"]:
         for name, data in local_files(steps / key):
@@ -106,4 +131,10 @@ with zipfile.ZipFile(temp) as archive:
     assert archive.testzip() is None
     assert all(hashlib.sha256(archive.read("objects/" + key)).hexdigest() == key for key in seen)
 temp.replace(output)
+# 독자 자료실에서도 방금 검증한 ZIP과 동일한 파일을 내려받도록 한다.
+reader_copy = output.parent / "reader-site" / output.name
+reader_copy.parent.mkdir(exist_ok=True)
+reader_temp = reader_copy.with_suffix(".partial")
+shutil.copyfile(output, reader_temp)
+reader_temp.replace(reader_copy)
 print(output, len(chapters), "chapters", len(seen), "unique files")

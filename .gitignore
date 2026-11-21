@@ -29,6 +29,9 @@ supabase/.branches/
 Thumbs.db
 .idea/
 .vscode/
+!docs/book/course/.vscode/
+docs/book/course/.vscode/*
+!docs/book/course/.vscode/tasks.json
 
 # Real source data requires separate publication permission
 data/raw/

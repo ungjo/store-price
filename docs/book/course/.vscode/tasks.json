@@ -1,0 +1,141 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "실습 명령어 도움말",
+      "type": "process",
+      "command": "node",
+      "args": [
+        "start.mjs",
+        "--help"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "한 장의 실습 파일 열기",
+      "type": "process",
+      "command": "node",
+      "args": [
+        "start.mjs",
+        "--open",
+        "${input:chapter}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "MARKET_LAB_VSCODE_EXECUTABLE": "${execPath}"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "전체 장의 실습 파일 한 번에 열기",
+      "type": "process",
+      "command": "node",
+      "args": [
+        "start.mjs",
+        "--open",
+        "all"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "MARKET_LAB_VSCODE_EXECUTABLE": "${execPath}"
+        }
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "chapter",
+      "type": "pickString",
+      "description": "열고 싶은 장을 선택하세요.",
+      "options": [
+        {
+          "label": "1장 우리가 만들 앱부터 살펴보기",
+          "value": "01"
+        },
+        {
+          "label": "2장 필요한 프로그램과 계정 준비하기",
+          "value": "02"
+        },
+        {
+          "label": "3장 실습에 필요한 언어와 개념 익히기",
+          "value": "03"
+        },
+        {
+          "label": "4장 Expo로 첫 Android 앱 실행하기",
+          "value": "04"
+        },
+        {
+          "label": "5장 상품 목록과 분류 만들기",
+          "value": "05"
+        },
+        {
+          "label": "6장 장바구니와 합계 계산하기",
+          "value": "06"
+        },
+        {
+          "label": "7장 예산과 남은 돈 표시하기",
+          "value": "07"
+        },
+        {
+          "label": "8장 낼 놀이돈 선택하고 거스름돈 계산하기",
+          "value": "08"
+        },
+        {
+          "label": "9장 거스름돈 맞히기 퀴즈 만들기",
+          "value": "09"
+        },
+        {
+          "label": "10장 계산 완료와 놀이 영수증 만들기",
+          "value": "10"
+        },
+        {
+          "label": "11장 상품과 가격을 저장할 데이터베이스 설계하기",
+          "value": "11"
+        },
+        {
+          "label": "12장 Supabase에서 상품 목록 읽어 오기",
+          "value": "12"
+        },
+        {
+          "label": "13장 실제 가격 자료와 개발용 미리보기 구분하기",
+          "value": "13"
+        },
+        {
+          "label": "14장 인터넷이 없어도 놀이 시작하기",
+          "value": "14"
+        },
+        {
+          "label": "15장 작은 화면과 큰 글자에서도 편하게 만들기",
+          "value": "15"
+        },
+        {
+          "label": "16장 TalkBack으로 사용할 수 있는 앱 만들기",
+          "value": "16"
+        },
+        {
+          "label": "17장 코드와 휴대전화 반복 검사 자동화하기",
+          "value": "17"
+        },
+        {
+          "label": "18장 앱 이름과 아이콘, 시작 화면 만들기",
+          "value": "18"
+        },
+        {
+          "label": "19장 EAS로 APK를 만들어 내 Android 기기에 설치하기",
+          "value": "19"
+        },
+        {
+          "label": "20장 내 기기에서 장보고 영수증까지 확인하기",
+          "value": "20"
+        }
+      ]
+    }
+  ]
+}
