@@ -315,14 +315,21 @@ npm start
 
 ### 50,000원 선택이 보이지 않을 때
 
-[20.7절](#ch20-s7)은 20장 완성본에서 진행한다. 이전 ZIP으로 만든 `work/ch20`이 있으면 이번 판의 첨부 ZIP을 **새 폴더**에 풀고 그 안에서 `node start.mjs 20`을 실행한다. 기존 자료실 ZIP이나 16장 예제로 실습 중인 종이책 독자는 아래 QR로 같은 완성 앱의 소스만 따로 받을 수도 있다.
+[20.7절](#ch20-s7)은 20장 완성본에서 진행한다. 이전 ZIP으로 실습하던 독자는 아래 QR이나 링크로 자료실의 최신 예제를 받는다. 처음 패키지를 설치할 때는 PC를 인터넷에 연결한다.
 
 <div class="reader-materials-card">
-<img src="figures/20-source-50000-qr.png" alt="50,000원 예산과 지폐가 포함된 GitHub의 20장 완성 소스 ZIP 다운로드 QR">
-<div><strong>50,000원 완성 앱 소스</strong><p>휴대전화로 QR을 읽어 다운로드 링크를 실습할 PC에 보내거나 전자책에서 링크를 누른다.</p><a href="https://github.com/ungjo/store-price/archive/9f5fd1318294b2bc5a7cfd700952f3512835febd.zip">20장 완성 소스 ZIP 받기 · 9f5fd13</a></div>
+<img src="figures/20-source-50000-qr.png" alt="자료실의 최신 장별 실습 예제 ZIP을 내려받는 QR 코드">
+<div><strong>20장 PC 실습 준비</strong><p>ZIP을 새 폴더에 모두 푼다. VS Code에서 <code>start.mjs</code>가 보이는 폴더를 연 뒤, ‘터미널 → 새 터미널’에서 PowerShell을 연다.</p><a href="https://ungjo.github.io/store-price/book/market-lab.zip">최신 장별 실습 예제 ZIP 받기</a></div>
 </div>
 
-이 QR로 받은 ZIP을 새 폴더에 풀면 `store-price-9f5fd13…` 폴더가 생긴다. VS Code의 **파일 → 폴더 열기**에서 그 안의 **apps → mobile**을 연다. 공개 저장소에서 가져온 소스는 이 위치에 이미 펼쳐져 있으므로 곧바로 새 PowerShell 터미널에서 `npm.cmd ci`를 입력한다. 설치가 끝나면 `npm.cmd run web`으로 브라우저에서, 또는 `npm.cmd start`로 Android의 Expo Go에서 [20.7절](#ch20-s7)을 따라간다.
+한 줄씩 실행한다. 이 ZIP에 `work/ch20`이 이미 있으면 둘째 줄부터 시작한다.
+
+```powershell
+node start.mjs 20
+cd work/ch20/apps/mobile
+npm.cmd ci
+npm.cmd run web
+```
 
 ## C.3 잠금 파일로 설치하기
 

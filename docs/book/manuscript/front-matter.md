@@ -29,7 +29,7 @@ Windows PC, 데이터 전송이 가능한 USB 케이블, Android 기기 한 대�
 
 **차례로 따라 하기.** 3장은 계산 예제다. 첫 앱은 [4.2절](#ch04-s2)에서 `node start.mjs 04`로 꺼낸다. [4.3절](#ch04-s3)에서 패키지를 설치하고 [4.4절](#ch04-s4)에서 상품 여섯 개를 확인한다. **다음 장의 참고본을 꺼낼 때마다** 터미널에서 `ls`로 `start.mjs`가 보이는지 확인한 뒤 장 번호를 바꾼다. 부록 C.1에는 4장에서 5장으로 이동하는 예도 있다.
 
-<span class="license-print">이 판의 예제 ZIP은 PDF 리더의 첨부 파일(클립) 패널에서 저장할 수 있다. 이전 ZIP에 TalkBack 버튼이나 50,000원 선택이 없으면 부록 C.2의 안내와 완성 소스 QR을 이용한다.</span>
+<span class="license-print">이 판의 예제 ZIP은 PDF 리더의 첨부 파일(클립) 패널에서 저장할 수 있다. 이전 ZIP에 TalkBack 버튼이나 50,000원 선택이 없으면 부록 C.2의 장별 실습 예제 ZIP QR을 이용한다.</span>
 
 [이 HTML에서 예제 ZIP 저장](market-lab.zip)
 
