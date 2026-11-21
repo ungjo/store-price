@@ -847,7 +847,8 @@ function productionReport(status, reason, seoul) {
     'maestro --device <기기> test -e APP_ID=' + aab.applicationId + ' --format junit --output <검사폴더>/result.xml --test-output-dir <검사폴더>/maestro --debug-output <검사폴더>/maestro apps/mobile/.maestro/production-play.yaml',
     '```', '',
     '- Expo Go에서 상품 로딩 중 예시 선택을 별도로 확인했다. JUnit ' + loadingJunit.testcases + '건 통과.',
-    '- 정식 앱에 예시 상품 12개가 표시됐다. 사과 2개와 우유 1개(5,500원)를 골라 10,000원을 지불하고, 거스름돈 4,500원과 영수증을 확인한 뒤 다시 장보기를 시작했다. JUnit ' + junit.testcases + '건 통과.',
+    '- 정식 앱에서 예시 상품 12개와 “실제 마트 판매 가격이 아니에요.”를 확인하고 개인정보처리방침을 열어 내용을 읽은 뒤 닫았다. TalkBack 설정 버튼으로 Android 접근성 설정에 들어갔다가 장보기 화면으로 돌아왔다.',
+    '- 50,000원 예산에서 사과 2개와 우유 1개(5,500원)를 골라 50,000원권으로 지불했다. 거스름돈 44,500원을 맞히고 영수증의 지불액·거스름돈·남은 놀이돈을 확인한 뒤 다시 장보기를 시작했다. JUnit ' + junit.testcases + '건 통과.',
     '- 검사 전후 공개 예시 상품 지문 `' + catalogAfter.fingerprint + '`',
     '- 충전 중 화면 유지 설정의 최종 처리 `' + (screenAwake.restoreStatus || screenAwake.applyStatus) + '`',
     ...checks.filter((check) => ['privacy-page', 'production-tests', 'maestro-syntax-production', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'catalog-http-before', 'catalog-http-after', 'maestro-loading-choice', 'production-play'].includes(check.label))

@@ -152,5 +152,7 @@
   "scripts/device/inspection-talkback-toggle.test.mjs",
   "docs/book/chapters/09-shopping-budget.md",
   "apps/mobile/src/features/budget/budget.ts",
-  "apps/mobile/.maestro/budget-choice.yaml"
+  "apps/mobile/.maestro/budget-choice.yaml",
+  "docs/book/chapters/09a-production-budget.md",
+  "apps/mobile/.maestro/talkback-settings-roundtrip.yaml"
 ]

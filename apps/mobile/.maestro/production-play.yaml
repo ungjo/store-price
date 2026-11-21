@@ -1,5 +1,5 @@
 appId: com.ungjo.storeprice
-name: 정식 앱의 공개 상품·장보기·거스름돈·영수증
+name: 정식 앱의 공개 상품·방침·접근성 설정·50,000원권 영수증
 ---
 # 앱 데이터를 보존하고 새 프로세스로 시작해 사용자가 처음 여는 상품 화면부터 검사합니다.
 - stopApp
@@ -22,6 +22,10 @@ name: 정식 앱의 공개 상품·장보기·거스름돈·영수증
 # 정식 앱은 사용자용 출처 문구로 서버 응답과 내장 예시 경로를 구분합니다.
 - scrollUntilVisible:
     element: { text: '^연습용 예시 가격이에요$' }
+    direction: DOWN
+    timeout: 30000
+- scrollUntilVisible:
+    element: { id: sample-price-notice, text: '(?s).*실제 마트 판매 가격이 아니에요\.$' }
     direction: DOWN
     timeout: 30000
 - scrollUntilVisible:
@@ -55,12 +59,37 @@ name: 정식 앱의 공개 상품·장보기·거스름돈·영수증
 - assertVisible:
     id: cart-summary
     text: '^장바구니 총 3개, 합계 5,500원\. 오늘의 놀이돈 10,000원\. 남을 돈 4,500원\. 이대로 사면 남을 돈이에요\.$'
+# 앱을 나갔다가 돌아와도 담은 물건이 유지되는지 확인한 뒤 예산을 바꿉니다.
+- runFlow:
+    file: talkback-settings-roundtrip.yaml
+    env: { APP_ID: com.ungjo.storeprice }
 - scrollUntilVisible:
-    element: { id: payment-option-10000 }
+    element: { id: privacy-open }
+    direction: UP
+    timeout: 30000
+- runFlow:
+    file: privacy-policy.yaml
+    env: { APP_ID: com.ungjo.storeprice, POLICY_DISMISS: button }
+- assertVisible: { id: privacy-open, enabled: true }
+- scrollUntilVisible:
+    element: { id: budget-option-10000, selected: true }
     direction: DOWN
     timeout: 30000
-- tapOn: { id: payment-option-10000, enabled: true }
-- assertVisible: { id: payment-option-10000, selected: true }
+- scrollUntilVisible:
+    element: { id: budget-option-50000 }
+    direction: DOWN
+    timeout: 30000
+- tapOn: { id: budget-option-50000, enabled: true }
+- assertVisible: { id: budget-option-50000, selected: true }
+- assertVisible:
+    id: cart-summary
+    text: '^장바구니 총 3개, 합계 5,500원\. 오늘의 놀이돈 50,000원\. 남을 돈 44,500원\. 이대로 사면 남을 돈이에요\.$'
+- scrollUntilVisible:
+    element: { id: payment-option-50000 }
+    direction: DOWN
+    timeout: 30000
+- tapOn: { id: payment-option-50000, enabled: true }
+- assertVisible: { id: payment-option-50000, selected: true }
 - scrollUntilVisible:
     element: { id: quiz-answer }
     direction: DOWN
@@ -69,11 +98,12 @@ name: 정식 앱의 공개 상품·장보기·거스름돈·영수증
     file: solve-quiz.yaml
     env:
       APP_ID: com.ungjo.storeprice
-      QUIZ_ANSWER: "4500"
+      QUIZ_BUDGET: "50,000"
+      QUIZ_ANSWER: "44500"
       CART_QUANTITY: "3"
       CART_TOTAL: "5,500"
 - scrollUntilVisible:
-    element: { id: payment-change, text: '^받을 거스름돈 4,500원\. 낼 돈 10,000원 빼기 물건값 5,500원은 4,500원\.$' }
+    element: { id: payment-change, text: '^받을 거스름돈 44,500원\. 낼 돈 50,000원 빼기 물건값 5,500원은 44,500원\.$' }
     direction: DOWN
     timeout: 30000
 - scrollUntilVisible:
@@ -97,10 +127,10 @@ name: 정식 앱의 공개 상품·장보기·거스름돈·영수증
     direction: DOWN
     timeout: 30000
 - scrollUntilVisible:
-    element: { id: receipt-payment, text: '^낸 놀이돈 10,000원\. 받은 거스름돈 4,500원\. 계산 후 남은 놀이돈 4,500원\.$' }
+    element: { id: receipt-payment, text: '^낸 놀이돈 50,000원\. 받은 거스름돈 44,500원\. 계산 후 남은 놀이돈 44,500원\.$' }
     direction: DOWN
     timeout: 30000
-- takeScreenshot: production-receipt
+- takeScreenshot: production-50000-receipt
 - scrollUntilVisible:
     element: { id: receipt-new-round }
     direction: DOWN
