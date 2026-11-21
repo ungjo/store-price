@@ -1,4 +1,5 @@
 export const STARTING_BUDGET_KRW = 10000;
+export const BUDGET_OPTIONS_KRW = [STARTING_BUDGET_KRW, 50000] as const;
 
 type BudgetSummary = {
   remainingKrw: number;

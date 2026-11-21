@@ -1,0 +1,103 @@
+appId: ${APP_ID || 'host.exp.exponent'}
+name: 장보기 예산 변경과 50,000원권 영수증
+# 앞선 놀이가 끝난 빈 장바구니의 목록 아래에서 시작합니다.
+---
+- scrollUntilVisible:
+    element: { id: sample-price-notice }
+    direction: UP
+    timeout: 30000
+- assertVisible: { id: sample-price-notice, text: '(?s).*실제 마트 판매 가격이 아니에요\.$' }
+- scrollUntilVisible:
+    element: { id: budget-option-10000 }
+    direction: DOWN
+- assertVisible: { id: budget-option-10000, selected: true }
+- scrollUntilVisible:
+    element: { id: budget-option-50000 }
+    direction: DOWN
+- tapOn: { id: budget-option-50000, enabled: true }
+- assertVisible: { id: budget-option-50000, selected: true }
+
+# 예산을 줄였을 때 물건을 버리지 않고 부족한 금액을 알려주는지 확인합니다.
+- scrollUntilVisible:
+    element: { id: product-sample-apple-add }
+    direction: DOWN
+- tapOn: { id: product-sample-apple-add }
+- tapOn: { id: product-sample-apple-add }
+- scrollUntilVisible:
+    element: { id: product-sample-milk-add }
+    direction: DOWN
+- tapOn: { id: product-sample-milk-add }
+- tapOn: { id: product-sample-milk-add }
+- tapOn: { id: product-sample-milk-add }
+- assertVisible: { id: cart-summary, text: '^장바구니 총 5개, 합계 10,500원\. 오늘의 놀이돈 50,000원\. 남을 돈 39,500원\. 이대로 사면 남을 돈이에요\.$' }
+- scrollUntilVisible:
+    element: { id: payment-option-50000 }
+    direction: DOWN
+    timeout: 30000
+- tapOn: { id: payment-option-50000, enabled: true }
+- assertVisible: { id: payment-option-50000, selected: true }
+- scrollUntilVisible:
+    element: { id: budget-option-10000 }
+    direction: UP
+    timeout: 30000
+- tapOn: { id: budget-option-10000, enabled: true }
+- assertVisible: { id: budget-option-10000, selected: true }
+- assertVisible: { id: cart-summary, text: '^장바구니 총 5개, 합계 10,500원\. 오늘의 놀이돈 10,000원\. 부족한 돈 500원\. 물건을 조금 빼 볼까요\?$' }
+- scrollUntilVisible:
+    element: { id: payment-option-50000 }
+    direction: DOWN
+    timeout: 30000
+- assertVisible: { id: payment-option-50000, selected: false, enabled: false }
+
+# 물건값이 예산 안으로 돌아와도 만 원 예산에서 오만 원권을 고를 수 없어야 합니다.
+- scrollUntilVisible:
+    element: { id: product-sample-milk-decrease }
+    direction: UP
+    timeout: 30000
+- tapOn: { id: product-sample-milk-decrease }
+- tapOn: { id: product-sample-milk-decrease }
+- assertVisible: { id: cart-summary, text: '^장바구니 총 3개, 합계 5,500원\. 오늘의 놀이돈 10,000원\. 남을 돈 4,500원\. 이대로 사면 남을 돈이에요\.$' }
+- scrollUntilVisible:
+    element: { id: payment-option-50000 }
+    direction: DOWN
+    timeout: 30000
+- assertVisible: { id: payment-option-50000, selected: false, enabled: false }
+- scrollUntilVisible:
+    element: { id: budget-option-50000 }
+    direction: UP
+    timeout: 30000
+- tapOn: { id: budget-option-50000, enabled: true }
+- assertVisible: { id: cart-summary, text: '^장바구니 총 3개, 합계 5,500원\. 오늘의 놀이돈 50,000원\. 남을 돈 44,500원\. 이대로 사면 남을 돈이에요\.$' }
+- scrollUntilVisible:
+    element: { id: payment-option-50000 }
+    direction: DOWN
+    timeout: 30000
+- tapOn: { id: payment-option-50000, enabled: true }
+- scrollUntilVisible:
+    element: { id: quiz-answer }
+    direction: DOWN
+- runFlow:
+    file: solve-quiz.yaml
+    env:
+      QUIZ_BUDGET: "50,000"
+      QUIZ_ANSWER: "44500"
+      CART_QUANTITY: "3"
+      CART_TOTAL: "5,500"
+- scrollUntilVisible:
+    element: { id: checkout-complete }
+    direction: DOWN
+- tapOn: { id: checkout-complete, enabled: true }
+- scrollUntilVisible:
+    element: { id: receipt-total }
+    direction: DOWN
+- assertVisible: { id: receipt-total, text: '^총 3개, 합계 5,500원\.$' }
+- scrollUntilVisible:
+    element: { id: receipt-payment }
+    direction: DOWN
+- assertVisible: { id: receipt-payment, text: '^낸 놀이돈 50,000원\. 받은 거스름돈 44,500원\. 계산 후 남은 놀이돈 44,500원\.$' }
+- takeScreenshot: budget-50000-receipt
+- scrollUntilVisible:
+    element: { id: receipt-new-round }
+    direction: DOWN
+- tapOn: { id: receipt-new-round, enabled: true }
+- assertVisible: { id: cart-summary, text: '^장바구니 총 0개, 합계 0원\. 오늘의 놀이돈 10,000원\. 남을 돈 10,000원\. 놀이돈 안에서 장을 봐요\.$' }

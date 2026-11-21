@@ -1568,3 +1568,9 @@ name: 놀이돈 선택과 장바구니 실기기 회귀 검사
     file: catalog-categories.yaml
     env:
       CATEGORY_SOURCE: "supabase"
+
+# 이전 설치본은 그대로 재검사할 수 있도록 새 예산 시나리오는 현재 소스 또는 명시한 APK에서만 실행합니다.
+- runFlow:
+    when:
+      true: ${typeof TARGET_MODE === 'undefined' || TARGET_MODE !== 'inspection' || (typeof VERIFY_BUDGET_CHOICES !== 'undefined' && VERIFY_BUDGET_CHOICES == '1')}
+    file: budget-choice.yaml

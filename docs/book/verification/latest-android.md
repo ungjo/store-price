@@ -1,14 +1,14 @@
 # Android 실기기 자동 검증 기록
 
-- 실행 시각: 2026-11-21 22:13:50 (Asia/Seoul)
+- 실행 시각: 2026-11-22 01:24:57 (Asia/Seoul)
 - 결과: **PASS**
-- 실행 ID: `20261121T124743991Z-c166394d`
+- 실행 ID: `20261121T155409733Z-0f6a070d`
 - 기기: SM-X710 / Android 14
-- 검사 시작 HEAD: `3487654c89e04660348571f0ca6287c445fba118`
-- 검사 소스 SHA-256: `b2c8a6eb358ce24cfef7e2b20e50bc84bef8b0066332ee62f6114c4e822208d4`
+- 검사 시작 HEAD: `b5915cfae0d480d41316e52098e682510e73dfc7`
+- 검사 소스 SHA-256: `5fdc507dead233067ee990c84e2ffeee83dffe5f510f3a14fd1b887ead05af9a`
 - 검사 설정 SHA-256: `0ca9c8f25fe0cd28841ff8491faab120c877f64e2a1a49bd0f69950985b09caa` (설정 값은 기록하지 않음)
 - 공개 상품 SHA-256: `d8c79583dff9fc97e15e342b9834c7627c73020d07c54418e31af7a25f16536b` (실행 전후 일치)
-- 예시 선택 별도 실행 ID: `20261121T124743991Z-c166394d-loading` (개발 검사 요청, 실제 통신 장애를 발생시키지 않음)
+- 예시 선택 별도 실행 ID: `20261121T155409733Z-0f6a070d-loading` (개발 검사 요청, 실제 통신 장애를 발생시키지 않음)
 - 도구: Maestro 2.12.1 / JDK 21 / USB 실기기 / Expo Go / 설치형 APK
 - 커밋 모드: 검사한 소스가 유지된 경우에만 자동 커밋. 실제 커밋 ID는 실행 요약 또는 git log에서 확인.
 
@@ -19,6 +19,7 @@ adb -s <선택한 실기기> shell settings get global stay_on_while_plugged_in
 adb -s <선택한 실기기> shell settings put global stay_on_while_plugged_in 7
 adb -s <선택한 실기기> shell settings get global stay_on_while_plugged_in
 maestro check-syntax apps/mobile/.maestro/payment.yaml
+maestro check-syntax apps/mobile/.maestro/budget-choice.yaml
 maestro check-syntax apps/mobile/.maestro/solve-quiz.yaml
 maestro check-syntax apps/mobile/.maestro/receipt.yaml
 maestro check-syntax apps/mobile/.maestro/catalog-loading-choice.yaml
@@ -56,8 +57,8 @@ adb -s <선택한 실기기> reverse --list
 adb -s <선택한 실기기> reverse --no-rebind tcp:8091 tcp:8091
 adb -s <선택한 실기기> shell input keyevent 224
 maestro --device <선택한 실기기> test -e EXPO_URL=exp://127.0.0.1:8091 -e RUN_ID=<실행 ID>-loading --format junit --output <검사폴더>/loading-result.xml --test-output-dir <검사폴더>/maestro-loading --debug-output <검사폴더>/maestro-loading apps/mobile/.maestro/catalog-loading-choice.yaml
-# 이미 설치한 검사 APK의 해시·버전이 이번 빌드와 정확히 같은지 검증해 재사용
-maestro --device <선택한 실기기> test -e APP_ID=com.ungjo.storeprice.inspection -e TARGET_MODE=inspection -e INSPECTION_FROM_HOME=1 -e RUN_ID=<APK 빌드 확인 번호> -e PRIVATE_PREVIEW_ENABLED=0 --format junit --output <검사폴더>/result.xml --test-output-dir <검사폴더>/maestro --debug-output <검사폴더>/maestro apps/mobile/.maestro/payment.yaml
+adb -s <선택한 실기기> install -r --user <현재 Android 사용자> <동일 서명의 새 검사 APK>
+maestro --device <선택한 실기기> test -e APP_ID=com.ungjo.storeprice.inspection -e TARGET_MODE=inspection -e VERIFY_BUDGET_CHOICES=1 -e INSPECTION_FROM_HOME=1 -e RUN_ID=<APK 빌드 확인 번호> -e PRIVATE_PREVIEW_ENABLED=0 --format junit --output <검사폴더>/result.xml --test-output-dir <검사폴더>/maestro --debug-output <검사폴더>/maestro apps/mobile/.maestro/payment.yaml
 adb -s <선택한 실기기> shell settings put global stay_on_while_plugged_in 0
 adb -s <선택한 실기기> shell settings get global stay_on_while_plugged_in
 ```
@@ -76,13 +77,13 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 
 - 앱: 꼬마 시장 검사 / 앱 ID: `com.ungjo.storeprice.inspection`
 - 버전: `1.0.0` / 코드 `2`
-- 빌드 ID: `1c7eab93-f166-4a0b-8e75-06d25b86d7f4` / 빌드 확인 번호: `inspection-d9fea202791a8c41`
-- APK SHA-256: `fa12cdba9946b862bb3221815dbcf08a55655e2c5cf1c405bc38f2f05a1ff5ab` (원본과 실제 설치 파일을 검사 전후 대조)
-- 빌드 소스 SHA-256: `8d37a993b61fc4de34120ecef12ba0a8813d18d2031add78aace8b345f219b37`
+- 빌드 ID: `26281501-a79b-4114-a36d-ec9aa38f5a52` / 빌드 확인 번호: `inspection-ecb20a267fa3873d`
+- APK SHA-256: `b19645b4f7702768c6ade60b24cafcd180a8815528c31b83a8c4285eb52ca877` (원본과 실제 설치 파일을 검사 전후 대조)
+- 빌드 소스 SHA-256: `7ca4069a0ad9ef1986f3924df06d184cca94e5b7c1400299a2e4c93cd2f0615a`
 - 서명 인증서 SHA-256: `edaa623bf85baefadec02d92e2a40467630d838f20ca6aa1fe9e6594c1c93746`
-- 설치: `reused-exact`. 다른 패키지를 변경하거나 앱 데이터를 삭제하지 않았다.
-- 업데이트 근거: 과거 PASS 커밋 `807d295e1a15d6e668b706bd07d19ff0ea24cda5`, 이전 APK SHA-256 `df541e490f0cc4269374de77de6f0114d2ed65bc5d725a9d5f408e3025dc4484`. 과거 PASS·동일 서명을 확인하고 현재 설치된 새 APK 파일을 대조했다.
-- 설치 코드 영향: `unchanged`. 데이터 보존은 삭제·초기화 명령 없이 설치했다는 뜻이며 데이터 전체의 바이트 비교를 뜻하지 않는다.
+- 설치: `updated-verified`. 다른 패키지를 변경하거나 앱 데이터를 삭제하지 않았다.
+- 업데이트 근거: 과거 PASS 커밋 `b5915cfae0d480d41316e52098e682510e73dfc7`, 이전 APK SHA-256 `fa12cdba9946b862bb3221815dbcf08a55655e2c5cf1c405bc38f2f05a1ff5ab`. 동일 서명과 이전 설치 파일을 대조한 뒤 업데이트했다.
+- 설치 코드 영향: `shared-package-update`. 데이터 보존은 삭제·초기화 명령 없이 설치했다는 뜻이며 데이터 전체의 바이트 비교를 뜻하지 않는다.
 - 디버그 모드 비활성·백업 복원 비활성·내장 번들·고정 공개 상품 설정·빌드 표시를 검증했다.
 - 개발 서버를 종료한 뒤 설치한 동일 APK에서 전체 놀이를 검사했다. 성공한 검사 앱은 기기에 남겼다.
 - 홈 런처의 꼬마 시장 검사 아이콘을 눌러 이번 빌드 번호를 확인했다. TalkBack 설정 버튼으로 Android 접근성 화면에 들어갔다 돌아와 화면 읽기 상태와 장바구니 3개·5,500원을 확인했다.
@@ -106,6 +107,7 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 - 이번 빌드의 화면 표시와 설치 APK 해시를 확인해 다른 번들을 검사하지 않도록 했다.
 - 장바구니 담기·합계·수량 감소·9개 상한·품목 삭제·전체 비우기.
 - 놀이돈 예산 안·딱 맞음·초과와 예산 안으로 복귀.
+- 예시 가격 안내, 10,000원·50,000원 예산 전환, 5,500원 장보기와 50,000원 지불의 거스름돈 44,500원 및 영수증.
 - 지불할 돈 단일 선택·부족액·선택 취소·상품 변경 시 선택 초기화.
 - 빈 장바구니와 예산 초과의 선택 차단·재실행 시 초기화.
 - 받을 거스름돈과 계산식: 5,500원에 10,000원은 4,500원, 정확히 낸 금액은 0원.
@@ -121,6 +123,7 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 
 - privacy-page: 종료 코드 0
 - maestro-syntax-main: 종료 코드 0
+- maestro-syntax-budget: 종료 코드 0
 - maestro-syntax-quiz: 종료 코드 0
 - maestro-syntax-receipt: 종료 코드 0
 - maestro-syntax-preview: 종료 코드 0
@@ -161,6 +164,6 @@ Windows에서는 npm CLI와 Maestro 배치 파일을 Node에서 호출했다. �
 - JUnit: 1 testcase, 실패 0, 오류 0, 건너뜀 0
 - 예시 선택 JUnit: 1 testcase, 실패 0, 오류 0, 건너뜀 0
 
-원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/20261121T124743991Z-c166394d/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.
+원본 로그·스크린샷·JUnit·실행 요약은 `.artifacts/device/20261121T155409733Z-0f6a070d/`에만 보관하며 Git에 올리지 않는다. 기기 일련번호와 화면 XML은 이 보고서에 포함하지 않는다.
 
 이 기록은 해당 Android 실기기·검사 시점의 결과다. 설치형 APK는 위에 기록한 빌드만 검증했다. Google Play 제출용 AAB 및 실제 이마트 가격의 앱 공개 표시는 검증하지 않았다. 앱은 공개 예시 상품 12개로 검사한다.

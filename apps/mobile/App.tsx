@@ -12,7 +12,7 @@ import { ShoppingReceipt } from './src/components/shopping-receipt';
 import { QuantityControl } from './src/components/quantity-control';
 import { useAccessibilityFocus } from './src/features/accessibility/use-accessibility-focus';
 import { getCartSummary } from './src/features/cart/cart';
-import { getBudgetSummary, STARTING_BUDGET_KRW } from './src/features/budget/budget';
+import { BUDGET_OPTIONS_KRW, getBudgetSummary } from './src/features/budget/budget';
 import { createInitialShoppingState, createShoppingReducer, getPaymentSummary } from './src/features/payment/payment';
 import { CatalogLoader, type CatalogSource } from './src/components/catalog-loader';
 import { PrivatePricePreview } from './src/components/real-price-preview';
@@ -81,10 +81,10 @@ function MarketScreen({ products, source, reload, settingsButtons }: {
   const [category, setCategory] = useState<CatalogFilter>('all');
   const visibleProducts = useMemo(() => filterProductsByCategory(products, category), [products, category]);
   const categoryCounts = useMemo(() => getCategoryCounts(products), [products]);
-  const { cart, selectedPaymentKrw, quiz } = shopping;
+  const { cart, budgetKrw, selectedPaymentKrw, quiz } = shopping;
   const summary = getCartSummary(cart, products);
   // 잔액도 장바구니 합계에서 매번 계산해 담기·빼기·비우기 뒤 금액이 항상 함께 바뀝니다.
-  const budget = getBudgetSummary(summary.totalPriceKrw);
+  const budget = getBudgetSummary(summary.totalPriceKrw, budgetKrw);
   const budgetLabel = budget.status === 'over' ? '부족한 돈' : '남을 돈';
   const budgetAmountKrw = budget.status === 'over' ? budget.shortfallKrw : budget.remainingKrw;
   const budgetHint = budget.status === 'over'
@@ -94,8 +94,8 @@ function MarketScreen({ products, source, reload, settingsButtons }: {
       : summary.totalQuantity === 0
         ? '놀이돈 안에서 장을 봐요.'
         : '이대로 사면 남을 돈이에요.';
-  // 10,000원을 고르면 예산 잔액도 정답이 되므로, 맞히기 전에는 화면과 읽기 안내에서 함께 가립니다.
-  const hideBudgetAnswer = getPaymentSummary(summary.totalPriceKrw, selectedPaymentKrw).changeAmountKrw !== null
+  // 예산을 전부 내면 잔액이 곧 거스름돈이므로, 풀이 중에는 화면과 읽기 안내에서 잔액을 가립니다.
+  const hideBudgetAnswer = getPaymentSummary(summary.totalPriceKrw, selectedPaymentKrw, budgetKrw).changeAmountKrw !== null
     && quiz.status !== 'correct';
   const quizBudgetHint = '거스름돈을 맞히면 남을 돈을 보여 줘요.';
   const selectedProducts = products.filter((product) => (cart[product.id] ?? 0) > 0);
@@ -152,7 +152,7 @@ function MarketScreen({ products, source, reload, settingsButtons }: {
       style={[styles.summary, compactLayout && styles.inlineSummary]}
       accessible
       accessibilityLiveRegion="polite"
-      accessibilityLabel={'장바구니 총 ' + summary.totalQuantity + '개, 합계 ' + won.format(summary.totalPriceKrw) + '원. 오늘의 놀이돈 ' + won.format(STARTING_BUDGET_KRW) + '원. ' + (hideBudgetAnswer ? quizBudgetHint : budgetLabel + ' ' + won.format(budgetAmountKrw) + '원. ' + budgetHint)}
+      accessibilityLabel={'장바구니 총 ' + summary.totalQuantity + '개, 합계 ' + won.format(summary.totalPriceKrw) + '원. 오늘의 놀이돈 ' + won.format(budgetKrw) + '원. ' + (hideBudgetAnswer ? quizBudgetHint : budgetLabel + ' ' + won.format(budgetAmountKrw) + '원. ' + budgetHint)}
     >
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>🧺 담은 물건 {summary.totalQuantity}개</Text>
@@ -269,24 +269,39 @@ function MarketScreen({ products, source, reload, settingsButtons }: {
 
                 <View style={styles.notice}>
                   <Text style={styles.noticeTitle}>{allSamples ? '연습용 예시 가격이에요' : '가격을 살펴보고 골라요'}</Text>
-                  <Text style={styles.noticeText}>
-                    {allSamples ? '놀이를 위해 만든 가격이에요.\n실제 이마트 판매 가격이 아니에요.' : '예시 상품에는 연습용 가격이 표시돼요.\n판매 가격은 확인한 시점에 따라 달라질 수 있어요.'}
+                  <Text testID="sample-price-notice" style={styles.noticeText}>
+                    {allSamples ? '놀이를 위해 만든 가격이에요.\n실제 마트 판매 가격이 아니에요.' : '예시 상품에는 연습용 가격이 표시돼요.\n판매 가격은 확인한 시점에 따라 달라질 수 있어요.'}
                   </Text>
                   <Text testID="catalog-origin" style={styles.noticeText}>
                     {source === 'supabase' ? '가게에서 불러온 상품이에요.' : '앱에 준비된 예시 상품으로 놀고 있어요.'}
                   </Text>
                 </View>
 
-                <View
-                  style={styles.playMoney}
-                  accessible
-                  accessibilityLabel={'오늘의 놀이돈 ' + won.format(STARTING_BUDGET_KRW) + '원. 이 돈 안에서 물건을 골라 봐요.'}
-                >
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.playMoneyLabel}>오늘의 놀이돈</Text>
-                    <Text style={styles.playMoneyAmount}>{won.format(STARTING_BUDGET_KRW)}원</Text>
+                <View style={styles.playMoney}>
+                  <Text style={styles.playMoneyLabel} accessibilityRole="header">오늘의 놀이돈</Text>
+                  <Text style={styles.playMoneyHint}>장을 볼 때 쓸 금액을 골라요.</Text>
+                  <View style={[styles.budgetOptions, compactLayout && styles.stackedBudgetOptions]}>
+                    {BUDGET_OPTIONS_KRW.map((amountKrw) => {
+                      const selected = amountKrw === budgetKrw;
+                      return (
+                        <Pressable
+                          key={amountKrw}
+                          testID={'budget-option-' + amountKrw}
+                          accessibilityRole="button"
+                          accessibilityLabel={'장보기 예산 ' + won.format(amountKrw) + '원'}
+                          accessibilityState={{ selected }}
+                          onPress={() => dispatch({ type: 'select-budget', amountKrw })}
+                          style={({ pressed }) => [
+                            styles.budgetOption, selected && styles.selectedBudgetOption, pressed && styles.pressed,
+                          ]}
+                        >
+                          <Text style={[styles.budgetAmount, selected && styles.selectedBudgetAmount]}>
+                            {selected ? '✓ ' : ''}{won.format(amountKrw)}원
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
                   </View>
-                  <Text style={styles.playMoneyHint}>이 돈 안에서 물건을 골라 봐요.</Text>
                 </View>
 
                 <CategorySelector selected={category} counts={categoryCounts} onSelect={setCategory} />
@@ -374,6 +389,7 @@ function MarketScreen({ products, source, reload, settingsButtons }: {
                 </View>
                 {compactLayout && cartSummary}
                 <PaymentSelector
+                  budgetKrw={budgetKrw}
                   totalPriceKrw={summary.totalPriceKrw}
                   selectedPaymentKrw={selectedPaymentKrw}
                   quiz={quiz}
@@ -454,8 +470,13 @@ const styles = StyleSheet.create({
   summaryPrice: { fontSize: 25, fontWeight: '800', color: '#255B42' },
   playMoney: { marginTop: 18, padding: 16, backgroundColor: '#EAF0E5', borderRadius: 16 },
   playMoneyLabel: { fontSize: 17, fontWeight: '700', color: '#315239' },
-  playMoneyAmount: { fontSize: 24, fontWeight: '800', color: '#255B42' },
   playMoneyHint: { fontSize: 14, lineHeight: 22, color: '#4E6653', marginTop: 6 },
+  budgetOptions: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  stackedBudgetOptions: { flexDirection: 'column' },
+  budgetOption: { flexGrow: 1, minHeight: 48, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 10, borderRadius: 12, borderWidth: 2, borderColor: '#A0B39E', backgroundColor: '#FFFFFF' },
+  selectedBudgetOption: { borderColor: '#255B42', backgroundColor: '#255B42' },
+  budgetAmount: { fontSize: 18, fontWeight: '700', color: '#315239', textAlign: 'center' },
+  selectedBudgetAmount: { color: '#FFFFFF' },
   balanceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 10, borderRadius: 12, backgroundColor: '#EAF0E5', paddingHorizontal: 12, paddingVertical: 8 },
   balanceOver: { backgroundColor: '#FFF0D7' },
   balanceLabel: { fontSize: 16, fontWeight: '700', color: '#315239' },

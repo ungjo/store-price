@@ -7,7 +7,7 @@ name: 거스름돈 정답 입력
 ---
 - assertVisible:
     id: "cart-summary"
-    text: "^장바구니 총 ${CART_QUANTITY}개, 합계 ${CART_TOTAL}원\\. 오늘의 놀이돈 10,000원\\. 거스름돈을 맞히면 남을 돈을 보여 줘요\\.$"
+    text: "^장바구니 총 ${CART_QUANTITY}개, 합계 ${CART_TOTAL}원\\. 오늘의 놀이돈 ${typeof QUIZ_BUDGET === 'undefined' ? '10,000' : QUIZ_BUDGET}원\\. 거스름돈을 맞히면 남을 돈을 보여 줘요\\.$"
 - assertVisible:
     id: "quiz-answer"
     enabled: true

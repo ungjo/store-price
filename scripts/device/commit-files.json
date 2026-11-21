@@ -149,5 +149,8 @@
   "docs/book/chapters/08a-talkback-settings.md",
   "docs/book/chapters/08b-inspection-talkback-settings.md",
   "scripts/device/inspection-talkback-toggle.mjs",
-  "scripts/device/inspection-talkback-toggle.test.mjs"
+  "scripts/device/inspection-talkback-toggle.test.mjs",
+  "docs/book/chapters/09-shopping-budget.md",
+  "apps/mobile/src/features/budget/budget.ts",
+  "apps/mobile/.maestro/budget-choice.yaml"
 ]

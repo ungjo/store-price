@@ -7,6 +7,7 @@ import { type ChangeQuizState } from '../features/payment/change-quiz';
 import { ChangeQuiz } from './change-quiz';
 
 type PaymentSelectorProps = {
+  budgetKrw: number;
   totalPriceKrw: number;
   selectedPaymentKrw: number | null;
   onSelect: (amountKrw: number) => void;
@@ -22,6 +23,7 @@ type PaymentSelectorProps = {
 const won = new Intl.NumberFormat('ko-KR');
 
 export function PaymentSelector({
+  budgetKrw,
   totalPriceKrw,
   selectedPaymentKrw,
   onSelect,
@@ -33,8 +35,8 @@ export function PaymentSelector({
   onRetry,
   onComplete,
 }: PaymentSelectorProps) {
-  const payment = getPaymentSummary(totalPriceKrw, selectedPaymentKrw);
-  const disabled = payment.status === 'empty' || payment.status === 'over-budget';
+  const payment = getPaymentSummary(totalPriceKrw, selectedPaymentKrw, budgetKrw);
+  const canChooseMoney = payment.status !== 'empty' && payment.status !== 'over-budget';
   const canComplete = payment.status === 'ready' && quiz.status === 'correct';
   const needsMoreMoney = payment.status === 'insufficient';
   const message = payment.status === 'empty'
@@ -59,12 +61,16 @@ export function PaymentSelector({
       {/* 색과 함께 글자·접근성 상태를 바꿔 어떤 금액을 골랐는지 알 수 있게 합니다. */}
       {PAYMENT_OPTIONS_KRW.map((amountKrw) => {
         const selected = amountKrw === selectedPaymentKrw;
+        const exceedsBudget = amountKrw > budgetKrw;
+        const disabled = !canChooseMoney || exceedsBudget;
+        const budgetHint = exceedsBudget ? won.format(amountKrw) + '원 예산에서 쓸 수 있어요.' : undefined;
         return (
           <Pressable
             key={amountKrw}
             testID={'payment-option-' + amountKrw}
             accessibilityRole="button"
             accessibilityLabel={won.format(amountKrw) + '원 놀이돈 고르기'}
+            accessibilityHint={budgetHint}
             accessibilityState={{ disabled, selected }}
             disabled={disabled}
             onPress={() => { Keyboard.dismiss(); onSelect(amountKrw); }}
@@ -79,7 +85,7 @@ export function PaymentSelector({
               {won.format(amountKrw)}원
             </Text>
             <Text style={[styles.optionLabel, selected && styles.selectedText]}>
-              {selected ? '선택됨' : '고르기'}
+              {budgetHint ?? (selected ? '선택됨' : '고르기')}
             </Text>
           </Pressable>
         );

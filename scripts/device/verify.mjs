@@ -32,7 +32,7 @@ const mobileRoot = path.join(repoRoot, 'apps/mobile');
 const reportPath = 'docs/book/verification/latest-android.md';
 const port = 8091;
 // 상품 12개로 목록 왕복과 분류 검사가 늘어났으므로 전체 실기기 흐름의 상한을 확보합니다.
-const timeout = { tool: 30_000, check: 300_000, export: 600_000, server: 180_000, flow: 1_500_000 };
+const timeout = { tool: 30_000, check: 300_000, export: 600_000, server: 180_000, flow: 35 * 60_000 };
 const args = process.argv.slice(2);
 let noCommit = false;
 let receiptOnly = false;
@@ -518,7 +518,7 @@ async function verifyInspectionInstalled() {
         const maestroDir = path.join(runDir, 'maestro');
         await run('maestro-flow', tools.maestro, [
           '--device', selectedSerial, 'test', '-e', 'APP_ID=' + inspectionApkState.applicationId,
-          '-e', 'TARGET_MODE=inspection', '-e', 'RUN_ID=' + inspectionApkState.buildNonce,
+          '-e', 'TARGET_MODE=inspection', '-e', 'VERIFY_BUDGET_CHOICES=1', '-e', 'RUN_ID=' + inspectionApkState.buildNonce,
           '-e', 'INSPECTION_FROM_HOME=' + (inspectionFromHome ? '1' : '0'),
           '-e', 'PRIVATE_PREVIEW_ENABLED=0',
           '--format', 'junit', '--output', path.join(runDir, 'result.xml'),
@@ -888,6 +888,7 @@ function writeReport(status, reason = '') {
       'adb -s <선택한 실기기> shell settings get global stay_on_while_plugged_in',
     ] : []),
     'maestro check-syntax apps/mobile/.maestro/payment.yaml',
+    'maestro check-syntax apps/mobile/.maestro/budget-choice.yaml',
     'maestro check-syntax apps/mobile/.maestro/solve-quiz.yaml',
     'maestro check-syntax apps/mobile/.maestro/receipt.yaml',
     'maestro check-syntax apps/mobile/.maestro/catalog-loading-choice.yaml',
@@ -926,7 +927,7 @@ function writeReport(status, reason = '') {
     'maestro --device <선택한 실기기> test -e EXPO_URL=exp://127.0.0.1:8091 -e RUN_ID=<실행 ID>-loading --format junit --output <검사폴더>/loading-result.xml --test-output-dir <검사폴더>/maestro-loading --debug-output <검사폴더>/maestro-loading apps/mobile/.maestro/catalog-loading-choice.yaml',
     ...(inspectionPath ? [
       ...(inspectionResult?.installationMode === 'fresh' ? ['adb -s <선택한 실기기> install -R --user <현재 Android 사용자> <검증한 검사 APK>'] : inspectionResult?.installationMode === 'updated-verified' ? ['adb -s <선택한 실기기> install -r --user <현재 Android 사용자> <동일 서명의 새 검사 APK>'] : ['# 이미 설치한 검사 APK의 해시·버전이 이번 빌드와 정확히 같은지 검증해 재사용']),
-      'maestro --device <선택한 실기기> test -e APP_ID=com.ungjo.storeprice.inspection -e TARGET_MODE=inspection -e INSPECTION_FROM_HOME=' + (inspectionFromHome ? '1' : '0') + ' -e RUN_ID=<APK 빌드 확인 번호> -e PRIVATE_PREVIEW_ENABLED=0 --format junit --output <검사폴더>/result.xml --test-output-dir <검사폴더>/maestro --debug-output <검사폴더>/maestro apps/mobile/.maestro/payment.yaml',
+      'maestro --device <선택한 실기기> test -e APP_ID=com.ungjo.storeprice.inspection -e TARGET_MODE=inspection -e VERIFY_BUDGET_CHOICES=1 -e INSPECTION_FROM_HOME=' + (inspectionFromHome ? '1' : '0') + ' -e RUN_ID=<APK 빌드 확인 번호> -e PRIVATE_PREVIEW_ENABLED=0 --format junit --output <검사폴더>/result.xml --test-output-dir <검사폴더>/maestro --debug-output <검사폴더>/maestro apps/mobile/.maestro/payment.yaml',
     ] : ['maestro --device <선택한 실기기> test -e EXPO_URL=exp://127.0.0.1:8091 -e RUN_ID=<실행 ID> --format junit --output <검사폴더>/result.xml --test-output-dir <검사폴더>/maestro --debug-output <검사폴더>/maestro apps/mobile/.maestro/payment.yaml']),
     ...(standaloneJunit ? [
       '# 직접 시작한 개발 서버·USB 연결을 정리한 후 현재 Android 프로필에 검증한 APK를 새로 설치',
@@ -1062,6 +1063,7 @@ function writeReport(status, reason = '') {
       : '- 이 실행만의 화면 표시를 확인해 이전 번들로 검사가 통과하는 것을 차단했다.',
     '- 장바구니 담기·합계·수량 감소·9개 상한·품목 삭제·전체 비우기.',
     '- 놀이돈 예산 안·딱 맞음·초과와 예산 안으로 복귀.',
+    '- 예시 가격 안내, 10,000원·50,000원 예산 전환, 5,500원 장보기와 50,000원 지불의 거스름돈 44,500원 및 영수증.',
     '- 지불할 돈 단일 선택·부족액·선택 취소·상품 변경 시 선택 초기화.',
     '- 빈 장바구니와 예산 초과의 선택 차단·재실행 시 초기화.',
     '- 받을 거스름돈과 계산식: 5,500원에 10,000원은 4,500원, 정확히 낸 금액은 0원.',
@@ -1073,7 +1075,7 @@ function writeReport(status, reason = '') {
     '- 정답 전 계산 완료 차단, 영수증 상품별 가격·수량·합계·지불액·거스름돈·잔액을 확인한다.',
     '- 0원 거스름돈도 완료하며, 다시 장보기와 영수증 상태의 재실행으로 새 놀이를 시작한다.',
     '', '## 결과', '',
-    ...checks.filter((check) => check.label.startsWith('maestro-syntax-readability-') || /^readability-(?:standard|large-font|narrow-large-font)-(?:open|correct|finish)$/u.test(check.label) || ['privacy-page', 'display-settings-helpers', 'keyboard-layout-helpers', 'talkback-observer-tests', 'talkback-device-helpers', 'talkback-speech-ocr-tests', 'talkback-flow', 'maestro-syntax-main', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'maestro-syntax-categories', 'maestro-syntax-standalone', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'build-helpers', 'app-config-tests', 'inspection-build-helpers', 'inspection-device-helpers', 'inspection-talkback-toggle-tests', 'inspection-report-tests', 'production-tests', 'inspection-installed', 'standalone-device-helpers', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'catalog-http-after-apk', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow', 'standalone-offline', 'screen-awake-restore', 'screen-awake-restored-check'].includes(check.label))
+    ...checks.filter((check) => check.label.startsWith('maestro-syntax-readability-') || /^readability-(?:standard|large-font|narrow-large-font)-(?:open|correct|finish)$/u.test(check.label) || ['privacy-page', 'display-settings-helpers', 'keyboard-layout-helpers', 'talkback-observer-tests', 'talkback-device-helpers', 'talkback-speech-ocr-tests', 'talkback-flow', 'maestro-syntax-main', 'maestro-syntax-budget', 'maestro-syntax-quiz', 'maestro-syntax-receipt', 'maestro-syntax-preview', 'maestro-syntax-loading', 'maestro-syntax-categories', 'maestro-syntax-standalone', 'git-guard-tests', 'catalog-http-check-tests', 'private-preview-tests', 'build-helpers', 'app-config-tests', 'inspection-build-helpers', 'inspection-device-helpers', 'inspection-talkback-toggle-tests', 'inspection-report-tests', 'production-tests', 'inspection-installed', 'standalone-device-helpers', 'private-preview-http-before', 'private-preview-http-after', 'private-preview-release-scan', 'catalog-http-before', 'catalog-http-after', 'catalog-http-after-apk', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'maestro-loading-choice', 'maestro-flow', 'standalone-offline', 'screen-awake-restore', 'screen-awake-restored-check'].includes(check.label))
       .map((check) => '- ' + check.label + ': 종료 코드 ' + check.exitCode),
     '- JUnit: ' + (junit ? `${junit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
     '- 예시 선택 JUnit: ' + (loadingJunit ? `${loadingJunit.testcases} testcase, 실패 0, 오류 0, 건너뜀 0` : '통과를 확인하지 못함'),
@@ -1202,7 +1204,7 @@ try {
       if (previewState) previewSession = await startPrivatePreviewServer(previewState, { sessionId: runId });
       checkPreviewExpectations = writePreviewExpectations(path.join(artifactRoot, 'private-preview-expectations.js'), previewSession);
       // 일반 YAML 구문 검사만으로는 명령 형식 오류를 찾을 수 없어, 기기를 조작하기 전에 Maestro로 확인합니다.
-      for (const [label, file] of [['maestro-syntax-main', 'apps/mobile/.maestro/payment.yaml'], ['maestro-syntax-quiz', 'apps/mobile/.maestro/solve-quiz.yaml'], ['maestro-syntax-receipt', 'apps/mobile/.maestro/receipt.yaml'], ['maestro-syntax-preview', 'apps/mobile/.maestro/real-price-preview.yaml'], ['maestro-syntax-loading', 'apps/mobile/.maestro/catalog-loading-choice.yaml'], ['maestro-syntax-categories', 'apps/mobile/.maestro/catalog-categories.yaml'], ['maestro-syntax-standalone', 'apps/mobile/.maestro/standalone-offline.yaml']]) {
+      for (const [label, file] of [['maestro-syntax-main', 'apps/mobile/.maestro/payment.yaml'], ['maestro-syntax-budget', 'apps/mobile/.maestro/budget-choice.yaml'], ['maestro-syntax-quiz', 'apps/mobile/.maestro/solve-quiz.yaml'], ['maestro-syntax-receipt', 'apps/mobile/.maestro/receipt.yaml'], ['maestro-syntax-preview', 'apps/mobile/.maestro/real-price-preview.yaml'], ['maestro-syntax-loading', 'apps/mobile/.maestro/catalog-loading-choice.yaml'], ['maestro-syntax-categories', 'apps/mobile/.maestro/catalog-categories.yaml'], ['maestro-syntax-standalone', 'apps/mobile/.maestro/standalone-offline.yaml']]) {
         await run(label, tools.maestro, ['check-syntax', file], { timeout: 60_000 });
       }
       for (const phase of ['open', 'correct', 'finish']) {
