@@ -267,3 +267,11 @@ git add AGENTS.md README.md apps scripts supabase docs
 `node docs/book/tools/render_book.cjs`로 HTML과 408쪽 내지를 생성하고 앞뒤 표지를 합쳐 410쪽 완성본을 만들었다. `a921167`과 전체 페이지를 비교해 지면이 달라진 곳은 본문 45·73·308·340쪽뿐임을 확인했다. 네 쪽을 이미지로 출력해 명령의 줄바꿈을 확인했다. 책갈피 322개, 내부 목적지 196개, 첨부 파일 13개와 앞뒤 표지도 대조했다. HTML에서는 교정한 코드 블록의 줄바꿈과 책 안 링크를 검사했다.
 
 Pages 게시 커밋 `9efc523` 반영 후 [자료실](https://ungjo.github.io/store-price/book/)에서 내려받은 410쪽 PDF·HTML·실습 ZIP의 SHA-256이 각각 로컬 검증본과 일치했다.
+
+## 이전 PDF 독자를 위한 자료실 정정 안내 (2026-11-22)
+
+자료실의 [이전 판 정정 안내](https://ungjo.github.io/store-price/book/#errata)에 본문 45·73·308·340쪽의 교정 내용을 실었다. 기존 `#errata-398` 주소는 20장 실행 안내로 바로 이동한다. 360px와 1280px 너비의 Chrome에서 공지 이동, 3장 명령의 줄 순서, Git 복구 설명 펼치기, 가로 넘침 여부를 확인했다.
+
+구판 절차로 이미 첫 커밋을 만든 경우도 확인했다. ZIP에서 꺼낸 17장과 19장의 실습 폴더에서 각각 구판의 첫 커밋을 만들자 `git status --short`에 `.editorconfig`와 `.gitattributes`만 미추적으로 나타났다. `git add -- .editorconfig .gitattributes`로 두 파일만 선택하고 새 커밋을 만든 뒤 작업 폴더가 깨끗해졌고 각 장의 Git 상태 검사를 통과했다.
+
+Pages 게시 커밋 `a5a06fb`을 반영한 공개 자료실에서 정정 안내와 HTML판의 다섯 절 링크를 확인했다. 공개 PDF·HTML·ZIP을 내려받아 `9665e12`의 배포 파일과 바이트 단위로 대조했다.
