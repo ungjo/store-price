@@ -38,6 +38,7 @@ summary{cursor:pointer;font-weight:700;color:var(--accent)}details{margin:.65rem
 <p class="book">처음부터 따라 만드는 꼬마 시장 Android 앱</p>
 <h1>독자 자료실</h1>
 <p class="intro">실습서를 PDF로 읽고, Windows PC에서 장별 예제를 따라 해 보세요. 휴대전화로 열었다면 이 페이지의 주소를 복사해 실습할 PC에서 열 수 있습니다.</p>
+<p><a href="#errata-398">398쪽 정정 안내 · PC에서 20장 실행하기</a></p>
 </header>
 <section class="downloads" aria-label="다운로드 파일">
 <article class="book-download"><h2>표지 포함 실습서</h2>
@@ -52,6 +53,22 @@ summary{cursor:pointer;font-weight:700;color:var(--accent)}details{margin:.65rem
 <p>11장에 나오는 상품 12개의 이름, 판매 단위, 실습용 기준가격을 Excel에서 확인할 수 있습니다.</p>
 <p class="meta"><code>product-samples.csv</code> · UTF-8</p>
 <a class="button secondary" href="./product-samples.csv" download="product-samples.csv">상품 12개 CSV 받기</a></article>
+</section>
+<section class="guide" id="final" aria-labelledby="errata-398">
+<h2 id="errata-398">398쪽 정정 안내</h2>
+<p>부록 C.2 본문 398쪽의 QR과 ‘20장 완성 소스 ZIP 받기’는 이전 예제로 연결됩니다. PC 브라우저에서 상품 화면으로 이동할 때 생기던 초점 오류를 수정한 예제는 아래 파일에 들어 있습니다.</p>
+<p><a class="button" href="./market-lab.zip" download="market-lab.zip">최신 장별 실습 예제 ZIP 받기</a></p>
+<h3>Windows PC에서 20장 실행하기</h3>
+<ol>
+<li>받은 ZIP의 압축을 <strong>새 폴더</strong>에 모두 푸세요. VS Code의 <strong>파일 → 폴더 열기</strong>에서 <code>start.mjs</code>가 보이는 폴더를 열고 <strong>터미널 → 새 터미널</strong>로 PowerShell을 여세요.</li>
+<li>아래 명령으로 20장 예제를 준비하세요. <strong>방금 받은 ZIP에서 이미 20장을 열어 <code>work/ch20</code>이 있다면 3단계로 이동하세요.</strong>
+<pre><code>node start.mjs 20</code></pre></li>
+<li>같은 터미널에서 다음 세 줄을 차례로 실행하세요. 처음에는 인터넷에 연결하고, 패키지 설치가 끝난 뒤 마지막 줄을 입력하세요.
+<pre><code>cd work/ch20/apps/mobile
+npm.cmd ci
+npm.cmd run web</code></pre></li>
+</ol>
+<p>브라우저가 자동으로 열리지 않으면 터미널에 표시된 웹 주소를 여세요. 상품 화면에서 사과 두 개와 우유 한 팩을 담아 합계 <strong>5,500원</strong>을 확인하세요. 20.7절처럼 예산과 낼 돈을 각각 50,000원으로 고르면 영수증의 거스름돈은 <strong>44,500원</strong>입니다.</p>
 </section>
 <section class="guide" aria-labelledby="first"><h2 id="first">Windows에서 첫 예제 실행하기</h2>
 <ol>
@@ -69,13 +86,6 @@ node checkout.mts</code></pre>
 <p>압축을 푼 뒤 <code>start.mjs</code>가 있는 폴더를 VS Code에서 여세요. <strong>F1 → 작업: 작업 실행 → 실습 명령어 도움말</strong>을 선택하면 1~20장의 제목과 여는 명령을 터미널에서 함께 볼 수 있습니다. 직접 <code>node start.mjs --help</code>를 입력해도 됩니다.</p>
 <p>작업 목록의 <strong>한 장의 실습 파일 열기</strong>에서 장 제목을 고르세요. <strong>전체 장의 실습 파일 한 번에 열기</strong>를 선택하면 왼쪽 탐색기의 <code>work</code> 폴더에 20개 장이 준비되고, 현재 창에 장별 대표 파일 20개가 열립니다. 터미널에서는 다음 명령 중 하나를 입력하세요.</p>
 <ul><li>6장 파일 열기 <code>node start.mjs --open 06</code></li><li>20장 완성본 열기 <code>node start.mjs --open 20</code></li><li>1~20장 전체 열기 <code>node start.mjs --open all</code></li></ul></section>
-<section class="guide" aria-labelledby="final"><h2 id="final">20장 완성본에서 50,000원으로 장보기</h2>
-<p><code>start.mjs</code>가 있는 폴더의 터미널에서 <code>node start.mjs 20</code>을 입력하세요. 왼쪽 탐색기에 <strong>work → ch20 → apps → mobile</strong>이 생깁니다. VS Code에서 그 폴더를 계속 보면서 아래 명령을 같은 터미널에 한 줄씩 입력합니다.</p>
-<pre aria-label="20장 완성 앱을 PC 브라우저에서 실행하는 세 줄"><code>cd work/ch20/apps/mobile
-npm.cmd ci
-npm.cmd run web</code></pre>
-<p>패키지 설치가 끝나 입력 칸이 돌아오면 마지막 줄을 실행하세요. 브라우저에서 예시 상품을 열어 <strong>오늘의 놀이돈</strong>을 50,000원으로 바꾸고, 사과 두 개와 우유 한 팩을 담아 <strong>낼 놀이돈 고르기</strong>에서도 50,000원을 선택해 보세요.</p>
-<p>이전 장별 ZIP으로 작업했다면 <a href="https://github.com/ungjo/store-price/archive/9f5fd1318294b2bc5a7cfd700952f3512835febd.zip">50,000원이 포함된 20장 완성 소스</a>를 별도 폴더에 풉니다. 압축 속 저장소 폴더에서 <code>apps/mobile</code>을 열어 같은 npm 명령을 실행합니다.</p></section>
 <section class="guide" aria-labelledby="data"><h2 id="data">11~13장의 데이터 찾기</h2>
 <p>가격표에는 책의 계산을 재현하기 위해 정한 예시 금액이 들어 있습니다. 사과 2개와 우유 1팩을 담으면 1,500 × 2 + 2,500 = 5,500원입니다.</p>
 <details><summary>11장 앱의 상품 목록과 데이터베이스 초기 파일</summary>
