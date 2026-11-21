@@ -1,0 +1,201 @@
+{
+  "date": "2026-11-21",
+  "method": "격리된 Windows 데스크톱과 임시 프로필에서 Windows 데스크톱용 VS Code 1.147.0, Git Bash, Expo를 실제로 실행했다. Electron 화면을 기기 배율 3배로 다시 렌더링했고 터미널 글꼴은 DOM 렌더러로 그렸다. PC 웹 미리보기는 Chrome의 기기 배율 4배에서 촬영했다. 필요한 영역만 원본 픽셀 그대로 잘라 쓰고 위치 안내 번호를 더했다.",
+  "platform": "Git for Windows Bash, Node.js 26, Expo 58.0.23. 개발 서버는 예제 프로젝트의 localhost:8082에만 열었다.",
+  "verification": [
+    "node prices.ts → 사과 1500",
+    "node start.mts → 3000",
+    "node checkout.mts → 총 3개 / 5,500원",
+    "VS Code에서 items.mts 문자열 가격의 TS2322 발생 확인 후 복원",
+    "git archive adcfaab의 apps/mobile에서 npm ci --offline 실행",
+    "Expo SDK 58에서 실제 QR·개발 서버 중지와 입력 프롬프트 복귀 확인",
+    "App.tsx의 한 문장만 바뀐 파일을 검사하고 PC 웹 미리보기의 자동 갱신 확인. 이번 촬영에서 Android 단말 연결 검사는 수행하지 않았다."
+  ],
+  "figures": [
+    {
+      "file": "02-editor-terminal.png",
+      "description": "prices.ts 편집기와 Git Bash 실행 · 위치 세 곳 표시",
+      "sha256": "8e67c70158a4a6df1cfe39ca3fefb59656660800b4fbc6f5daf90a84c4573775",
+      "source_pixel_sha256": "742e222791c966dfa5d62cf2b9a9392e4f92428ea0d85bfd38ba39a3bccfbfe0",
+      "width": 3030,
+      "height": 1800,
+      "source_width": 3030,
+      "source_height": 1800,
+      "device_scale_factor": 3
+    },
+    {
+      "file": "02-terminal-result.png",
+      "description": "사과 1500 결과 줄 확대",
+      "sha256": "cd9b5c0d36568b8fbbda60bc2b679bcede8c5bc0fabf02865093d0b6431768a2",
+      "source_pixel_sha256": "742e222791c966dfa5d62cf2b9a9392e4f92428ea0d85bfd38ba39a3bccfbfe0",
+      "width": 1347,
+      "height": 261,
+      "source_width": 3030,
+      "source_height": 1800,
+      "device_scale_factor": 3,
+      "crop_source_pixels": [
+        708,
+        924,
+        2055,
+        1185
+      ]
+    },
+    {
+      "file": "03-editor-first-run.png",
+      "description": "start.mts 원본과 실행 결과 · 위치 세 곳 표시",
+      "sha256": "5d42ec283b803ee7046a4e9d30168161787b20997c1435889749f77cfe6a89d8",
+      "source_pixel_sha256": "97bf7a81754716d699e830b07dbc35965a8463073dbdf098696fdd085d3ef2ff",
+      "width": 3090,
+      "height": 2100,
+      "source_width": 3090,
+      "source_height": 2100,
+      "device_scale_factor": 3
+    },
+    {
+      "file": "03-editor-problems.png",
+      "description": "문자열 가격의 TS2322 경고가 나타난 실제 Problems 패널",
+      "sha256": "b241ea58df6d13d23bcd6560116f87a475846f0e8ba86cb81bbc8e95050232a0",
+      "source_pixel_sha256": "b241ea58df6d13d23bcd6560116f87a475846f0e8ba86cb81bbc8e95050232a0",
+      "width": 3030,
+      "height": 2130,
+      "source_width": 3030,
+      "source_height": 2130,
+      "device_scale_factor": 3
+    },
+    {
+      "file": "03-problem-detail.png",
+      "description": "동일 캡처의 문제 행과 메시지 확대",
+      "sha256": "1f2d553c7ab06a30f7595d5f7d04401d59a340f8a3f23512287779be9e511183",
+      "source_pixel_sha256": "b241ea58df6d13d23bcd6560116f87a475846f0e8ba86cb81bbc8e95050232a0",
+      "width": 2247,
+      "height": 792,
+      "source_width": 3030,
+      "source_height": 2130,
+      "device_scale_factor": 3,
+      "crop_source_pixels": [
+        690,
+        603,
+        2937,
+        1395
+      ]
+    },
+    {
+      "file": "03-editor-checkout.png",
+      "description": "checkout.mts 편집기 및 두 번의 실제 Node 실행",
+      "sha256": "761eb99e1d499e2566ebd3514bc18787c92c8399d43178be8b2c04776ef69dc8",
+      "source_pixel_sha256": "761eb99e1d499e2566ebd3514bc18787c92c8399d43178be8b2c04776ef69dc8",
+      "width": 3090,
+      "height": 2100,
+      "source_width": 3090,
+      "source_height": 2100,
+      "device_scale_factor": 3
+    },
+    {
+      "file": "03-checkout-output.png",
+      "description": "계산 명령과 결과 줄 확대",
+      "sha256": "83b854a50d3b6dd4479819bd914abf2b6f18eeb9f1404cdc9ca58e4824ecc299",
+      "source_pixel_sha256": "761eb99e1d499e2566ebd3514bc18787c92c8399d43178be8b2c04776ef69dc8",
+      "width": 1362,
+      "height": 408,
+      "source_width": 3090,
+      "source_height": 2100,
+      "device_scale_factor": 3,
+      "crop_source_pixels": [
+        708,
+        1221,
+        2070,
+        1629
+      ]
+    },
+    {
+      "file": "04-project-editor.png",
+      "description": "adcfaab의 앱 루트 · 작업할 파일 세 곳 표시",
+      "sha256": "0f2fd160eabd02fb8e07e96fd09ee8f1439becd68ee8f027b543e2413fa063d0",
+      "source_pixel_sha256": "a9d2fca47a13fd7480cb17fcd9d5e53ead154d93d2939f3c3fec6e3f18629b75",
+      "width": 3030,
+      "height": 1800,
+      "source_width": 3030,
+      "source_height": 1800,
+      "device_scale_factor": 3
+    },
+    {
+      "file": "04-edit-app.png",
+      "description": "첫 화면 예제에 들어 있는 App.tsx의 메시지",
+      "sha256": "faf1a5faf838256d7f75edc963a6330bbbaaad16c72c575c29eeb1321ef12eed",
+      "source_pixel_sha256": "9bc9d43a2705c33c06b61f2bc7f5ae00d2e1223aff6b4b6dada60e6c9a4f3f9a",
+      "width": 2850,
+      "height": 1284,
+      "source_width": 3270,
+      "source_height": 2100,
+      "device_scale_factor": 3,
+      "crop_source_pixels": [
+        159,
+        105,
+        3009,
+        1389
+      ]
+    },
+    {
+      "file": "04-before-save.png",
+      "description": "새 메시지만 입력한 저장 전 탭과 줄",
+      "sha256": "4266dade7f61ee7908cb58a1c796883cfa2ce3d108c4cfcfdc6ef26ad60b0954",
+      "source_pixel_sha256": "6d6c7b9716ef8fe96c9e1816263ee0253e45f6dba0bbfc52bf30f09e77263ab4",
+      "width": 2850,
+      "height": 1284,
+      "source_width": 3270,
+      "source_height": 2100,
+      "device_scale_factor": 3,
+      "crop_source_pixels": [
+        159,
+        105,
+        3009,
+        1389
+      ]
+    },
+    {
+      "file": "04-expo-terminal.png",
+      "description": "Expo Go 연결 QR, Metro 주소와 단축키 출력 · 로컬호스트 모드",
+      "sha256": "755d1470a888e0a7c51a123600a38b0af3d6dc7d8f9feb53218691268777a032",
+      "source_pixel_sha256": "b3d1e32a380c88b04db8ab915b74a0468fe45e63bd21291939ca048d98badcbd",
+      "width": 1605,
+      "height": 2247,
+      "source_width": 4440,
+      "source_height": 3750,
+      "device_scale_factor": 3,
+      "crop_source_pixels": [
+        180,
+        210,
+        1785,
+        2457
+      ]
+    },
+    {
+      "file": "04-saved-web.png",
+      "description": "저장 후 같은 localhost 웹 미리보기에서 자동 갱신된 인사말 카드",
+      "sha256": "38e438089f17932f93ba950ddd3295a53813bae541a2783cb31ac67cacaaf538",
+      "source_pixel_sha256": "38e438089f17932f93ba950ddd3295a53813bae541a2783cb31ac67cacaaf538",
+      "width": 1896,
+      "height": 756,
+      "source_width": 1896,
+      "source_height": 756,
+      "device_scale_factor": 4
+    },
+    {
+      "file": "04-server-stopped.png",
+      "description": "서버 중지 후 돌아온 실제 셸 입력 줄",
+      "sha256": "f4a98e5e44e7c2ebc62c5c84e96356f7975d87a49abed4478d813699161eacb7",
+      "source_pixel_sha256": "df8dfde3b670b8ea432ba96b90aca2464afd44ab657483765c151b521654549c",
+      "width": 1062,
+      "height": 207,
+      "source_width": 3270,
+      "source_height": 2100,
+      "device_scale_factor": 3,
+      "crop_source_pixels": [
+        183,
+        1764,
+        1245,
+        1971
+      ]
+    }
+  ]
+}

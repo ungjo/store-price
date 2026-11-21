@@ -1,0 +1,228 @@
+{
+  "source": "Supabase / supabase/supabase",
+  "commit": "4ead4b092ee7e5ad4def2cd295b14492db12720b",
+  "license": "Apache-2.0",
+  "license_url": "https://github.com/supabase/supabase/blob/4ead4b092ee7e5ad4def2cd295b14492db12720b/LICENSE",
+  "included_license": "licenses/supabase-Apache-2.0.txt",
+  "checked": "2026-11-21",
+  "note": "공식 공개 자료의 Studio 예시 화면. 독자 프로젝트의 호스팅 세션 캡처가 아님. 실습 쿼리 결과는 별도로 로컬 PGlite에서 확인.",
+  "figures": [
+    {
+      "file": "12-studio-create.png",
+      "source": "https://github.com/supabase/supabase/blob/4ead4b092ee7e5ad4def2cd295b14492db12720b/apps/www/public/images/blog/2024-12-01-orioledb-release/orioledb-project-create.png",
+      "original_sha256": "662c05f4f03cb344c4cfe7c920f6280b60ca7f2bdc762f401500eacc03d3b937",
+      "book_sha256": "cf5a74e8a69e70cdbeef352d6f4dac99f1acc118cf2be453ee601dc988d25498",
+      "changes": "입력 컨트롤 4개와 마지막 버튼을 원본 화소에서 각각 잘라 순서대로 배치. 예시 프로젝트 이름 차폐. 비밀번호 입력 힌트의 문자 대비를 조정. 왼쪽 번호·영문 레이블·한글 작업명은 인쇄용 새 활자.",
+      "book_dimensions_px": [
+        2176,
+        1030
+      ],
+      "original_dimensions_px": [
+        1376,
+        2034
+      ],
+      "source_crops_xyxy": [
+        [
+          497,
+          233,
+          1322,
+          321
+        ],
+        [
+          497,
+          384,
+          1322,
+          471
+        ],
+        [
+          497,
+          685,
+          1322,
+          773
+        ],
+        [
+          497,
+          915,
+          1322,
+          1004
+        ],
+        [
+          1044,
+          1937,
+          1324,
+          2011
+        ]
+      ],
+      "redacted_source_xyxy": [
+        [
+          520,
+          410,
+          912,
+          454
+        ]
+      ],
+      "contrast_adjustment": {
+        "rect": [
+          526,
+          699,
+          973,
+          754
+        ],
+        "pivot": 36,
+        "factor": 3.35
+      }
+    },
+    {
+      "file": "12-studio-sql-editor.png",
+      "source": "https://github.com/supabase/supabase/blob/4ead4b092ee7e5ad4def2cd295b14492db12720b/apps/www/public/images/index/dashboard/supabase-sql-editor-light.png",
+      "original_sha256": "f9333b5db4701dba48016a43dc9268ecf81b66bad1824e496c44827b2978a32f",
+      "book_sha256": "61fca174f38cf7d711b86a8cc82f92f978600d925c5e56a848475a3a26bc6aec",
+      "changes": "실제 캡처의 왼쪽 새 쿼리 목록, SQL 입력 줄, Run 버튼, Results 탭·첫 행을 각기 원본에서 발췌. 결과는 같은 행의 name·code 두 열. 원래 열 간 빈 공간을 줄였으며 번호와 설명은 별도 조판.",
+      "book_dimensions_px": [
+        2176,
+        1232
+      ],
+      "original_dimensions_px": [
+        2420,
+        1365
+      ],
+      "source_crops_xyxy": [
+        [
+          87,
+          0,
+          461,
+          155
+        ],
+        [
+          485,
+          165,
+          811,
+          355
+        ],
+        [
+          1332,
+          851,
+          1639,
+          914
+        ],
+        [
+          466,
+          854,
+          550,
+          917
+        ],
+        [
+          968,
+          919,
+          1107,
+          1025
+        ],
+        [
+          1443,
+          919,
+          1563,
+          1025
+        ]
+      ],
+      "redacted_source_xyxy": []
+    },
+    {
+      "file": "12-studio-project-url.png",
+      "source": "https://github.com/supabase/supabase/blob/4ead4b092ee7e5ad4def2cd295b14492db12720b/apps/docs/public/img/guides/auth-workos/supabase-project-settings-url.png",
+      "original_sha256": "2670c5e7f9cb04a5dba76eb068deaccbfc698014ad6312dd7d4c9be29c8653e0",
+      "book_sha256": "6b39acebb045c660e285820aecd098b34957fe610bbea94fdd675404ae5eeff7",
+      "changes": "Project URL 입력값과 같은 줄 오른쪽 Copy 컨트롤을 각각 원본 영역에서 확대. 주소의 프로젝트 참조 문자열을 차폐. 새 활자로 입력칸·버튼 원문을 병기.",
+      "book_dimensions_px": [
+        2176,
+        600
+      ],
+      "original_dimensions_px": [
+        2554,
+        460
+      ],
+      "source_crops_xyxy": [
+        [
+          1471,
+          287,
+          2221,
+          380
+        ],
+        [
+          2301,
+          288,
+          2473,
+          379
+        ]
+      ],
+      "redacted_source_xyxy": [
+        [
+          1646,
+          307,
+          1986,
+          358
+        ]
+      ]
+    },
+    {
+      "file": "12-studio-publishable.png",
+      "source": "https://github.com/supabase/supabase/blob/4ead4b092ee7e5ad4def2cd295b14492db12720b/apps/www/public/images/blog/2026/security-retro/api-keys.png",
+      "original_sha256": "c30eba4b0bfebec2c9c756e95d9db927f9233a4fa1954261f3c56dde739b09ae",
+      "book_sha256": "8e5e9d0f10b05de8aefca5c734c8b62af8e87c94828707b2e246433e07424994",
+      "changes": "Publishable key 영역의 default 행, sb_publishable_ 접두어, 같은 행 복사 아이콘을 원본에서 따로 확대. 접두어 다음의 값은 차폐하고 Secret keys 구역은 제외. 복사 아이콘의 밝기 대비를 조정. 녹색 번호와 패널 설명은 별도 조판.",
+      "book_dimensions_px": [
+        2176,
+        645
+      ],
+      "original_dimensions_px": [
+        2352,
+        1060
+      ],
+      "source_crops_xyxy": [
+        [
+          72,
+          238,
+          365,
+          406
+        ],
+        [
+          533,
+          315,
+          791,
+          411
+        ],
+        [
+          1229,
+          317,
+          1314,
+          408
+        ]
+      ],
+      "redacted_source_xyxy": [
+        [
+          776,
+          341,
+          1200,
+          384
+        ]
+      ],
+      "contrast_adjustment": {
+        "rect": [
+          1250,
+          337,
+          1295,
+          388
+        ],
+        "pivot": 36,
+        "factor": 1.58
+      }
+    }
+  ],
+  "offline_license_check": {
+    "command": "node docs/book/tools/render_book.cjs --proof",
+    "original_bytes": 11338,
+    "sha256": "c29468abcd629e248c2f76848155c386b733872bcabcc4cf65ef1e7c61431042",
+    "pdf": "pypdf 증분 첨부 후 원문 바이트, 전체 페이지의 링크 주석과 이름 있는 이동 대상을 비교했다.",
+    "html": "인터넷을 끈 Chromium에서 부록의 다운로드를 클릭해 저장한 파일을 원문과 바이트 단위로 대조했다.",
+    "visual": "Poppler로 마지막 쪽을 렌더링해 첨부 파일 위치와 파일 이름이 읽히는지 확인했다."
+  }
+}

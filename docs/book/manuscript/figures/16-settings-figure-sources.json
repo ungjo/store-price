@@ -1,0 +1,74 @@
+[
+  {
+    "name": "16-settings-off.png",
+    "run": "20261121T110805536Z-4ea4a1da",
+    "date": "2026-11-21",
+    "device": "SM-X710 / Android 14 / Expo Go",
+    "description": "장보기 화면 위쪽의 TalkBack 설정 열기 버튼과 화면 읽기 꺼짐 표시.",
+    "source_path": "../tb-settings/.artifacts/device/20261121T110805536Z-4ea4a1da/maestro-loading/2026-11-21_201048/상품을 기다리는 중 예시 놀이 선택과 늦은 응답 무시/takeScreenshot/catalog-sample-new-round.png",
+    "source_sha256": "56b47ce4a7455448322574abbaa346e142c3ebf163224882dfb66b8b319c9704",
+    "original_size": [
+      1600,
+      2560
+    ],
+    "crop": [
+      762,
+      236,
+      1120,
+      390
+    ],
+    "result_size": [
+      358,
+      154
+    ],
+    "result_sha256": "16f3ad77e633e66b37b6cb27239cba1bd5d2cbdaf9c947f4ee8a21e7c75ef585"
+  },
+  {
+    "name": "16-settings-on.png",
+    "run": "20261121T110805536Z-4ea4a1da",
+    "date": "2026-11-21",
+    "device": "SM-X710 / Android 14 / Expo Go",
+    "description": "같은 장보기 화면 위쪽의 TalkBack 설정 열기 버튼과 화면 읽기 켜짐 표시.",
+    "source_path": "../tb-settings/.artifacts/device/20261121T110805536Z-4ea4a1da/talkback/settings-screen-reader-on.png",
+    "source_sha256": "86bb28f31e93a5e1a24d2c6e94501a4cb61de7b65e1d76c7deaed4c06708e267",
+    "original_size": [
+      1600,
+      2560
+    ],
+    "crop": [
+      762,
+      236,
+      1120,
+      390
+    ],
+    "result_size": [
+      358,
+      154
+    ],
+    "result_sha256": "ca23bd49694dee4545d0adc72515a979447e088267e35127f51681bdee450064"
+  },
+  {
+    "name": "16-settings-android.png",
+    "date": "2026-11-21",
+    "device": "SM-X710 / Android 14 / 삼성 Android 설정",
+    "description": "Android 접근성 설정 오른쪽 패널에 열린 TalkBack 상세와 사용 안 함 스위치. 앱에서 사용하는 것과 같은 공개 설정 인텐트로 열고 스위치를 누르지 않은 채 원래 실행 중이던 꼬마 시장 검사 화면으로 복귀했다.",
+    "capture": "adb exec-out screencap -p",
+    "action": "android.settings.ACCESSIBILITY_SETTINGS",
+    "original_size": [
+      2560,
+      1600
+    ],
+    "crop": [
+      1163,
+      106,
+      2471,
+      360
+    ],
+    "result_size": [
+      1308,
+      254
+    ],
+    "source_sha256": "6ae9d8e0dd975c0b4b5d2a32f3cd30aa8e3b1af9a1f65d2ed638fc13b8666842",
+    "result_sha256": "784b192452fd76e7413f1b1b7338ec984456a6a0055a1bd535ac2d08f38c5cec"
+  }
+]

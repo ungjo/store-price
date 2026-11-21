@@ -1,0 +1,127 @@
+@page { size: 180mm 240mm; margin: 16mm 16mm 18mm 16mm; }
+:root { --ink: #182a29; --green: #176752; --rule: #bdd2c8; }
+* { box-sizing: border-box; }
+html { background: white; }
+body { margin: 0; font: 12pt/1.72 "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: var(--ink); overflow-wrap: anywhere; word-break: normal; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.preface { font-size: 11.1pt; line-height: 1.63; }
+p { margin: 0 0 0.66em; orphans: 2; widows: 2; }
+strong { font-weight: 700; }
+a { color: #10654e; text-decoration-thickness: .5pt; text-underline-offset: .15em; }
+h1, h2, h3, h4, .partname { break-after: avoid-page; }
+h1, h2, h3 { line-height: 1.4; }
+h1 { font-size: 24pt; letter-spacing: -.075em; margin: 0 0 6mm; color: #143d32; text-wrap: balance; }
+h2 { margin: 5.3mm 0 2.2mm; padding-top: 2mm; border-top: 1px solid var(--rule); font-size: 15pt; letter-spacing: -.06em; color: #184c3d; }
+h3 { font-size: 12pt; margin: 3.3mm 0 1.2mm; color: #245b4a; letter-spacing: -.045em; }
+h4 { font-size: 11.5pt; margin: 3mm 0 1mm; }
+.chapter { break-before: page; }
+.partname { color: var(--green); font: 700 9.25pt/1.4 "Malgun Gothic", sans-serif; letter-spacing: .035em; padding: 0 0 2.5mm; border-bottom: 2pt solid var(--green); margin: 0 0 3.4mm; }
+p code,li code,td code,th code,figcaption code,h2 code,h3 code { font: .90em/1.35 Consolas,"Malgun Gothic",monospace; color: #1a4e42; background: #eef4f1; padding: 0 .12em; border-radius: 2px; }
+pre { margin: 1mm 0 3mm; padding: 2.7mm 3mm; border-left: 1.6pt solid #70a88a; background: #f1f5f2; font: 10.8pt/1.51 Consolas,"Malgun Gothic",monospace; color: #1b332c; white-space: pre-wrap; tab-size: 2; orphans: 2; widows: 2; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+pre[data-language]::before { content:attr(data-language); display:block; font:700 7.8pt/1.3 "Malgun Gothic",sans-serif; letter-spacing:.02em; color:#467053; margin-bottom:1.5mm; }
+pre code { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+.code-line { display:block; min-height: 1.44em; }
+blockquote { margin: 2mm 0 3mm; border-left: 2pt solid #c7a763; padding: 2mm 3mm; background:#faf6eb; }
+blockquote p:last-child,li p:last-child { margin-bottom: 0; }
+ol,ul { padding-left: 1.4em; margin: .35em 0 .8em; }
+li { margin-bottom: .22em; }
+table { border-collapse: collapse; width: 100%; font-size: 10.35pt; line-height: 1.53; margin: 2mm 0 3.5mm; }
+thead { display: table-header-group; }
+th,td { text-align: left; vertical-align: top; padding: 1.45mm 1.65mm; border-bottom: .65pt solid #c6d7cf; }
+th { background: #e4efe7; color: #1e5142; }
+tr { break-inside: avoid; }
+figure { margin: 3mm 0 4mm; break-inside: avoid-page; text-align:center; }
+figure img { display: block; object-fit: contain; width:auto; max-width:100%; height:auto; max-height:101mm; margin:0 auto; }
+figure.icon img { max-width: 45mm; max-height:45mm; }
+figcaption { font-size: 9.4pt; line-height: 1.5; margin: 1.8mm 0 0; color:#39564b; text-align:left; }
+hr { border:0; border-top:1px solid var(--rule); margin:4mm 0; }
+.contents { break-before: page; }
+.contents h1 { margin-bottom: 1mm; }
+.contents .toc-subtitle { font-size: 10pt; color: #3d6151; margin-bottom: 4mm; }
+.toc-part { break-before: page; }
+.contents .toc-part:first-of-type { break-before: auto; }
+.toc-part h2 { margin: 0 0 2.4mm; font-size: 17pt; border: none; }
+.toc-row { display:flex; align-items: baseline; gap:2mm; color:inherit; text-decoration:none; }
+.toc-name { flex:0 1 auto; }
+.toc-fill { flex:1 1 6mm; border-bottom: .5pt dotted #b3c7ba; }
+.toc-num { flex:0 0 7mm; text-align:right; font-variant-numeric:tabular-nums; }
+.toc-ch { font-size:11.4pt; font-weight:700; color:#144936; margin:1.9mm 0 .6mm; break-after:avoid; }
+.toc-sec { font-size:9.1pt; line-height:1.42; margin-left:3.5mm; margin-bottom:.48mm; }
+.toc-top { display:none; }
+@media screen {
+ html { background:#e9efeb; } body { max-width: 920px; margin: 20px auto; font-size:17px; line-height:1.75; padding: 55px clamp(18px,6vw,78px); background:white; box-shadow:0 4px 24px #24463216; }
+ .chapter,.contents { margin-top:60px; } h2 { scroll-margin-top: 30px; } .toc-part {margin-top: 24px;}
+ .toc-row {max-width: 660px;} .toc-top {display:block;font-size: .85em; text-align:right; }
+ figure img { max-height:600px; } pre {font-size:15px;}
+}
+
+/* 화면판에서는 원문을 직접 내려받고, 인쇄판은 PDF 리더의 첨부 위치를 안내한다. */
+.figure-licenses { break-inside:avoid; }
+@media print { .license-screen { display:none; } }
+@media screen { .license-print { display:none; } }
+
+/* 확대 단추는 인쇄본의 그림 크기와 정렬을 유지한다. */
+.open-figure { display:block; width:100%; padding:0; margin:0; border:0; background:transparent; color:inherit; cursor:zoom-in; }
+.open-figure:focus-visible { outline:2px solid #23634c; outline-offset:3px; }
+.image-reader { box-sizing:border-box; position:fixed; inset:0; margin:auto; padding:0; border:1px solid #75877e; border-radius:8px; width:96vw; max-width:96vw; height:94vh; max-height:94vh; color:#19382a; background:white; }
+.image-reader[open] { display:flex; flex-direction:column; }
+.image-reader::backdrop { background:rgba(15,24,19,.78); }
+.reader-bar { display:flex; align-items:center; padding:8px 12px; gap:8px; border-bottom:1px solid #cbd5ce; background:#f3f6f3; }
+.reader-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; }
+.reader-bar button { flex:none; font:inherit; font-size:14px; padding:5px 10px; border:1px solid #98a89e; border-radius:4px; color:inherit; background:white; cursor:pointer; }
+.reader-scroll { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; }
+.reader-scroll img { display:block; width:auto; height:auto; max-width:none; max-height:none; margin:0 auto; }
+.reader-fit .reader-scroll img { width:100%; height:100%; object-fit:contain; }
+@media print { dialog.image-reader { display:none !important; } }
+
+.capture-original { white-space:nowrap; }
+@media print {
+ .capture-original { display:none; }
+ figure.setup-artwork img { width:100%; max-height:none; }
+}
+@media print { figure img[style] { max-width:min(100%,var(--print-image-width,100%)); } }
+
+.reader-materials-card { display:flex; align-items:center; gap:5mm; padding:3mm; margin:3mm 0; border:1px solid #a5bcb2; break-inside:avoid; }
+.reader-materials-card img { display:block; flex:none; width:35mm; height:35mm; }
+.reader-materials-card strong,.reader-materials-card > div > a { display:block; }
+.reader-materials-card p { margin:1mm 0 0; }
+@media print { .reader-materials-start { break-before:page; } }
+@media screen and (max-width:560px) { .reader-materials-card { gap:10px; flex-wrap:wrap; } }
+
+@media print {
+ .preface pre,
+ #ch02 pre:has(.language-bash),
+ #ch04 pre:has(.language-bash, .language-powershell, .language-terminal) { break-inside:avoid; }
+}
+
+@media print {
+ /* 선택 안내문은 단추와 함께, 장보기 화면은 이어지는 상품 카드와 가깝게 배치한다. */
+ #ch02 p:has(+ figure > img[data-name="figures/02-final-choice.png"]) { break-inside: avoid-page; break-after: avoid-page; }
+ #ch02 img[data-name="figures/02-final-web-terminal.png"] { width: 104mm; max-width: 100%; }
+ #ch02 img[data-name="figures/20-overview-default-budget.png"] { max-height: 87mm; }
+ #ch02 img[data-name="figures/02-final-browser.png"] { max-height: 77mm; }
+}
+
+@media print {
+ #ch16 img[data-name="figures/16-settings-off.png"],
+ #ch16 img[data-name="figures/16-settings-on.png"] { width: 44mm; }
+ #ch16 img[data-name="figures/16-settings-android.png"] { width: 128mm; }
+}
+
+.file-copy-bar { display:flex; flex-wrap:wrap; align-items:center; gap:.65em; margin:1em 0 .35em; }
+.file-copy-bar button { padding:.46em .8em; border:1px solid #46735d; border-radius:4px; background:white; color:#154c38; font:inherit; font-weight:700; cursor:pointer; }
+.file-copy-bar [role="status"] { color:#30594a; font-size:.9em; }
+@media print {
+ .file-copy-bar { display:none; }
+ .print-together { break-inside:avoid-page; }
+ .file-listing pre code { display:block; white-space:normal; }
+ .file-listing .source-line { display:block; position:relative; padding-left:7mm; min-height:1.51em; white-space:pre-wrap; break-inside:avoid-page; }
+ .file-listing .source-line::before { content:attr(data-line); position:absolute; top:0; left:0; width:5mm; text-align:right; color:#58685e; font-size:8pt; line-height:16.3pt; }
+ .file-listing pre::before { break-after:avoid-page; }
+ #ch16-s6 ~ pre, #ch16-s6 ~ table { break-inside:avoid-page; }
+}
+
+@media print {
+ #ch20-s7 { break-before: page; }
+ #ch20-s7 ~ pre { break-inside: avoid-page; }
+ #ch20 img[data-name="figures/20-payment-50000.png"] { max-height: 125mm; }
+}

@@ -1,0 +1,52 @@
+{
+  "type": "Windows에서 실행 중인 Git Bash의 실제 mintty 창 캡처",
+  "captured": "2026-11-21",
+  "capture": "격리된 Win32 Desktop에 CreateProcessW의 lpDesktop으로 mintty.exe 실행, 그 데스크톱에 속한 본 교재 창 핸들로 WM_CHAR 입력 및 PrintWindow 캡처. 직후 셸 종료.",
+  "terminal": {
+    "application": "Git for Windows / mintty",
+    "prompt": "market-book $ ",
+    "window_title": "Git Bash",
+    "personal_info": "촬영용 사용자명·경로 없는 프롬프트와 글자 크기·배경색 사용",
+    "font": "Consolas",
+    "point_size": 25,
+    "columns": 66,
+    "rows": 13
+  },
+  "commands": [
+    "git --version",
+    "bash --version"
+  ],
+  "first_lines": [
+    "git version 2.55.0.windows.3",
+    "GNU bash, version 5.3.15(1)-release (x86_64-pc-cygwin)"
+  ],
+  "files": {
+    "02-git-bash-window.png": {
+      "sha256": "43f7b132a517d2c05077c7c64ab1f61f78360250dc549b9e9dc327abf9cdde8e",
+      "dimensions": [
+        1832,
+        825
+      ],
+      "crop": null
+    },
+    "02-git-bash-versions.png": {
+      "sha256": "4ffe7dbf0d65142f13b8055f25ee342d0944ab3a4655b523f211a3ddaabd0e79",
+      "dimensions": [
+        1502,
+        289
+      ],
+      "crop": [
+        12,
+        0,
+        1514,
+        289
+      ]
+    }
+  },
+  "note": "원본은 창 전체를, 확대용은 제목·두 입력과 각 버전의 첫 줄을 포함한다. Bash의 라이선스 출력과 다음 프롬프트는 원본에 보인다.",
+  "full_capture_sha256": "fcbc400776429b7ce787c303a6ca6ec4949937c523da17479ca9dfcf44a77314",
+  "source_dimensions": [
+    1832,
+    825
+  ]
+}

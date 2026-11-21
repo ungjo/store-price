@@ -1,0 +1,125 @@
+{
+  "captured": "2026-11-22",
+  "web": {
+    "project": "apps/mobile",
+    "gitRevision": "0e25731",
+    "chrome": "157.0.8103.79",
+    "locale": "ko-KR",
+    "source": "Actual Expo web export, EXPO_NO_DOTENV=1, built-in sample catalog. Static files served to an isolated headless Chrome context. Only application controls were used, no render content changed. Crop coordinates are CSS x, y, width, height measured in the viewport at capture."
+  },
+  "scenario": {
+    "budgetKrw": 50000,
+    "items": [
+      {
+        "name": "사과",
+        "quantity": 2,
+        "priceKrw": 1500
+      },
+      {
+        "name": "우유",
+        "quantity": 1,
+        "priceKrw": 2500
+      }
+    ],
+    "totalKrw": 5500,
+    "paymentKrw": 50000,
+    "changeKrw": 44500,
+    "remainingKrw": 44500,
+    "verified": [
+      "Default budget was selected at 10,000 KRW.",
+      "50,000 KRW note was disabled at the default budget, even with the three cart items.",
+      "Switching budget kept the basket and updated remaining budget to 44,500 KRW.",
+      "App accepted answer 44500 before checkout; the receipt showed payment, change and remaining budget."
+    ]
+  },
+  "figures": [
+    {
+      "file": "20-overview-default-budget.png",
+      "pixels": [
+        2415,
+        2363
+      ],
+      "sha256": "ae5a7c22448f0d9741de195114fed6c35f4e214c716660c66a1558a155fcc245",
+      "source": "web",
+      "viewportCssPx": [
+        770,
+        1050
+      ],
+      "deviceScaleFactor": 3.5,
+      "clipCssPx": [
+        40,
+        0,
+        690,
+        675
+      ],
+      "note": "First sample-market screen, before selecting products. Default budget tick, new price disclaimer, and both budget options. The twelve-product count was verified separately in the same page."
+    },
+    {
+      "file": "20-budget-50000.png",
+      "pixels": [
+        2493,
+        1355
+      ],
+      "sha256": "75888346aa0592ad24a79fa3c885af6c71fc64f1f577547983f4e2dfe3a08a38",
+      "source": "web",
+      "viewportCssPx": [
+        594,
+        1100
+      ],
+      "deviceScaleFactor": 4.5,
+      "clipCssPx": [
+        20,
+        215,
+        554,
+        301
+      ],
+      "note": "Actual sample-price notice and selected 50,000 KRW budget card after adding two apples and one milk."
+    },
+    {
+      "file": "20-payment-50000.png",
+      "pixels": [
+        2493,
+        2493
+      ],
+      "sha256": "11e7d8e7fe2a1462354d8494117fc01e9242e5153a97f850457002d85dc35304",
+      "source": "web",
+      "viewportCssPx": [
+        594,
+        1100
+      ],
+      "deviceScaleFactor": 4.5,
+      "clipCssPx": [
+        20,
+        0,
+        554,
+        554
+      ],
+      "note": "Actual payment panel from its heading to the selected-money result before entering the answer."
+    },
+    {
+      "file": "20-receipt-50000.png",
+      "pixels": [
+        1464,
+        566
+      ],
+      "sha256": "78eadaf4b1115d5c833c80be5411c861b4bb5445ffb476a7c88b355f803d07c8",
+      "source": "Android",
+      "device": "Samsung Galaxy Tab SM-X710, Android 14",
+      "run": "20261121T164742116Z-6d282827",
+      "sourcePath": ".artifacts/device/20261121T164742116Z-6d282827/production-50000-receipt.png",
+      "sourceSha256": "17cf852ee9f932d538f511d93a2741942f5871c4ac5d8ad2ac4249e227934a16",
+      "sourcePixels": [
+        1600,
+        2560
+      ],
+      "cropBoxXYXY": [
+        68,
+        1165,
+        1532,
+        1731
+      ],
+      "record": "docs/book/verification/latest-android.md at 9f5fd13",
+      "note": "Lossless crop of the receipt in the production app installed from the device-targeted APKs. No resampling."
+    }
+  ]
+}

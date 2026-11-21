@@ -1,0 +1,37 @@
+{
+  "chapter": 12,
+  "kind": "actual browser screenshot",
+  "description": "10장 교육용 앱에 12장 선택 실습의 CatalogLoader를 연결한 설정 없음 화면",
+  "source": "market-lab.zip chapter12 files verified equal to 479f6f5; chapter12 App.tsx optional block",
+  "viewport": {
+    "width": 480,
+    "height": 960,
+    "deviceScaleFactor": 5
+  },
+  "validation": {
+    "typecheck": "pass",
+    "lint": "pass",
+    "tests": 24,
+    "webExportModules": 222,
+    "cartTotalKrw": 5500,
+    "selectedPaymentKrw": 10000,
+    "answerKrw": 4500,
+    "receipt": "pass",
+    "newRound": "pass",
+    "externalRequests": 0,
+    "pageErrors": 0
+  },
+  "environment": "PC Chrome headless web preview, no external DB, not Android device verification",
+  "captureClipCssPixels": {
+    "x": 15,
+    "y": 252,
+    "width": 450,
+    "height": 458
+  },
+  "imagePixels": {
+    "width": 2250,
+    "height": 2290
+  },
+  "note": "Browser screenshot clipped to actual introduction and buttons; no compositing or text replacement.",
+  "sha256": "b1f3d99b849badc39988478d162e4c059b09cd9a14d49c4bcb5252aa6d709bbe"
+}

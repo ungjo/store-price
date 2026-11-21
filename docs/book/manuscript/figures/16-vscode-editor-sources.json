@@ -1,0 +1,102 @@
+{
+  "application": "Visual Studio Code - Insiders",
+  "version": "1.148.0-insider",
+  "commit": "0d15d4d60248e35fac1a3fe234d74ed780e15691",
+  "platform": "Windows x64",
+  "distribution": "https://update.code.visualstudio.com/latest/win32-x64-archive/insider",
+  "workspace": "market-lab/work/ch16/apps/mobile",
+  "workspaceSource": "market-lab.zip / node start.mjs 16",
+  "capture": "PNG captures of the Microsoft desktop workbench at device scale factor 3, using the real reader project and Default Light Modern theme. The App.tsx line was selected in the editor. No redrawing or enlargement.",
+  "figures": [
+    {
+      "file": "16-vscode-button-file.png",
+      "pixels": [
+        2388,
+        1119
+      ],
+      "source": "src/components/talkback-settings-button.tsx",
+      "visibleLines": [
+        34,
+        38
+      ]
+    },
+    {
+      "file": "16-vscode-app-placement.png",
+      "pixels": [
+        2871,
+        801
+      ],
+      "source": "App.tsx",
+      "selectedLine": 211,
+      "visibleContext": [
+        207,
+        214
+      ]
+    },
+    {
+      "file": "16-vscode-app-import.png",
+      "pixels": [
+        2889,
+        864
+      ],
+      "source": "App.tsx",
+      "selectedLine": 6,
+      "visibleContext": [
+        3,
+        9
+      ]
+    },
+    {
+      "file": "16-vscode-catalog-import.png",
+      "pixels": [
+        2514,
+        711
+      ],
+      "source": "src/components/catalog-loader.tsx",
+      "selectedLine": 6,
+      "visibleContext": [
+        4,
+        8
+      ]
+    },
+    {
+      "file": "16-vscode-catalog-placement.png",
+      "pixels": [
+        2514,
+        789
+      ],
+      "source": "src/components/catalog-loader.tsx",
+      "selectedLine": 84,
+      "visibleContext": [
+        81,
+        87
+      ]
+    },
+    {
+      "file": "16-vscode-receipt-import.png",
+      "pixels": [
+        2514,
+        867
+      ],
+      "source": "src/components/shopping-receipt.tsx",
+      "selectedLine": 4,
+      "visibleContext": [
+        1,
+        7
+      ]
+    },
+    {
+      "file": "16-vscode-receipt-placement.png",
+      "pixels": [
+        2514,
+        867
+      ],
+      "source": "src/components/shopping-receipt.tsx",
+      "selectedLine": 99,
+      "visibleContext": [
+        95,
+        102
+      ]
+    }
+  ]
+}

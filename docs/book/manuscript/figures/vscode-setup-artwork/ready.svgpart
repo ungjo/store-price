@@ -1,0 +1,21 @@
+<g fill="#151515" font-size="12" font-family="Malgun Gothic, Segoe UI, sans-serif">
+  <text x="24" y="50" font-size="14" font-weight="700">설치 준비 완료</text>
+  <text x="40" y="68">귀하의 컴퓨터에 Visual Studio Code을(를) 설치할 준비가 되었습니다.</text>
+  <text x="40" y="111">설치를 계속하려면 "설치"를, 설정을 변경하거나 검토하려면 "뒤로"를 클릭하십시오.</text>
+  <rect x="40.5" y="123.5" width="517" height="269" fill="#f0f0f0" stroke="#818181"/>
+  <rect x="539.5" y="124" width="17" height="251" fill="#f6f6f6"/>
+  <rect x="41" y="374.5" width="516" height="17" fill="#f6f6f6"/>
+  <path d="M545 136 l3 -3 3 3 M545 360 l3 3 3 -3 M49 380 l-3 3 3 3 M535 380 l3 3 -3 3" fill="none" stroke="#b6b6b6" stroke-width="1.6" stroke-linecap="round"/>
+  <text x="45" y="142">추가 작업:</text>
+  <text x="61" y="162">기타:</text>
+  <text x="73" y="181">Code을(를) 지원되는 파일 형식에 대한 편집기로 등록합니다.</text>
+  <text x="73" y="201">PATH에 추가(다시 시작한 후 사용 가능)</text>
+  <text x="45" y="231">GitHub Copilot CLI:</text>
+  <text x="61" y="251">Don't add copilot to PATH</text>
+  <rect x="351" y="418.5" width="73" height="23" rx="1" fill="#e4e4e4" stroke="#969696" stroke-width="1"/>
+  <text x="387.5" y="434" text-anchor="middle" font-size="12">뒤로(B)</text>
+  <rect x="428" y="418.5" width="73" height="23" rx="1" fill="#e8f2fb" stroke="#0078d4" stroke-width="1.5"/>
+  <text x="464.5" y="434" text-anchor="middle" font-size="12">설치</text>
+  <rect x="513" y="418.5" width="73" height="23" rx="1" fill="#e4e4e4" stroke="#969696" stroke-width="1"/>
+  <text x="549.5" y="434" text-anchor="middle" font-size="12">취소</text>
+</g>

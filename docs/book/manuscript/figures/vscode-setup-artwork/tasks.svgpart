@@ -1,0 +1,25 @@
+<g fill="#151515" font-size="12" font-family="Malgun Gothic, Segoe UI, sans-serif">
+  <text x="24" y="50" font-size="14" font-weight="700">추가 작업 선택</text>
+  <text x="40" y="68">수행할 추가 작업을 선택하십시오.</text>
+  <text x="40" y="111">Visual Studio Code 설치 과정에 포함할 추가 작업을 선택한 후, "다음"을 클릭하십시오.</text>
+  <text x="40" y="139">아이콘 추가:</text>
+  <rect x="42" y="151" width="13" height="13" fill="#ffffff" stroke="#555555"/>
+  <text x="60" y="162">바탕 화면에 바로가기 만들기(D)</text>
+  <text x="40" y="187">기타:</text>
+  <rect x="42" y="199" width="13" height="13" fill="#ffffff" stroke="#555555"/>
+  <text x="60" y="210">"Code(으)로 열기" 작업을 Windows 탐색기 파일의 상황에 맞는 메뉴에 추가</text>
+  <rect x="42" y="223" width="13" height="13" fill="#ffffff" stroke="#555555"/>
+  <text x="60" y="234">"Code(으)로 열기" 작업을 Windows 탐색기 디렉터리의 상황에 맞는 메뉴에 추가</text>
+  <rect x="42" y="247" width="13" height="13" fill="#ffffff" stroke="#555555"/>
+  <path d="M44 253 l3 3 6 -7" fill="none" stroke="#1d292f" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="60" y="258">Code을(를) 지원되는 파일 형식에 대한 편집기로 등록합니다.</text>
+  <rect x="42" y="271" width="13" height="13" fill="#ffffff" stroke="#555555"/>
+  <path d="M44 277 l3 3 6 -7" fill="none" stroke="#1d292f" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="60" y="282">PATH에 추가(다시 시작한 후 사용 가능)</text>
+  <rect x="351" y="418.5" width="73" height="23" rx="1" fill="#e4e4e4" stroke="#969696" stroke-width="1"/>
+  <text x="387.5" y="434" text-anchor="middle" font-size="12">뒤로(B)</text>
+  <rect x="428" y="418.5" width="73" height="23" rx="1" fill="#e8f2fb" stroke="#0078d4" stroke-width="1.5"/>
+  <text x="464.5" y="434" text-anchor="middle" font-size="12">다음(N)</text>
+  <rect x="513" y="418.5" width="73" height="23" rx="1" fill="#e4e4e4" stroke="#969696" stroke-width="1"/>
+  <text x="549.5" y="434" text-anchor="middle" font-size="12">취소</text>
+</g>

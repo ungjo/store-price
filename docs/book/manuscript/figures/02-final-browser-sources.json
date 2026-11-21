@@ -1,0 +1,95 @@
+{
+  "date": "2026-11-21",
+  "readerKitSha256": "b7e1b921a442219377d779af27c9cb4e860547361b1658d3d3c730f0e6fe96c7",
+  "chapter": 20,
+  "sourceRevision": "35b12e4",
+  "setup": [
+    "node start.mjs 20",
+    "cd work/ch20/apps/mobile",
+    "npm.cmd ci --offline --no-audit --no-fund"
+  ],
+  "privateEnvironmentFile": false,
+  "verifiedCommand": "npm.cmd run web -- --localhost --port 18747",
+  "npmScript": "expo start --web",
+  "webAddress": "http://localhost:18747",
+  "chromeVersion": "157.0.8103.79",
+  "locale": "ko-KR",
+  "method": "Direct captures of the running app in a new browser context. Book crops use CSS pixel coordinates. No app source or DOM content was changed.",
+  "verified": {
+    "browserTitle": "꼬마 시장 검사",
+    "firstPrompt": "가게를 준비하고 있어요",
+    "button": "예시 상품으로 바로 놀이하기",
+    "greeting": "오늘은 무엇을 사 볼까요?",
+    "initialBudget": "10,000원",
+    "sampleLabel": "앱에 준비된 예시 상품으로 놀고 있어요.",
+    "catalogHeader": "우리 가게 물건",
+    "productCount": 12,
+    "appleAdded": "담은 물건 1개 / 1,500원",
+    "webRuntimeObservation": [
+      "AccessibilityInfo.default.sendAccessibilityEvent is not a function"
+    ],
+    "observationDetails": "Sample selection renders the catalog despite an unsupported native accessibility-focus call logged by Chrome. Apple add updated the cart. Android device was not tested in this capture."
+  },
+  "figures": [
+    {
+      "file": "02-final-choice.png",
+      "viewportCssPx": [
+        570,
+        660
+      ],
+      "deviceScaleFactor": 3,
+      "clipCssPx": [
+        0,
+        94,
+        570,
+        470
+      ],
+      "description": "Fresh browser before selecting the built-in example catalog.",
+      "dimensions": [
+        1710,
+        1410
+      ],
+      "sha256": "9234c5e6418316ccca7f8a5e75bc2353fe35bf0c6d12bea1a39bc0db9bbb800d"
+    },
+    {
+      "file": "02-final-overview.png",
+      "viewportCssPx": [
+        770,
+        880
+      ],
+      "deviceScaleFactor": 2.5,
+      "clipCssPx": [
+        0,
+        0,
+        770,
+        611
+      ],
+      "description": "Initial market shown immediately after clicking the sample button, without scrolling.",
+      "dimensions": [
+        1925,
+        1528
+      ],
+      "sha256": "0749d7fc6b59465c9477a1b31e51f0c1cc8ac56ac5fbfe601639e4bf4b413efd"
+    },
+    {
+      "file": "02-final-browser.png",
+      "viewportCssPx": [
+        570,
+        660
+      ],
+      "deviceScaleFactor": 3,
+      "description": "Selected samples, scrolled to 우리 가게 물건, showing the first two product cards.",
+      "dimensions": [
+        1710,
+        1116
+      ],
+      "sha256": "692f0d18237b685a38fd3ee9c71b0359b3684b4c18121e3c13a934eef7d586f4",
+      "clipCssPx": [
+        0,
+        0,
+        570,
+        372
+      ]
+    }
+  ]
+}

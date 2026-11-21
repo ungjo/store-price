@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:lang="ko" width="3000" height="2260" viewBox="0 0 600 452" role="img" aria-labelledby="figureTitle figureDesc" font-family="Malgun Gothic, Segoe UI, sans-serif" fill="#121212">
+<title id="figureTitle">Visual Studio Code 사용자용 설치기 · 사용권 계약</title>
+<desc id="figureDesc">한국어 Windows에서 연 VS Code 1.147.0의 실제 설치 캡처를 바탕으로 재구성한 도해. 글자와 단추를 벡터로 조판했다.</desc>
+<metadata>Visual Studio Code icon © Microsoft Corporation. VS Code 1.147.0, 8a14f0cc1b08d531eb83255ea3764ae22aa932b5, out/vs/workbench/browser/media/code-icon.svg. https://code.visualstudio.com/brand</metadata>
+<defs><symbol id="codeIcon" viewBox="0 0 256 256" fill="none"><mask id="mask0" mask-type="alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="256" height="256"><path fill-rule="evenodd" clip-rule="evenodd" d="M181.534 254.252a15.934 15.934 0 0 0 12.7-.488l52.706-25.361a16.002 16.002 0 0 0 9.06-14.42V42.018c0-6.15-3.522-11.754-9.06-14.42L194.234 2.238a15.939 15.939 0 0 0-18.185 3.097l-100.9 92.052-43.95-33.361a10.655 10.655 0 0 0-13.614.605L3.49 77.453c-4.648 4.227-4.653 11.54-.011 15.774L41.593 128 3.478 162.773c-4.642 4.235-4.637 11.547.011 15.775l14.097 12.822a10.655 10.655 0 0 0 13.613.606l43.95-33.362 100.9 92.053a15.915 15.915 0 0 0 5.485 3.585Zm10.505-184.367L115.479 128l76.56 58.115V69.885Z" fill="#fff"/></mask><g mask="url(#mask0)"><path d="M246.94 27.638 194.193 2.241a15.947 15.947 0 0 0-18.194 3.092L3.324 162.773c-4.645 4.235-4.64 11.547.011 15.775L17.44 191.37a10.667 10.667 0 0 0 13.622.606l207.941-157.75c6.976-5.291 16.996-.316 16.996 8.44v-.612a16 16 0 0 0-9.059-14.416Z" fill="#0065A9"/><g filter="url(#filter0_d)"><path d="m246.94 228.362-52.747 25.397a15.95 15.95 0 0 1-18.194-3.092L3.324 93.227c-4.645-4.234-4.64-11.547.011-15.775L17.44 64.63a10.667 10.667 0 0 1 13.622-.605l207.941 157.748c6.976 5.292 16.996.317 16.996-8.44v.613a16.001 16.001 0 0 1-9.059 14.416Z" fill="#007ACC"/></g><g filter="url(#filter1_d)"><path d="M194.196 253.763A15.955 15.955 0 0 1 176 250.667c5.904 5.904 16 1.722 16-6.628V11.961c0-8.35-10.096-12.532-16-6.628a15.955 15.955 0 0 1 18.196-3.097L246.934 27.6A16 16 0 0 1 256 42.017v171.965a16 16 0 0 1-9.066 14.419l-52.738 25.361Z" fill="#1F9CF0"/></g><g style="mix-blend-mode:overlay" opacity=".25"><path fill-rule="evenodd" clip-rule="evenodd" d="M181.378 254.252a15.936 15.936 0 0 0 12.699-.488l52.706-25.362a16 16 0 0 0 9.061-14.419V42.018c0-6.15-3.522-11.754-9.06-14.42L194.077 2.238a15.939 15.939 0 0 0-18.185 3.096l-100.9 92.053-43.95-33.361a10.655 10.655 0 0 0-13.613.605L3.333 77.452c-4.648 4.228-4.653 11.54-.011 15.775L41.436 128 3.322 162.773c-4.642 4.235-4.637 11.547.011 15.775L17.43 191.37a10.655 10.655 0 0 0 13.614.606l43.95-33.362 100.899 92.053a15.919 15.919 0 0 0 5.486 3.585Zm10.505-184.367L115.323 128l76.56 58.115V69.885Z" fill="url(#paint0_linear)"/></g></g><defs><filter id="filter0_d" x="-21.49" y="40.523" width="298.822" height="236.149" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset/><feGaussianBlur stdDeviation="10.667"/><feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/><feBlend mode="overlay" in2="BackgroundImageFix" result="effect1_dropShadow"/><feBlend in="SourceGraphic" in2="effect1_dropShadow" result="shape"/></filter><filter id="filter1_d" x="154.667" y="-20.674" width="122.667" height="297.347" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset/><feGaussianBlur stdDeviation="10.667"/><feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/><feBlend mode="overlay" in2="BackgroundImageFix" result="effect1_dropShadow"/><feBlend in="SourceGraphic" in2="effect1_dropShadow" result="shape"/></filter><linearGradient id="paint0_linear" x1="127.844" y1=".66" x2="127.844" y2="255.34" gradientUnits="userSpaceOnUse"><stop stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs></symbol></defs>
+<rect x=".5" y=".5" width="599" height="451" fill="#fff" stroke="#8e979d"/>
+<rect x="1" y="404" width="598" height="47" fill="#f0f0f0"/>
+<path d="M1 404.5H599" fill="none" stroke="#aaa"/>
+<use xlink:href="#codeIcon" x="8" y="6" width="16" height="16"/>
+<text x="28" y="20" font-size="12.5">Microsoft Visual Studio Code (User) 설치</text>
+<g fill="none" stroke-width="1">
+  <path d="M476 15.5h10" stroke="#222"/>
+  <rect x="522.5" y="9.5" width="9" height="9" stroke="#c4c4c4"/>
+  <path d="m569.5 9.5 9 9m0-9-9 9" stroke="#282828"/>
+</g>
+<use xlink:href="#codeIcon" x="548" y="36" width="43" height="43"/>
+<g xmlns="http://www.w3.org/2000/svg" font-family="Malgun Gothic, Segoe UI, sans-serif" fill="#141414">
+  <text x="24" y="50" font-size="13.5" font-weight="700">사용권 계약</text>
+  <text x="40" y="67" font-size="12.6">계속하기 전에 다음의 중요 정보를 읽어보십시오.</text>
+  <text x="40" y="110" font-size="12.9">다음 사용권 계약을 읽어보십시오, 설치를 계속하려면 이 계약에 동의해야 합니다.</text>
+
+  <rect x="40.5" y="123.5" width="517" height="226" fill="#fff" stroke="#c8c8c8"/>
+  <g id="license-visible-terms" font-size="15.1" font-style="italic">
+    <text x="45" y="151">이 라이선스는 Visual Studio 코드 제품에 적용됩니다. Visual Studio</text>
+    <text x="45" y="178">코드의 소스 코드는 MIT 라이선스 계약</text>
+    <text x="45" y="205">(<tspan fill="#095e9b" text-decoration="underline">https://github.com/microsoft/vscode/blob/main/LICENSE.txt</tspan>) 아래</text>
+    <text x="45" y="232"><tspan fill="#095e9b" text-decoration="underline">https://github.com/Microsoft/vscode</tspan>에 나와 있습니다. 추가 라이선스</text>
+    <text x="45" y="259">정보는 FAQ(<tspan fill="#095e9b" text-decoration="underline">https://code.visualstudio.com/docs/supporting/faq</tspan>)에서</text>
+    <text x="45" y="286">참조할 수 있습니다.</text>
+  </g>
+  <text x="43" y="333" font-size="20.5" font-weight="700">MICROSOFT 소프트웨어 라이선스 계약서</text>
+
+  <rect x="540" y="124" width="16" height="225" fill="#f0f0f0"/>
+  <path d="m545 136 3-3 3 3 M545 338l3 3 3-3" fill="none" stroke="#575757" stroke-width="1.5"/>
+  <rect x="540" y="141" width="16" height="18" fill="#c5c5c5"/>
+
+  <circle cx="47" cy="367.5" r="6.4" fill="#fff" stroke="#0877b8"/>
+  <circle cx="47" cy="367.5" r="3.45" fill="#0877b8"/>
+  <rect x="56" y="360" width="84" height="16.5" fill="none" stroke="#737373" stroke-width=".7" stroke-dasharray="1 1.7"/>
+  <text x="57" y="372" font-size="12.1">동의합니다(<tspan text-decoration="underline">A</tspan>)</text>
+  <circle cx="47" cy="388.5" r="6.4" fill="#fff" stroke="#4e4e4e"/>
+  <text x="57" y="393" font-size="12.1">동의하지 않습니다(<tspan text-decoration="underline">D</tspan>)</text>
+
+  <rect x="427.5" y="419.5" width="73" height="21" fill="#e4e4e4" stroke="#006db2" stroke-width="1.3"/>
+  <rect x="512.5" y="419.5" width="74" height="21" fill="#e4e4e4" stroke="#acacac"/>
+  <text x="464" y="434" font-size="12.2" text-anchor="middle">다음(<tspan text-decoration="underline">N</tspan>)</text>
+  <text x="549.5" y="434" font-size="12.2" text-anchor="middle">취소</text>
+</g>
+</svg>

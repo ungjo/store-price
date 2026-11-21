@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "prepared": "2026-11-21",
+  "note": "이미지는 기존 프로젝트 원본에서 가져왔으며, 영수증은 개인 알림·앱 독을 제외한 금액 영역만 사용한다. 원본은 변경하지 않았다.",
+  "images": [
+    {
+      "output": "18-market-icon.png",
+      "source": "apps/mobile/assets/brand/market-icon.png",
+      "role": "일반 앱 기본 아이콘",
+      "transform": "원본 바이트 복사",
+      "sourceInfo": {
+        "sha256": "0c73f68a9f9173062747695aee65d065182ab24d8dc4f71103c2e3bc4a97c8e7",
+        "bytes": 1114396,
+        "width": 1254,
+        "height": 1254
+      },
+      "outputInfo": {
+        "sha256": "0c73f68a9f9173062747695aee65d065182ab24d8dc4f71103c2e3bc4a97c8e7",
+        "bytes": 1114396,
+        "width": 1254,
+        "height": 1254
+      }
+    },
+    {
+      "output": "18-inspection-icon.png",
+      "source": "apps/mobile/assets/brand/inspection-icon.png",
+      "role": "검사 배지가 있는 검사 앱 기본 아이콘",
+      "transform": "원본 바이트 복사",
+      "sourceInfo": {
+        "sha256": "4403b90670cbbe49411e677b18732a3cc6232289264b1d9ed9112e650961b9ea",
+        "bytes": 1153085,
+        "width": 1254,
+        "height": 1254
+      },
+      "outputInfo": {
+        "sha256": "4403b90670cbbe49411e677b18732a3cc6232289264b1d9ed9112e650961b9ea",
+        "bytes": 1153085,
+        "width": 1254,
+        "height": 1254
+      }
+    },
+    {
+      "output": "20-receipt.png",
+      "source": ".artifacts/device/20261118T110934582Z-be68d2a1/maestro/2026-11-18_201640/정식 앱의 공개 상품·장보기·거스름돈·영수증/takeScreenshot/production-receipt.png",
+      "role": "사과 2개와 우유 1개, 합계 5500원·거스름돈 4500원 실제 정식 앱 영수증",
+      "transform": "원본 좌표 [65,557,1535,1728] 크롭; 리사이즈·내용 수정 없음",
+      "crop": [
+        65,
+        557,
+        1535,
+        1728
+      ],
+      "runId": "20261118T110934582Z-be68d2a1",
+      "evidenceCommit": "35b12e4",
+      "sourceInfo": {
+        "sha256": "3c6eeb823331b67c5d6bd0032fae192a1bad54d4df140c8686bb1672ba0292b6",
+        "bytes": 199567,
+        "width": 1600,
+        "height": 2560
+      },
+      "outputInfo": {
+        "sha256": "bbecef4f697d6275cfb9b3dd12a8053a6bf997a08ba3edfd7c9c6694ac5b79e0",
+        "bytes": 60003,
+        "width": 1470,
+        "height": 1171
+      }
+    }
+  ],
+  "reportExcerpt": {
+    "chapter": "17.6",
+    "source": ".artifacts/device/20261117T193545552Z-2508322f/result.xml",
+    "transform": "testsuite와 testcase의 결과 속성만 발췌; device 식별자와 중복·내부 속성 제외",
+    "sourceSha256": "fe00e0f9f6d47b1c4c4b5ccf1761e0094df8dbf8e2310b162276e22549018874"
+  }
+}

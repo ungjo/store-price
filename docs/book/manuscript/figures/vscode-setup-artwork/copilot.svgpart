@@ -1,0 +1,26 @@
+<g fill="#151515" font-size="12" font-family="Malgun Gothic, Segoe UI, sans-serif">
+  <text x="24" y="50" font-size="14" font-weight="700">GitHub Copilot CLI</text>
+  <text x="40" y="68">Use GitHub Copilot from any terminal with the copilot command.</text>
+  <text x="40" y="111">GitHub Copilot CLI isn't installed on this computer. How would you like to set up the copilot</text>
+  <text x="40" y="128">command?</text>
+  <circle cx="47.5" cy="150.6" r="6.2" fill="white" stroke="#666666" stroke-width="1.15"/>
+  <text x="60" y="155">Install GitHub Copilot CLI now</text>
+  <text x="60" y="174">Adds copilot to PATH and downloads about 124 MB from GitHub after Visual Studio Code</text>
+  <text x="60" y="190">is installed.</text>
+  <circle cx="47.5" cy="210.6" r="6.2" fill="white" stroke="#666666" stroke-width="1.15"/>
+  <text x="60" y="215">Install GitHub Copilot CLI when I first run copilot</text>
+  <text x="60" y="233">Adds copilot to PATH. Nothing is downloaded until you run it and confirm.</text>
+  <circle cx="47.5" cy="256.6" r="6.2" fill="white" stroke="#006bb3" stroke-width="1.15"/>
+  <circle cx="47.5" cy="256.6" r="3.5" fill="#006bb3"/>
+  <text x="60" y="261">Don't add the copilot command</text>
+  <text x="60" y="279">copilot isn't added to PATH. You can still run it in the Visual Studio Code terminal.</text>
+  <text x="40" y="310">GitHub Copilot CLI is a separate GitHub product with its own license terms, and it requires a</text>
+  <text x="40" y="327">GitHub Copilot subscription. It works with Windows PowerShell, and PowerShell 7 or later is</text>
+  <text x="40" y="344">recommended. <tspan fill="#0067a8">Learn more</tspan></text>
+  <rect x="351" y="418.5" width="73" height="23" rx="1" fill="#e4e4e4" stroke="#969696" stroke-width="1"/>
+  <text x="387.5" y="434" text-anchor="middle" font-size="12">뒤로(B)</text>
+  <rect x="428" y="418.5" width="73" height="23" rx="1" fill="#e8f2fb" stroke="#0078d4" stroke-width="1.5"/>
+  <text x="464.5" y="434" text-anchor="middle" font-size="12">다음(N)</text>
+  <rect x="513" y="418.5" width="73" height="23" rx="1" fill="#e4e4e4" stroke="#969696" stroke-width="1"/>
+  <text x="549.5" y="434" text-anchor="middle" font-size="12">취소</text>
+</g>

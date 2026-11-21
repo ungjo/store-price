@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="『처음부터 따라 만드는 꼬마 시장 Android 앱』의 장별 예제와 실습용 상품 데이터를 다운로드하세요.">
+<title>독자 자료실 · 꼬마 시장 Android 앱</title>
+<style>
+:root{color-scheme:light;--ink:#17352c;--body:#364942;--accent:#19634d;--line:#d6ded8;--paper:#fbfaf6;--card:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--body);font:1rem/1.7 "Source Sans 3","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;word-break:keep-all;overflow-wrap:break-word}
+main{max-width:60rem;margin:auto;padding:2.25rem clamp(1.15rem,5vw,3.5rem) 4rem}
+header{padding-bottom:2rem;border-bottom:2px solid var(--ink)}
+.book{margin:0;color:var(--accent);font-size:.96rem;font-weight:700}
+h1,h2,h3{color:var(--ink);line-height:1.32;letter-spacing:-.035em}
+h1{font-family:"Source Sans 3","Malgun Gothic",sans-serif;font-size:clamp(2.45rem,7.2vw,4.65rem);margin:1.6rem 0 .75rem}
+h2{font-size:clamp(1.45rem,3.4vw,2rem);margin:0 0 .75rem} h3{font-size:1.18rem;margin:0 0 .3rem}
+p{margin:0 0 .7rem}
+.intro{max-width:42rem;font-size:1.08rem;margin:0}
+.downloads{display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:1.4rem 0 2.6rem}
+article{display:flex;flex-direction:column;align-items:flex-start;padding:1.35rem 1.4rem;background:var(--card);border:1px solid var(--line);border-radius:8px}
+article h2{font-size:1.42rem;margin:0 0 .35rem}
+article p{margin-bottom:1rem} article .meta{margin-top:auto;margin-bottom:.6rem;color:#4b5e53;font-size:.88rem}
+.button:link,.button:visited{display:inline-block;background:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:.52rem .9rem;color:white;font-weight:700;text-decoration:none;text-align:center}
+.button.secondary:link,.button.secondary:visited{background:white;color:var(--accent)}
+.button:hover{filter:brightness(.92)}a:focus-visible,summary:focus-visible{outline:3px solid #a94d00;outline-offset:4px}
+.guide{padding:1.6rem 0 .5rem;border-top:1px solid var(--line)}
+ol{margin:.5rem 0 1.2rem;padding-left:1.45rem}li{padding-left:.3rem;margin:.6rem 0} li::marker{font-weight:700;color:var(--accent)}
+code,pre{font-family:"IBM Plex Mono",Consolas,"Malgun Gothic",monospace;font-size:.93em}code{overflow-wrap:anywhere}pre{padding:.9rem 1.15rem;margin:.6rem 0;background:#18382e;color:#f5faf5;line-height:1.6;border-radius:4px;overflow:auto;max-width:100%;white-space:pre}
+summary{cursor:pointer;font-weight:700;color:var(--accent)}details{margin:.65rem 0 .9rem;border:1px solid var(--line);border-radius:5px;padding:.7rem 1rem;background:white}details ul{padding-left:1.25rem;margin: .65rem 0}
+@media(max-width:40rem){main{padding-top:1.25rem}.downloads{grid-template-columns:1fr;padding-bottom:1.6rem}.button{width:100%}article{padding:1.1rem}h1{margin-top:1rem}}
+@media print{body{background:white;color:#111}main{padding:0}article,.guide,pre{break-inside:avoid}.button:link,.button:visited{background:white;color:#111}pre{background:#eee;color:#111}}
+</style>
+</head>
+<body><main>
+<header>
+<p class="book">처음부터 따라 만드는 꼬마 시장 Android 앱</p>
+<h1>독자 자료실</h1>
+<p class="intro">Windows PC에 예제 파일을 받아 책과 같은 결과를 확인하세요. 휴대전화로 열었다면 이 페이지의 주소를 복사해 실습할 PC에서 열 수 있습니다.</p>
+</header>
+<section class="downloads" aria-label="다운로드 파일">
+<article><h2>장별 실습 예제</h2>
+<p>3~20장의 예제와 <code>start.mjs</code>가 들어 있습니다. 20장 완성본에서 예산과 낼 돈을 각각 50,000원으로 고를 수 있습니다. 16~20장의 Android 앱에서는 ‘TalkBack 설정 열기’로 기기 접근성 설정에 들어갈 수 있습니다.</p>
+<p class="meta"><code>market-lab.zip</code> · 4.69 MB</p>
+<a class="button" href="./market-lab.zip" download="market-lab.zip">장별 실습 예제 ZIP 받기</a></article>
+<article><h2>상품·가격표</h2>
+<p>11장에 나오는 상품 12개의 이름, 판매 단위, 실습용 기준가격을 Excel에서 확인할 수 있습니다.</p>
+<p class="meta"><code>product-samples.csv</code> · UTF-8</p>
+<a class="button secondary" href="./product-samples.csv" download="product-samples.csv">상품 12개 CSV 받기</a></article>
+</section>
+<section class="guide" aria-labelledby="first"><h2 id="first">Windows에서 첫 예제 실행하기</h2>
+<ol>
+<li>책 2장을 따라 Node.js와 Git Bash를 준비합니다. 파일 탐색기의 <strong>다운로드</strong> 폴더에서 <strong>market-lab.zip</strong>을 마우스 오른쪽으로 클릭해 <strong>압축 풀기</strong>를 선택합니다.</li>
+<li>내 Windows 사용자 폴더 아래에 <code>market-book</code> 폴더를 만들고 그 안의 <code>kit</code>에 풉니다. <code>kit</code>을 열었을 때 <strong>start.mjs</strong>, <strong>index.json</strong>, <strong>objects</strong>가 보이면 준비가 끝났습니다.</li>
+<li>시작 메뉴에서 <strong>Git Bash</strong>를 열고 다음 명령을 한 줄씩 입력한 뒤 Enter를 누릅니다.
+<pre aria-label="Git Bash에 입력할 네 줄"><code>cd ~/market-book/kit
+node start.mjs 03
+cd work/ch03
+node checkout.mts</code></pre>
+<p><strong>총 3개 / 5,500원</strong>이 나오면 성공입니다. <code>~</code>는 내 사용자 폴더를 뜻합니다. 다른 장도 <code>kit</code>에서 원하는 장 번호를 넣어 준비합니다.</p></li>
+</ol></section>
+<section class="guide" aria-labelledby="final"><h2 id="final">20장 완성본에서 50,000원으로 장보기</h2>
+<p>위에서 받은 장별 ZIP을 새 폴더에 풀고 <code>start.mjs</code>가 있는 위치에서 <code>node start.mjs 20</code>을 입력합니다. VS Code에서 <code>work/ch20/apps/mobile</code>을 열고 PowerShell 터미널에서 <code>npm.cmd ci</code>, <code>npm.cmd run web</code>을 실행합니다.</p>
+<p>이전 장별 ZIP으로 작업했다면 <a href="https://github.com/ungjo/store-price/archive/9f5fd1318294b2bc5a7cfd700952f3512835febd.zip">50,000원이 포함된 20장 완성 소스</a>를 별도 폴더에 풉니다. 압축 속 저장소 폴더에서 <code>apps/mobile</code>을 열어 같은 npm 명령을 실행합니다.</p></section>
+<section class="guide" aria-labelledby="data"><h2 id="data">11~13장의 데이터 찾기</h2>
+<p>가격표에는 책의 계산을 재현하기 위해 정한 예시 금액이 들어 있습니다. 사과 2개와 우유 1팩을 담으면 1,500 × 2 + 2,500 = 5,500원입니다.</p>
+<details><summary>11장 앱의 상품 목록과 데이터베이스 초기 파일</summary>
+<p>Git Bash에서 <code>cd ~/market-book/kit</code>, <code>node start.mjs 11</code>을 차례로 실행합니다. VS Code에서 <code>work/ch11</code> 폴더를 열어 다음 파일을 확인하세요.</p>
+<ul><li>앱에서 읽는 예시 상품과 가격은 <code>apps/mobile/src/data/sample-products.ts</code>에 있습니다.</li>
+<li>데이터베이스에 예시 상품과 가격을 채우는 파일은 <code>supabase/seed.sql</code>입니다. 테이블을 만드는 SQL 파일은 <code>supabase/migrations/</code>에 있습니다.</li></ul>
+<p><a href="https://github.com/ungjo/store-price/blob/b21a0a31ff71a7852f274f1bdc20f7c18e78fbdf/supabase/seed.sql">브라우저에서 같은 상품·가격 SQL 열기</a></p>
+</details>
+<details><summary>12장의 Supabase와 13장의 가상 관측 자료</summary>
+<p>12장의 온라인 실습에서는 <code>node start.mjs 12</code>로 참고본을 준비한 뒤 책의 12.2절 순서대로 SQL을 적용합니다. URL과 공개 키는 본인이 만든 실습 프로젝트에서 확인하세요.</p>
+<p>13장의 가상 가격 관측 예제는 ZIP 안의 <code>steps/13/manual-observation-demo.mjs</code>에 있습니다. 13장의 명령을 따라 PC에서 실행할 수 있습니다.</p>
+</details></section>
+</main></body></html>

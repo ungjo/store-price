@@ -1,0 +1,17 @@
+{
+  "tool": "TypeScript compiler API",
+  "version": "6.0.3",
+  "source": "docs/book/course/steps/03/items.mts",
+  "method": "in-memory source replacement; no app/source mutation",
+  "before": [
+    {
+      "code": 2322,
+      "file": "items.mts",
+      "line": 8,
+      "column": 37,
+      "message": "Type 'string' is not assignable to type 'number'."
+    }
+  ],
+  "after": [],
+  "presentation": "Typescript diagnostics redrawn for reading; not editor or terminal screenshot"
+}

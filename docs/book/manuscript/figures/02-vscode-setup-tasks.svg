@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:lang="ko" width="3000" height="2260" viewBox="0 0 600 452" role="img" aria-labelledby="figureTitle figureDesc" font-family="Malgun Gothic, Segoe UI, sans-serif" fill="#121212">
+<title id="figureTitle">Visual Studio Code 사용자용 설치기 · 추가 작업 선택</title>
+<desc id="figureDesc">한국어 Windows에서 연 VS Code 1.147.0의 실제 설치 캡처를 바탕으로 재구성한 도해. 글자와 단추를 벡터로 조판했다.</desc>
+<metadata>Visual Studio Code icon © Microsoft Corporation. VS Code 1.147.0, 8a14f0cc1b08d531eb83255ea3764ae22aa932b5, out/vs/workbench/browser/media/code-icon.svg. https://code.visualstudio.com/brand</metadata>
+<defs><symbol id="codeIcon" viewBox="0 0 256 256" fill="none"><mask id="mask0" mask-type="alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="256" height="256"><path fill-rule="evenodd" clip-rule="evenodd" d="M181.534 254.252a15.934 15.934 0 0 0 12.7-.488l52.706-25.361a16.002 16.002 0 0 0 9.06-14.42V42.018c0-6.15-3.522-11.754-9.06-14.42L194.234 2.238a15.939 15.939 0 0 0-18.185 3.097l-100.9 92.052-43.95-33.361a10.655 10.655 0 0 0-13.614.605L3.49 77.453c-4.648 4.227-4.653 11.54-.011 15.774L41.593 128 3.478 162.773c-4.642 4.235-4.637 11.547.011 15.775l14.097 12.822a10.655 10.655 0 0 0 13.613.606l43.95-33.362 100.9 92.053a15.915 15.915 0 0 0 5.485 3.585Zm10.505-184.367L115.479 128l76.56 58.115V69.885Z" fill="#fff"/></mask><g mask="url(#mask0)"><path d="M246.94 27.638 194.193 2.241a15.947 15.947 0 0 0-18.194 3.092L3.324 162.773c-4.645 4.235-4.64 11.547.011 15.775L17.44 191.37a10.667 10.667 0 0 0 13.622.606l207.941-157.75c6.976-5.291 16.996-.316 16.996 8.44v-.612a16 16 0 0 0-9.059-14.416Z" fill="#0065A9"/><g filter="url(#filter0_d)"><path d="m246.94 228.362-52.747 25.397a15.95 15.95 0 0 1-18.194-3.092L3.324 93.227c-4.645-4.234-4.64-11.547.011-15.775L17.44 64.63a10.667 10.667 0 0 1 13.622-.605l207.941 157.748c6.976 5.292 16.996.317 16.996-8.44v.613a16.001 16.001 0 0 1-9.059 14.416Z" fill="#007ACC"/></g><g filter="url(#filter1_d)"><path d="M194.196 253.763A15.955 15.955 0 0 1 176 250.667c5.904 5.904 16 1.722 16-6.628V11.961c0-8.35-10.096-12.532-16-6.628a15.955 15.955 0 0 1 18.196-3.097L246.934 27.6A16 16 0 0 1 256 42.017v171.965a16 16 0 0 1-9.066 14.419l-52.738 25.361Z" fill="#1F9CF0"/></g><g style="mix-blend-mode:overlay" opacity=".25"><path fill-rule="evenodd" clip-rule="evenodd" d="M181.378 254.252a15.936 15.936 0 0 0 12.699-.488l52.706-25.362a16 16 0 0 0 9.061-14.419V42.018c0-6.15-3.522-11.754-9.06-14.42L194.077 2.238a15.939 15.939 0 0 0-18.185 3.096l-100.9 92.053-43.95-33.361a10.655 10.655 0 0 0-13.613.605L3.333 77.452c-4.648 4.228-4.653 11.54-.011 15.775L41.436 128 3.322 162.773c-4.642 4.235-4.637 11.547.011 15.775L17.43 191.37a10.655 10.655 0 0 0 13.614.606l43.95-33.362 100.899 92.053a15.919 15.919 0 0 0 5.486 3.585Zm10.505-184.367L115.323 128l76.56 58.115V69.885Z" fill="url(#paint0_linear)"/></g></g><defs><filter id="filter0_d" x="-21.49" y="40.523" width="298.822" height="236.149" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset/><feGaussianBlur stdDeviation="10.667"/><feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/><feBlend mode="overlay" in2="BackgroundImageFix" result="effect1_dropShadow"/><feBlend in="SourceGraphic" in2="effect1_dropShadow" result="shape"/></filter><filter id="filter1_d" x="154.667" y="-20.674" width="122.667" height="297.347" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset/><feGaussianBlur stdDeviation="10.667"/><feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/><feBlend mode="overlay" in2="BackgroundImageFix" result="effect1_dropShadow"/><feBlend in="SourceGraphic" in2="effect1_dropShadow" result="shape"/></filter><linearGradient id="paint0_linear" x1="127.844" y1=".66" x2="127.844" y2="255.34" gradientUnits="userSpaceOnUse"><stop stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs></symbol></defs>
+<rect x=".5" y=".5" width="599" height="451" fill="#fff" stroke="#8e979d"/>
+<rect x="1" y="404" width="598" height="47" fill="#f0f0f0"/>
+<path d="M1 404.5H599" fill="none" stroke="#aaa"/>
+<use xlink:href="#codeIcon" x="8" y="6" width="16" height="16"/>
+<text x="28" y="20" font-size="12.5">Microsoft Visual Studio Code (User) 설치</text>
+<g fill="none" stroke-width="1">
+  <path d="M476 15.5h10" stroke="#222"/>
+  <rect x="522.5" y="9.5" width="9" height="9" stroke="#c4c4c4"/>
+  <path d="m569.5 9.5 9 9m0-9-9 9" stroke="#282828"/>
+</g>
+<use xlink:href="#codeIcon" x="548" y="36" width="43" height="43"/>
+<g fill="#151515" font-size="12" font-family="Malgun Gothic, Segoe UI, sans-serif">
+  <text x="24" y="50" font-size="14" font-weight="700">추가 작업 선택</text>
+  <text x="40" y="68">수행할 추가 작업을 선택하십시오.</text>
+  <text x="40" y="111">Visual Studio Code 설치 과정에 포함할 추가 작업을 선택한 후, "다음"을 클릭하십시오.</text>
+  <text x="40" y="139">아이콘 추가:</text>
+  <rect x="42" y="151" width="13" height="13" fill="#ffffff" stroke="#555555"/>
+  <text x="60" y="162">바탕 화면에 바로가기 만들기(D)</text>
+  <text x="40" y="187">기타:</text>
+  <rect x="42" y="199" width="13" height="13" fill="#ffffff" stroke="#555555"/>
+  <text x="60" y="210">"Code(으)로 열기" 작업을 Windows 탐색기 파일의 상황에 맞는 메뉴에 추가</text>
+  <rect x="42" y="223" width="13" height="13" fill="#ffffff" stroke="#555555"/>
+  <text x="60" y="234">"Code(으)로 열기" 작업을 Windows 탐색기 디렉터리의 상황에 맞는 메뉴에 추가</text>
+  <rect x="42" y="247" width="13" height="13" fill="#ffffff" stroke="#555555"/>
+  <path d="M44 253 l3 3 6 -7" fill="none" stroke="#1d292f" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="60" y="258">Code을(를) 지원되는 파일 형식에 대한 편집기로 등록합니다.</text>
+  <rect x="42" y="271" width="13" height="13" fill="#ffffff" stroke="#555555"/>
+  <path d="M44 277 l3 3 6 -7" fill="none" stroke="#1d292f" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="60" y="282">PATH에 추가(다시 시작한 후 사용 가능)</text>
+  <rect x="351" y="418.5" width="73" height="23" rx="1" fill="#e4e4e4" stroke="#969696" stroke-width="1"/>
+  <text x="387.5" y="434" text-anchor="middle" font-size="12">뒤로(B)</text>
+  <rect x="428" y="418.5" width="73" height="23" rx="1" fill="#e8f2fb" stroke="#0078d4" stroke-width="1.5"/>
+  <text x="464.5" y="434" text-anchor="middle" font-size="12">다음(N)</text>
+  <rect x="513" y="418.5" width="73" height="23" rx="1" fill="#e4e4e4" stroke="#969696" stroke-width="1"/>
+  <text x="549.5" y="434" text-anchor="middle" font-size="12">취소</text>
+</g>
+</svg>

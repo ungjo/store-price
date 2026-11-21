@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="3000" height="2450" viewBox="0 0 600 490" role="img" aria-labelledby="title desc">
+<title id="title">Completing the Git Setup Wizard</title>
+<desc id="desc">실제 Git 2.25.0 설치 캡처를 바탕으로 재구성한 도해. 설치 완료. Launch Git Bash는 해제되어 있고 View Release Notes는 선택되어 있다.</desc>
+<metadata>Git 2.25.0 Setup screenshot by Tyler Matijevich, CC BY 4.0. Adapted and typeset for the book. Source: https://raw.githubusercontent.com/tmatijevich/gfw-tutorial/5bbc1083576c8ae66cb3a3a65c9fd69ae3b4b7aa/media/install/git/12%20complete%202020-02-10_16-16-52.png | License: https://creativecommons.org/licenses/by/4.0/ | Git for Windows symbol extracted from https://github.com/git-for-windows/build-extra/blob/main/git-for-windows.svg . Git logo by Jason Long, CC BY 3.0.</metadata>
+<defs><clipPath id="clipPath3018"><path d="m230.8919,51.9769-49.7423-49.7387c-2.8623-2.8648-7.5083-2.8648-10.3745,0l-10.3286,10.3295 13.1021,13.1026c3.0459-1.0284 6.5371-.3389 8.9639,2.0884 2.4394,2.4424 3.124,5.9634 2.0698,9.0195l12.628,12.6275c3.0551-1.0528 6.58-.3726 9.0195,2.0713 3.4106,3.4096 3.4106,8.9345 0,12.3453s-8.936,3.4116-12.3486,0c-2.5645-2.5665-3.1988-6.3345-1.8999-9.4942l-11.7769-11.7773-.001,30.9911c.8315.4116 1.6163.961 2.3091,1.6509 3.4096,3.4093 3.4096,8.9331 0,12.3478s-8.938,3.4091-12.3453,0-3.4101-8.9385 0-12.3478c.8428-.8413 1.8179-1.478 2.8584-1.9047v-31.2787c-1.0405-.4254-2.0141-1.0576-2.8584-1.9049-2.583-2.581-3.2051-6.372-1.8804-9.5439l-12.9155-12.918-34.1065,34.1045c-2.8657,2.8671-2.8657,7.5131 0,10.3784l49.7417,49.7388c2.8638,2.8647 7.5083,2.8647 10.376,0l49.5093-49.5083c2.8647-2.8663 2.8647-7.5136 0-10.3789"></path></clipPath><symbol id="git-symbol" viewBox="0 0 114 114"><g transform="translate(-.3381,25.4018)"><g clip-path="url(#clipPath3018)" transform="translate(-118.7776,-25.4764)"><path d="m230.4355-10.8129-49.7422-49.7388c-2.8622-2.8647-7.5083-2.8647-10.3745,0l-49.5102,49.5088c-2.8657,2.8671-2.8657,7.5131 0,10.3784l49.7417,49.7388c2.8638,2.8647 7.5083,2.8647 10.376,0l49.5093-49.5083c2.8647-2.8662 2.8647-7.5136 0-10.3789" fill="#ff8080"></path><path d="m293.3929,51.9276-49.7423-49.7388c-2.8622-2.8647-7.5083-2.8647-10.3745,0l-49.5102,49.5088c-2.8657,2.8671-2.8657,7.5131 0,10.3784l49.7417,49.7388c2.8638,2.8648 7.5083,2.8648 10.376,0l49.5093-49.5083c2.8647-2.8662 2.8647-7.5136 0-10.3789" fill="#8dd35f"></path><path d="m167.4356,51.5209-49.7422-49.7388c-2.8623-2.8647-7.5083-2.8647-10.3745,0l-49.5102,49.5088c-2.8657,2.8671-2.8657,7.5131 0,10.3784l49.7417,49.7388c2.8638,2.8647 7.5083,2.8647 10.376,0l49.5092-49.5083c2.8647-2.8662 2.8647-7.5136 0-10.3789" fill="#80b3ff"></path><path d="m230.1294,114.1172-49.7422-49.7388c-2.8622-2.8647-7.5083-2.8647-10.3745,0l-49.5102,49.5088c-2.8657,2.8671-2.8657,7.5131 0,10.3784l49.7417,49.7388c2.8638,2.8647 7.5083,2.8647 10.376,0l49.5093-49.5083c2.8647-2.8663 2.8647-7.5136 0-10.3789" fill="#ffe680"></path></g></g></symbol></defs>
+<g font-family="Segoe UI, Arial, sans-serif">
+<rect x="0.5" y="0.5" width="599" height="489" fill="white" stroke="#9b9b9b" stroke-width="1"/>
+<use href="#git-symbol" xlink:href="#git-symbol" x="5" y="5" width="20" height="20"/>
+<text x="31" y="21" font-size="16" fill="#151515" text-anchor="start">Git 2.25.0 Setup</text>
+<path d="M445 15h13" fill="none" stroke="#111" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="505" y="9" width="12" height="12" fill="none" stroke="#bcbcbc" stroke-width="1"/>
+<path d="M564 9l12 12m0 -12l-12 12" fill="none" stroke="#bcbcbc" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<use href="#git-symbol" xlink:href="#git-symbol" x="32" y="163" width="133" height="133"/>
+<text x="211" y="77" font-size="23" fill="#151515" text-anchor="start" font-weight="700">Completing the Git Setup</text>
+<text x="211" y="104" font-size="23" fill="#151515" text-anchor="start" font-weight="700">Wizard</text>
+<text x="211" y="148" font-size="14.5" fill="#151515" text-anchor="start">Setup has finished installing Git on your computer. The</text>
+<text x="211" y="167" font-size="14.5" fill="#151515" text-anchor="start">application may be launched by selecting the installed</text>
+<text x="211" y="186" font-size="14.5" fill="#151515" text-anchor="start">shortcuts.</text>
+<text x="211" y="218" font-size="14.5" fill="#151515" text-anchor="start">Click Finish to exit Setup.</text>
+<rect x="216" y="241" width="16" height="16" fill="white" stroke="#575757" stroke-width="1.1"/>
+<rect x="237" y="238.5" width="106.25" height="19" fill="none" stroke="#646464" stroke-width=".8" stroke-dasharray="1.5 1.5"/>
+<text x="239" y="253" font-size="14.5" fill="#151515" text-anchor="start">Launch Git Bash</text>
+<rect x="216" y="272" width="16" height="16" fill="white" stroke="#575757" stroke-width="1.1"/>
+<path d="M219 280l3.5 4 7-8.6" fill="none" stroke="#222" stroke-width="1.65" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="239" y="284" font-size="14.5" fill="#151515" text-anchor="start">View Release Notes</text>
+<rect x="1" y="431" width="598" height="58" fill="#efefef" stroke="none" stroke-width="1"/>
+<path d="M1 431h598" fill="none" stroke="#b7b7b7" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="394" y="450" width="89" height="27" fill="#e5e5e5" stroke="#0078d4" stroke-width="1.7"/>
+<text x="438.5" y="468.3" font-size="14" fill="#151515" text-anchor="middle">Next &gt;</text>
+</g>
+</svg>

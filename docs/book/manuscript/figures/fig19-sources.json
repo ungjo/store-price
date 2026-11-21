@@ -1,0 +1,61 @@
+{
+  "captured_at_kst": "2026-11-18 04:08",
+  "capture_manifest": ".artifacts/build/inspection-79c7e8590dc610f0/branding-20261117T190836842Z-996ab9895aeb8204/capture.json",
+  "visual_review": ".artifacts/build/inspection-79c7e8590dc610f0/branding-20261117T190836842Z-996ab9895aeb8204/visual-review.json",
+  "application_id": "com.ungjo.storeprice.inspection",
+  "version_name": "1.0.0",
+  "version_code": 2,
+  "build_source_head": "bf1663e910492a5a06bacfc9079f810cf05f3e3b",
+  "later_full_verification_run": "20261117T193545552Z-2508322f",
+  "later_full_verification_commit": "807d295e1a15d6e668b706bd07d19ff0ea24cda5",
+  "privacy_review": "Cropped away status bar, notification icons, device dock and unrelated settings navigation. Remaining area reviewed visually; no account name, device serial, API key, private product observation or temporary token shown.",
+  "limits": [
+    "App-info image does not show a version number; version comes from capture metadata.",
+    "Cold-start image shows a remote public sample catalog; this image is not an offline-first launch proof.",
+    "Image capture preceded later full regression pass; images alone do not establish interaction tests."
+  ],
+  "figures": [
+    {
+      "figure": "fig19-01-inspection-app-info.png",
+      "source": ".artifacts/build/inspection-79c7e8590dc610f0/branding-20261117T190836842Z-996ab9895aeb8204/system-app-info.png",
+      "source_sha256": "07a8d333e554a0d07605f7b249cf94d8ee90dbc8a4380e54e2278489baefe449",
+      "source_size": [
+        2560,
+        1600
+      ],
+      "crop_box": [
+        1100,
+        95,
+        2485,
+        1005
+      ],
+      "output_size": [
+        1385,
+        910
+      ],
+      "output_sha256": "34a334c2c1e80f77d771a5649087b3dcca1fb99abed46a84ca9daa5f5a768f94",
+      "transformation": "crop only; no pixel content replaced, no scaling or rotation"
+    },
+    {
+      "figure": "fig19-02-inspection-cold-start.png",
+      "source": ".artifacts/build/inspection-79c7e8590dc610f0/branding-20261117T190836842Z-996ab9895aeb8204/after-cold-start.png",
+      "source_sha256": "7422cc4ba6254a79d23e13d729c46731eae93f645b55a74af0a311b69c6947eb",
+      "source_size": [
+        1600,
+        2560
+      ],
+      "crop_box": [
+        36,
+        70,
+        1564,
+        2455
+      ],
+      "output_size": [
+        1528,
+        2385
+      ],
+      "output_sha256": "9cb0f42ecfa5136ba1757e44b7159848bd805f5962ef73f056e6953d9b6fcc50",
+      "transformation": "crop only; no pixel content replaced, no scaling or rotation"
+    }
+  ]
+}

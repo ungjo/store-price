@@ -1,0 +1,88 @@
+{
+  "date": "2026-11-21",
+  "method": "The download card is cropped from the local copy of the published reader site in Chrome at 3x device scale. The three Windows figures are direct crops of supplied Korean VS Code screenshots. Lanczos resampling enlarges the crops 1.6x for print placement. No generated interface text.",
+  "figures": [
+    {
+      "file": "02-reader-download.png",
+      "dimensions": [
+        1140,
+        774
+      ],
+      "sha256": "41558336803bb98fa7773753a9510d71739e61c75c4af225bb1835addbe0d50b",
+      "source": "book/index.html on gh-pages",
+      "source_sha256": "117402416bd073da206e345ba49bc0fd144083dc886d282610066107d62948ad",
+      "viewport_css_px": [
+        862,
+        760
+      ],
+      "crop_css_xywh": [
+        43,
+        296,
+        380,
+        258
+      ],
+      "device_scale_factor": 3
+    },
+    {
+      "file": "02-kit-opened.png",
+      "source": "User-supplied screenshot of VS Code on Windows",
+      "source_sha256": "4e118f3d6412470e077c6a1dacc9cf833f18a6489244eb5323435c2f3d555cec",
+      "source_dimensions": [
+        3840,
+        2160
+      ],
+      "crop_source_xyxy": [
+        76,
+        4,
+        1016,
+        483
+      ],
+      "dimensions": [
+        1504,
+        766
+      ],
+      "sha256": "763250266ddf35a78e3f68db47fbe4ad756da7371589811df52cc11e1f786e19"
+    },
+    {
+      "file": "04-step-created.png",
+      "source": "User-supplied screenshot of VS Code on Windows",
+      "source_sha256": "5a4c1c5c8ecc86dcf3c0655699bb625a5742210d505b0986b58170d2c5a8ca99",
+      "source_dimensions": [
+        3840,
+        2160
+      ],
+      "crop_source_xyxy": [
+        420,
+        1494,
+        1425,
+        1728
+      ],
+      "redaction": "Windows account name obscured at all three occurrences.",
+      "dimensions": [
+        1608,
+        374
+      ],
+      "sha256": "3e11e391d3587c22f34448f9fe2d47705d12a65a0615a3459a7a98678e8aa077"
+    },
+    {
+      "file": "04-before-install.png",
+      "source": "User-supplied screenshot of VS Code on Windows",
+      "source_sha256": "e47fc90c9fec72bd8794028d79712eb33169c09ead667040465f697e0e4103a2",
+      "source_dimensions": [
+        3840,
+        2160
+      ],
+      "crop_source_xyxy": [
+        91,
+        364,
+        1168,
+        724
+      ],
+      "dimensions": [
+        1723,
+        576
+      ],
+      "sha256": "a3015a9c26dd3269997ebc64d0eb37fffc40c579141c24c0b731e414781c0d63"
+    }
+  ]
+}

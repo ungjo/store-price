@@ -1,0 +1,38 @@
+{
+  "date": "2026-11-21",
+  "image": "02-final-web-terminal.png",
+  "method": "Two native Git Bash (mintty, Windows) window crops: typed command on top and Metro and Web URLs from the same process below. Exact captured pixels, no generated UI text. Windows PrintWindow on a separate private desktop.",
+  "kit_sha256": "b7e1b921a442219377d779af27c9cb4e860547361b1658d3d3c730f0e6fe96c7",
+  "chapter": "20",
+  "cwd": "work/ch20/apps/mobile",
+  "command": "npm run web -- --localhost",
+  "environment": {
+    "RCT_METRO_PORT": "18755",
+    "BROWSER": "none",
+    "EXPO_OFFLINE": "1"
+  },
+  "server_check": "http://127.0.0.1:18755/status returned packager-status:running",
+  "crops": [
+    {
+      "frame": "before Enter",
+      "box": {
+        "left": 10,
+        "top": 45,
+        "width": 947,
+        "height": 64
+      },
+      "source_sha256": "7a44ff73c24882f4893f8ea4d43331a6723f445e5eded1aabe5749fbea6db580"
+    },
+    {
+      "frame": "after server startup",
+      "box": {
+        "left": 10,
+        "top": 157,
+        "width": 947,
+        "height": 119
+      },
+      "source_sha256": "cd23fcce8fed6b7d7787b6a924c495b6380746f866af5be1ae159dc768290f97"
+    }
+  ],
+  "sha256": "8c441b97b6e6916ff85dc70220dd92ae89f6d732492b13ca0ce9770dbc06d371"
+}

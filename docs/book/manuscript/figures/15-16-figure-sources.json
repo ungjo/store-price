@@ -1,0 +1,98 @@
+[
+  {
+    "name": "15-standard-columns.png",
+    "crop": [
+      70,
+      550,
+      1370,
+      2230
+    ],
+    "commit": "e15dac6",
+    "run": "20261115T161955875Z-724b31ea",
+    "date": "2026-11-16",
+    "device": "SM-S948N / Android 17 / Expo Go",
+    "description": "기본 글자 상품 두 열과 크래커 1개 장바구니. 원본의 앱 영역 발췌.",
+    "source_path": ".artifacts/device/20261115T161955875Z-724b31ea/readability-standard-open/2026-11-16_012510/큰 글자와 좁은 화면에서 거스름돈 입력 준비/takeScreenshot/readability-standard-product.png",
+    "source_sha256": "eb8d229027ea45940519169d47c474e78eff8e64ad06e4461a3871e0bba522e3",
+    "original_size": [
+      1440,
+      3120
+    ],
+    "result_size": [
+      1300,
+      1680
+    ]
+  },
+  {
+    "name": "15-large-font-column.png",
+    "crop": [
+      42,
+      1110,
+      1399,
+      2940
+    ],
+    "commit": "e15dac6",
+    "run": "20261115T161955875Z-724b31ea",
+    "date": "2026-11-16",
+    "device": "SM-S948N / Android 17 / Expo Go",
+    "description": "큰 글자 상품 한 열과 세로 배치된 크래커 장바구니. 원본의 앱 영역 발췌.",
+    "source_path": ".artifacts/device/20261115T161955875Z-724b31ea/readability-large-font-open/2026-11-16_012724/큰 글자와 좁은 화면에서 거스름돈 입력 준비/takeScreenshot/readability-large-font-product.png",
+    "source_sha256": "dc4038e519ba695a2040745d5469dc42589a66083c0e15d0b1c077c352a811a4",
+    "original_size": [
+      1440,
+      3120
+    ],
+    "result_size": [
+      1357,
+      1830
+    ]
+  },
+  {
+    "name": "15-keyboard-answer.png",
+    "crop": [
+      55,
+      300,
+      1388,
+      2925
+    ],
+    "commit": "e15dac6",
+    "run": "20261115T161955875Z-724b31ea",
+    "date": "2026-11-16",
+    "device": "SM-S948N / Android 17 / Expo Go",
+    "description": "좁은 화면·큰 글자, 5000-1500의 답3500 수정 뒤 키보드와 정답 확인 버튼. Expo Go 도구 표시를 포함한 실제 앱/키보드 영역.",
+    "source_path": ".artifacts/device/20261115T161955875Z-724b31ea/readability-narrow-large-font-correct/2026-11-16_013105/키보드를 연 채 첫 탭으로 오답 채점하고 답 고치기/takeScreenshot/readability-narrow-large-font-keyboard-corrected.png",
+    "source_sha256": "731958e86685a04b43b561ef7ea51dc8c0e0d55a7add6ac740abecf76e14ac20",
+    "original_size": [
+      1440,
+      3120
+    ],
+    "result_size": [
+      1333,
+      2625
+    ]
+  },
+  {
+    "name": "16-talkback-correct-focus.png",
+    "crop": [
+      114,
+      948,
+      1490,
+      2105
+    ],
+    "commit": "c949154",
+    "run": "20261116T112508546Z-5416f64e",
+    "date": "2026-11-16",
+    "device": "SM-X710 / Android 14 / Expo Go / TalkBack",
+    "description": "정답 결과 문장에 파란 접근성 초점. 10000-5500=4500. 앱 영역 발췌, 음성 자체의 증거 아님.",
+    "source_path": ".artifacts/device/20261116T112508546Z-5416f64e/talkback/quiz-correct-focus.png",
+    "source_sha256": "752c29892eda760c3e12c5360c4aabb552d15eaee9338cd87d82e324e6a74b00",
+    "original_size": [
+      1600,
+      2560
+    ],
+    "result_size": [
+      1376,
+      1157
+    ]
+  }
+]

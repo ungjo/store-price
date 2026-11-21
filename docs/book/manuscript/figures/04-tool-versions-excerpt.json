@@ -1,0 +1,32 @@
+{
+  "node": "v26.1.0",
+  "npm": "11.13.0",
+  "packages": [
+    "market-play-mobile@0.1.0",
+    "├── expo@58.0.23",
+    "├── react-native@0.88.1",
+    "├── react@19.3.0",
+    "└── typescript@6.0.3"
+  ],
+  "source_relative": ".artifacts/book-chapter-check/first-app-rksny0sy/apps/mobile",
+  "source_commit": "adcfaab",
+  "commands": [
+    "node --version",
+    "npm --version",
+    "npm ls expo react react-native typescript --depth=0"
+  ],
+  "exit_codes": [
+    0,
+    0,
+    0
+  ],
+  "edited": "Removed only the absolute local project path from npm ls header; outputs otherwise verbatim.",
+  "kind": "typeset excerpt of real terminal outputs; not a UI screenshot",
+  "rendered_figure": "04-tool-versions-excerpt.png",
+  "sha256": "5df740dfbf74ff14440151da4b407c77b1fdeb4e67b6c7decbc2f657c9d84601",
+  "image_size": [
+    2880,
+    2016
+  ],
+  "executed_on_client_date": "2026-11-21"
+}

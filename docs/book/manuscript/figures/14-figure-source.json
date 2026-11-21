@@ -1,0 +1,25 @@
+{
+  "name": "14-offline-first-launch.png",
+  "crop": [
+    60,
+    730,
+    1380,
+    2390
+  ],
+  "sourceCommit": "479f6f5",
+  "verificationCommit": "125d852",
+  "run": "20261115T142809826Z-10d3cf5c",
+  "date": "2026-11-15 23:52 KST",
+  "device": "SM-S948N / Android 17 / installed standalone APK",
+  "description": "실제 통신 차단 후 새 APK 첫 실행의 조회 실패·예시 선택 화면. 오프라인 조건은 같은 실행의 검사 보고서로 확인하며 그림만으로 판정하지 않는다.",
+  "source_path": ".artifacts/device/20261115T142809826Z-10d3cf5c/maestro-standalone/2026-11-15_235242/새로 설치한 독립 APK의 실제 오프라인 첫 실행/takeScreenshot/standalone-offline-first-launch.png",
+  "source_sha256": "d1837a49cf3f580db16ab7719bf005e5258822852a7e249dd5481574cb8f8111",
+  "original_size": [
+    1440,
+    3120
+  ],
+  "result_size": [
+    1320,
+    1660
+  ]
+}

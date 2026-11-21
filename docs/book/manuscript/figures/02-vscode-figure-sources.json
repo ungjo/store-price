@@ -1,0 +1,228 @@
+{
+  "date": "2026-11-21",
+  "capture_method": "Windows 설치기와 파일 탐색기는 해당 실제 창만 캡처. 공식 다운로드 페이지를 별도 브라우저로 열어 촬영. 이미지의 개인정보가 될 수 있는 탐색기 왼쪽과 주소 앞부분은 제외.",
+  "installer_result": "설치 준비 완료까지 이동한 뒤 취소. 촬영과정에서 프로그램 설치나 PATH·사용자 설정 변경을 실행하지 않았다.",
+  "official_help": "https://code.visualstudio.com/docs/setup/windows",
+  "file_explorer_help": "https://support.microsoft.com/windows/find-and-open-file-explorer-ef370130-1cca-9dc5-e0df-2f7416fe1cb1",
+  "figures": {
+    "02-vscode-download.png": {
+      "origin": "https://code.visualstudio.com/download",
+      "view": "공식 웹페이지를 브라우저에서 고밀도로 렌더링한 후 실제 다운로드 카드와 링크를 발췌.",
+      "crop": [
+        1194,
+        2052,
+        3018,
+        3552
+      ],
+      "source_sha256": "cf0e7049ccb08982fc147e7beb5ade29a49779e04e54b508924a8cca64a8cf33",
+      "png_sha256": "d53b7006923fbbe5bc398583d760a41413ae7d7a42560b0739d97a45501fa4d9",
+      "dimensions": [
+        1824,
+        1500
+      ],
+      "previous_figure_sha256": "6aeaf18100dc9844b475395f4b76acee18062a37b4029cb9dfcf24ad601a0e22",
+      "source_dimensions": [
+        7800,
+        5700
+      ],
+      "device_scale_factor": 6,
+      "changes": "브라우저의 고밀도 렌더링을 직접 PNG로 촬영한 후 해당 영역을 자름."
+    },
+    "02-vscode-setup-license.png": {
+      "origin": "기존 Microsoft 서명 Windows 사용자용 VS Code 1.147.0 설치기, 8a14f0cc1b08d531eb83255ea3764ae22aa932b5",
+      "view": "사용권 계약",
+      "kind": "기존 실물 촬영본을 참고해 창 안의 글자와 조작 요소를 벡터로 재구성한 학습용 도해",
+      "vector": "02-vscode-setup-license.svg",
+      "vector_sha256": "c36148968314fcdefb458acdc13d8e708e3a471edf7b4fda628e26329ea935ed",
+      "source_fragment": "vscode-setup-artwork/license.svgpart",
+      "source_fragment_sha256": "77600b674b457cbee618ad31f2009c425dbe3abdff2249fe3ffff4088c01cb81",
+      "original_capture": "vscode-setup-originals/VSCode-Setup-license.png",
+      "original_capture_sha256": "82ba5825f50873d0cd78919735c297486bd1dd926e77022b65c27108647e1783",
+      "original_capture_dimensions": [
+        598,
+        451
+      ],
+      "previous_side_by_side_sha256": "5331871002ca3298482fd5262aeabf0fce8083579a18b41f54c90fc6f2efadc2",
+      "print_fallback": "02-vscode-setup-license.png",
+      "png_sha256": "e1ca2c54063798e66e2c04a88ff789b040e08bca063d8dfa3b8cc5a86c8ea94d",
+      "dimensions": [
+        3000,
+        2260
+      ],
+      "license_source": "VS Code 1.147.0 (8a14f0cc1b08d531eb83255ea3764ae22aa932b5) resources/app/licenses/LICENSE-kor.rtf",
+      "license_rtf_sha256": "a7d67fbae8e114ba25bcf3ef532df570f3cf51ba9bf16879ea516e919222a136",
+      "license_excerpt": "설치 창에 보이는 한국어 머리 문단·링크 세 개·계약서 제목",
+      "installer_license_selection": "https://github.com/microsoft/vscode/blob/8a14f0cc1b08d531eb83255ea3764ae22aa932b5/build/win32/code.iss"
+    },
+    "02-vscode-setup-tasks.png": {
+      "origin": "기존 Microsoft 서명 Windows 사용자용 VS Code 1.147.0 설치기, 8a14f0cc1b08d531eb83255ea3764ae22aa932b5",
+      "view": "추가 작업 선택",
+      "kind": "기존 실물 촬영본을 참고해 창 안의 글자와 조작 요소를 벡터로 재구성한 학습용 도해",
+      "vector": "02-vscode-setup-tasks.svg",
+      "vector_sha256": "49ceb0c821382b5702201fe0686151ae5f6be3e1e7c1519f49f1f153a4ad9c58",
+      "source_fragment": "vscode-setup-artwork/tasks.svgpart",
+      "source_fragment_sha256": "de7bde9889af2bc6821c71dbc7307de4e9f595bf8eb76ccce00979be37f03016",
+      "original_capture": "vscode-setup-originals/VSCode-Setup-tasks.png",
+      "original_capture_sha256": "bab66d4204a8af21ed5ba749a14fca283df8a1cbba0a6844525bd1d58d617e16",
+      "original_capture_dimensions": [
+        598,
+        451
+      ],
+      "previous_side_by_side_sha256": "f6cec1100d324f80304356959e95689a0b17b4497e4041d8e84ffee78cf491c6",
+      "print_fallback": "02-vscode-setup-tasks.png",
+      "png_sha256": "a1d638d80f8b4045d735bec4674060a48549bb193b9ab737ac38a0115670ac72",
+      "dimensions": [
+        3000,
+        2260
+      ]
+    },
+    "02-vscode-setup-copilot.png": {
+      "origin": "기존 Microsoft 서명 Windows 사용자용 VS Code 1.147.0 설치기, 8a14f0cc1b08d531eb83255ea3764ae22aa932b5",
+      "view": "GitHub Copilot CLI 선택",
+      "kind": "기존 실물 촬영본을 참고해 창 안의 글자와 조작 요소를 벡터로 재구성한 학습용 도해",
+      "vector": "02-vscode-setup-copilot.svg",
+      "vector_sha256": "893f647521425957202cc43e0eef9e984844a02816f1b461dfac6c85e160e28b",
+      "source_fragment": "vscode-setup-artwork/copilot.svgpart",
+      "source_fragment_sha256": "c1b8ed844010b8b56deeb6daf0724cb6d8ede3dc5daa78f5d2d80b381930de46",
+      "original_capture": "vscode-setup-originals/VSCode-Setup-copilot.png",
+      "original_capture_sha256": "fd958f7cf3afaeb2085f7266b8f497682642f53ee64cf4b41950e22af95e2d0e",
+      "original_capture_dimensions": [
+        598,
+        451
+      ],
+      "previous_side_by_side_sha256": "587ab641626ad4cd83629cb1cc5260db3600441f42687cd9ec2021112cf59024",
+      "print_fallback": "02-vscode-setup-copilot.png",
+      "png_sha256": "1abd4e01a8791df3996bd13d6d4b886009e5d2991d647a0444be1688e3c1f878",
+      "dimensions": [
+        3000,
+        2260
+      ],
+      "selection": "원래 그림 2-5의 요약에 기록된 Don't add copilot to PATH에 맞춰 세 번째 라디오를 선택한 상태로 표시했다."
+    },
+    "02-vscode-setup-ready.png": {
+      "origin": "기존 Microsoft 서명 Windows 사용자용 VS Code 1.147.0 설치기, 8a14f0cc1b08d531eb83255ea3764ae22aa932b5",
+      "view": "설치 준비 완료",
+      "kind": "기존 실물 촬영본을 참고해 창 안의 글자와 조작 요소를 벡터로 재구성한 학습용 도해",
+      "vector": "02-vscode-setup-ready.svg",
+      "vector_sha256": "a8d1dc00fd90c020a28fad5345d1ce43509c381fc7b709da394e4c5dd63092c6",
+      "source_fragment": "vscode-setup-artwork/ready.svgpart",
+      "source_fragment_sha256": "188d309869bf9b5c8cc664aa7c4855f117bb5221b960c5640154a86d65cc2a82",
+      "original_capture": "vscode-setup-originals/VSCode-Setup-ready.png",
+      "original_capture_sha256": "c5ddabd1b045273cd7e6c0652b7b4f22ff7be2799467571ad0dddf8987430e23",
+      "original_capture_dimensions": [
+        598,
+        451
+      ],
+      "previous_side_by_side_sha256": "c104e23f6e42227bb59e54ca715e57d18a3ff25b2d80ae6d345d8e25e8b75688",
+      "print_fallback": "02-vscode-setup-ready.png",
+      "png_sha256": "038c73fd02394bbbc2eb967a1960492588454a0e5cb1209bf78d4526f96ecb5f",
+      "dimensions": [
+        3000,
+        2260
+      ]
+    },
+    "02-explorer-folder.png": {
+      "origin": "Windows 파일 탐색기, 이 책만을 위해 만든 market-book 폴더",
+      "view": "상위 폴더의 새 폴더 리본과 market-notes 행",
+      "crop": [
+        260,
+        49,
+        816,
+        265
+      ],
+      "source_sha256": "fef84b30c6b38fb09b64a761d7b241a5c7ec06ef1bf30474898cc65e5a036f8d",
+      "png_sha256": "5d972ee28912ebf6c51f6622d4e44257b276dcfbe8c894363a88de137e5d5ccc",
+      "dimensions": [
+        1740,
+        402
+      ],
+      "previous_figure_sha256": "1faad909e50959d2612812f10a44224b10a41aba53fa1bd238e59ef7f37d497f",
+      "original_figure_dimensions": [
+        556,
+        216
+      ],
+      "display_method": "왼쪽은 실제 화면, 오른쪽은 화면에서 찾을 핵심 글자를 표시 상태와 구별해 인쇄용으로 새로 조판한 읽기 보조 영역. 부분 문자열인 .mjs는 확장자로 표시.",
+      "reading_labels": {
+        "도구 모음": "새 폴더",
+        "선택한 폴더": "market-notes"
+      }
+    },
+    "02-explorer-file.png": {
+      "origin": "Windows 파일 탐색기, 이 책만을 위해 만든 market-notes 폴더",
+      "view": "주소 끝 market-book > market-notes 및 prices 파일",
+      "crop": [
+        247,
+        159,
+        682,
+        333
+      ],
+      "source_sha256": "526e9e5573161206fe6aadf0308e9a648745ab83c73104736404b9a867680f5a",
+      "png_sha256": "c2c1cfa71083ef944eba44e86914a1f0e9a0e1f0058abce5c471091e39affae1",
+      "dimensions": [
+        1740,
+        402
+      ],
+      "previous_figure_sha256": "0efaa9bd1043d3c75b4dee172166f5c430e8cd58f30ee03e3dac050be97c747d",
+      "original_figure_dimensions": [
+        435,
+        174
+      ],
+      "display_method": "왼쪽은 실제 화면, 오른쪽은 화면에서 찾을 핵심 글자를 표시 상태와 구별해 인쇄용으로 새로 조판한 읽기 보조 영역. 부분 문자열인 .mjs는 확장자로 표시.",
+      "reading_labels": {
+        "주소 표시줄": "market-book  ›  market-notes",
+        "화면에 보이는 파일 이름": "prices"
+      }
+    },
+    "02-explorer-kit.png": {
+      "origin": "실제 Windows 파일 탐색기와 파일 속성. docs/book/output/market-lab.zip을 실습용 market-book/kit에 압축 해제하여 촬영.",
+      "zip_sha256": "b7e1b921a442219377d779af27c9cb4e860547361b1658d3d3c730f0e6fe96c7",
+      "original_sha256": [
+        "a0f7ddc872f27c300392283feb47a1f276c9e917ad906a9835aff964b4ceec16",
+        "7744b5e1f7e6e086f67b2f67f21319213e2afb95ab200d5b457b561970a6c207"
+      ],
+      "crop": [
+        [
+          247,
+          159,
+          869,
+          363
+        ],
+        [
+          12,
+          134,
+          335,
+          175
+        ]
+      ],
+      "caption_added": "선택한 start 파일의 속성",
+      "png_sha256": "cc8dfc5e0a1457b43603d107e2f4458d969ac317dbc453f08e1c691d95d81446",
+      "dimensions": [
+        1740,
+        540
+      ],
+      "previous_figure_sha256": "299176bbf9b97a32b3d981ba5bba1a903ff21885f1485a38537cfdcb8cc4c449",
+      "original_figure_dimensions": [
+        642,
+        305
+      ],
+      "display_method": "왼쪽은 실제 화면, 오른쪽은 화면에서 찾을 핵심 글자를 표시 상태와 구별해 인쇄용으로 새로 조판한 읽기 보조 영역. 부분 문자열인 .mjs는 확장자로 표시.",
+      "reading_labels": {
+        "주소 표시줄": "market-book  ›  kit",
+        "목록에서 찾을 이름": "objects · index · start",
+        "start 속성에 표시된 확장자": ".mjs"
+      }
+    }
+  },
+  "high_resolution_revision": "다운로드 카드는 고밀도로 촬영했다. VS Code 설치 창 네 장은 실제 창을 토대로 다시 그린 벡터 도해이며 실제 촬영본도 함께 제공한다. 파일 탐색기는 기존 화면과 큰 글씨 안내를 나란히 표시한다.",
+  "setup_artwork": {
+    "renderer": "docs/book/tools/render_setup_figures.cjs",
+    "frame": "실제 한국어 설치 창의 배치에 맞춰 재구성. 인쇄용으로 글자 크기와 일부 줄바꿈을 조정했다.",
+    "logo": "vscode-setup-artwork/code-icon.svg",
+    "logo_sha256": "57270d907046995a87bb87c49a9e0ad683e87810718bcfa4c1d7ee6240400e13",
+    "reference": "Microsoft VS Code 1.147.0 resources/app/out/vs/workbench/browser/media/code-icon.svg",
+    "korean_controls": [
+      "https://github.com/microsoft/vscode/blob/main/build/win32/i18n/Default.ko.isl",
+      "https://github.com/microsoft/vscode/blob/main/build/win32/i18n/messages.ko.isl"
+    ]
+  }
+}
