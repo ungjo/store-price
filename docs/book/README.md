@@ -2,7 +2,7 @@
 
 ## 처음부터 따라 만드는 꼬마 시장 Android 앱
 
-[책 PDF](output/pdf/market-play-book.pdf) · [코드를 복사하며 읽는 HTML](output/market-play-book.html) · [장별 실습 예제 ZIP](output/market-lab.zip) · [종이책 독자 자료실](https://ungjo.github.io/store-price/book/)
+[표지 포함 완성본 PDF (410쪽)](output/pdf/market-play-book-complete.pdf) · [내지 PDF (408쪽)](output/pdf/market-play-book.pdf) · [코드를 복사하며 읽는 HTML](output/market-play-book.html) · [장별 실습 예제 ZIP](output/market-lab.zip) · [종이책 독자 자료실](https://ungjo.github.io/store-price/book/)
 
 앞·뒤 표지를 제외한 **7부 20장, 부록 A~D, 408쪽**의 개발 실습서다. Windows에서 작업 폴더를 열고 첫 코드를 쓰는 데서 시작해, 독자의 Android 기기에 설치한 APK로 장을 보고 영수증을 확인하는 데서 마친다. PDF 목차의 각 장·절 제목을 누르면 해당 쪽으로 이동한다.
 
@@ -24,7 +24,7 @@
 
 [실제 쪽수와 집필 목차](table-of-contents.md) · [장별 편집 원고](manuscript/) · [실행과 조판 검증 기록](verification/book-edition.md)
 
-이전 두 쪽 견본과 4·19장 합본은 [6.4절 견본](output/pdf/cart-total-sample.pdf), [4·19장 견본](output/pdf/first-run-and-apk.pdf)에 보존한다. 본책의 쪽 번호는 위 책 PDF를 기준으로 한다.
+이전 두 쪽 견본과 4·19장 합본은 [6.4절 견본](output/pdf/cart-total-sample.pdf), [4·19장 견본](output/pdf/first-run-and-apk.pdf)에 보존한다. 본문의 인쇄 쪽 번호는 1~408이다. 표지 포함 완성본의 PDF 쪽 라벨은 앞표지, 1~408, 뒤표지 순서다.
 
 ## 개발 당시의 가제와 계획
 
