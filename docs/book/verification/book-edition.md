@@ -248,3 +248,22 @@ Pages 배포 커밋 `7c81e65` 게시 후 공개 PDF·HTML을 내려받아 검증
 `docs/book/tools/package_course.py`로 다시 만든 ZIP의 344개 항목을 이전 판과 비교해 README 한 파일만 달라졌음을 확인했다. 임시 폴더에서 20장을 복원하고 패키지 742개를 설치했다. Chrome에서 사과 2개와 우유 1개의 합계 5,500원, 50,000원권으로 지불한 영수증의 거스름돈 44,500원을 확인했다. 브라우저 오류는 0건이었다.
 
 내지와 완성본 PDF에서 첨부 ZIP을 교체하고 두 판본의 페이지 내용·쪽 번호·링크·책갈피와 다른 첨부 12개를 이전 판과 대조했다. 398쪽을 96dpi로 렌더링한 결과도 일치했다. 오프라인 HTML에서는 ZIP 저장 링크의 내장 데이터만 교체했다. Pages 배포 커밋 `359ff78`이 반영된 뒤 공개 자료실에서 직접 받은 ZIP과 HTML·410쪽 PDF의 첨부 ZIP이 모두 4,702,144바이트였고 SHA-256은 `a8afe9a9764badfb1c06905f66e793957a1685c974804b6950f4c38dd1ac257c`로 같았다.
+
+## 45·73·308·340쪽의 실습 안내 교정 (2026-11-22)
+
+45쪽 그림 2-20에는 자료실에 표시되는 카드 이름 ‘장별 실습 예제’와 버튼 이름 ‘장별 실습 예제 ZIP 받기’를 적었다. 그 버튼으로 받은 ZIP은 4,702,144바이트였고 저장소본과 SHA-256이 일치했다.
+
+73쪽에는 터미널의 위치를 바꾸는 명령을 추가했다. 새 ZIP의 최상위 폴더에서 `node start.mjs 03`을 실행한 뒤 같은 터미널에서 `cd work/ch03`, `node checkout.mts`를 차례로 실행했다. 출력은 `총 3개 / 5,500원`이었다. 같은 폴더에서 `npx --yes --package=typescript@6.0.3 tsc -p .`도 종료 코드 0으로 통과했다.
+
+308쪽과 340쪽의 첫 커밋에는 이전 판에서 누락된 `.editorconfig`와 `.gitattributes`를 포함했다. 공개 ZIP으로 17장과 19장을 각각 새 폴더에 복원했다. 두 장의 원고에서 `git init`, 아래 두 줄, `git commit`을 읽어 실행했다.
+
+```bash
+git add .editorconfig .gitattributes .gitignore .easignore
+git add AGENTS.md README.md apps scripts supabase docs
+```
+
+두 장 모두 첫 커밋에 두 설정 파일이 포함됐고 `git status --short`의 출력은 비어 있었다. 각 장에 포함된 Git 상태 검사 `captureGitState(process.cwd())`가 통과했다. 검증 범위는 첫 커밋 준비와 Git 상태 검사까지다.
+
+`node docs/book/tools/render_book.cjs`로 HTML과 408쪽 내지를 생성하고 앞뒤 표지를 합쳐 410쪽 완성본을 만들었다. `a921167`과 전체 페이지를 비교해 지면이 달라진 곳은 본문 45·73·308·340쪽뿐임을 확인했다. 네 쪽을 이미지로 출력해 명령의 줄바꿈을 확인했다. 책갈피 322개, 내부 목적지 196개, 첨부 파일 13개와 앞뒤 표지도 대조했다. HTML에서는 교정한 코드 블록의 줄바꿈과 책 안 링크를 검사했다.
+
+Pages 게시 커밋 `9efc523` 반영 후 [자료실](https://ungjo.github.io/store-price/book/)에서 내려받은 410쪽 PDF·HTML·실습 ZIP의 SHA-256이 각각 로컬 검증본과 일치했다.

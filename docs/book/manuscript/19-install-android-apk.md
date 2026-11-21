@@ -190,7 +190,8 @@ EAS가 소스 위치를 판단할 수 있도록 참고본의 저장소 루트를
 cd ../..
 git init -b codex/book-ch19
 git status --short
-git add .gitignore .easignore AGENTS.md README.md apps scripts supabase docs
+git add .editorconfig .gitattributes .gitignore .easignore
+git add AGENTS.md README.md apps scripts supabase docs
 git diff --cached --name-only
 ```
 

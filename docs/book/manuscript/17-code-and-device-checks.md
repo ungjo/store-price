@@ -162,7 +162,8 @@ export ANDROID_SERIAL="adb devices에서 확인한 실제 번호"
 ```bash
 git init -b codex/book-ch17
 git status --short
-git add .gitignore .easignore AGENTS.md README.md apps scripts supabase docs
+git add .editorconfig .gitattributes .gitignore .easignore
+git add AGENTS.md README.md apps scripts supabase docs
 git diff --cached --name-only
 git commit -m "chore: 17장 검사 실습 시작점"
 ```
