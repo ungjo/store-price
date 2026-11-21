@@ -40,8 +40,8 @@ summary{cursor:pointer;font-weight:700;color:var(--accent)}details{margin:.65rem
 </header>
 <section class="downloads" aria-label="다운로드 파일">
 <article><h2>장별 실습 예제</h2>
-<p>3~20장의 예제와 <code>start.mjs</code>가 들어 있습니다. 16~20장의 Android 앱에서는 ‘TalkBack 설정 열기’로 기기 접근성 설정에 들어갈 수 있습니다.</p>
-<p class="meta"><code>market-lab.zip</code> · 4.54 MB</p>
+<p>3~20장의 예제와 <code>start.mjs</code>가 들어 있습니다. 20장 완성본에서 예산과 낼 돈을 각각 50,000원으로 고를 수 있습니다. 16~20장의 Android 앱에서는 ‘TalkBack 설정 열기’로 기기 접근성 설정에 들어갈 수 있습니다.</p>
+<p class="meta"><code>market-lab.zip</code> · 4.69 MB</p>
 <a class="button" href="./market-lab.zip" download="market-lab.zip">장별 실습 예제 ZIP 받기</a></article>
 <article><h2>상품·가격표</h2>
 <p>11장에 나오는 상품 12개의 이름, 판매 단위, 실습용 기준가격을 Excel에서 확인할 수 있습니다.</p>
@@ -59,6 +59,9 @@ cd work/ch03
 node checkout.mts</code></pre>
 <p><strong>총 3개 / 5,500원</strong>이 나오면 성공입니다. <code>~</code>는 내 사용자 폴더를 뜻합니다. 다른 장도 <code>kit</code>에서 원하는 장 번호를 넣어 준비합니다.</p></li>
 </ol></section>
+<section class="guide" aria-labelledby="final"><h2 id="final">20장 완성본에서 50,000원으로 장보기</h2>
+<p>위에서 받은 장별 ZIP을 새 폴더에 풀고 <code>start.mjs</code>가 있는 위치에서 <code>node start.mjs 20</code>을 입력합니다. VS Code에서 <code>work/ch20/apps/mobile</code>을 열고 PowerShell 터미널에서 <code>npm.cmd ci</code>, <code>npm.cmd run web</code>을 실행합니다.</p>
+<p>이전 장별 ZIP으로 작업했다면 <a href="https://github.com/ungjo/store-price/archive/9f5fd1318294b2bc5a7cfd700952f3512835febd.zip">50,000원이 포함된 20장 완성 소스</a>를 별도 폴더에 풉니다. 압축 속 저장소 폴더에서 <code>apps/mobile</code>을 열어 같은 npm 명령을 실행합니다.</p></section>
 <section class="guide" aria-labelledby="data"><h2 id="data">11~13장의 데이터 찾기</h2>
 <p>가격표에는 책의 계산을 재현하기 위해 정한 예시 금액이 들어 있습니다. 사과 2개와 우유 1팩을 담으면 1,500 × 2 + 2,500 = 5,500원입니다.</p>
 <details><summary>11장 앱의 상품 목록과 데이터베이스 초기 파일</summary>
