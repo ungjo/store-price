@@ -281,3 +281,9 @@ Pages 게시 커밋 `a5a06fb`을 반영한 공개 자료실에서 정정 안내�
 [Android 앱 설치하기](https://ungjo.github.io/store-price/book/#android)에서 검사 앱 1.0.0(빌드 2)을 로그인 없이 받을 수 있다. Expo 임시 다운로드 주소가 만료된 뒤에도 같은 파일을 제공하도록 `gh-pages`의 `book/downloads/kkoma-market-inspection.apk`에 서명된 APK를 게시했다. 원본은 `inspection-ecb20a267fa3873d` 빌드로, APK 서명 검사와 Android 패키지명 `com.ungjo.storeprice.inspection`, 최소 Android 버전 7.0을 확인했다.
 
 Pages 커밋 `17cc20a` 배포 뒤 자료실 버튼이 가리키는 공개 주소에 인증 없이 GET을 보냈다. HTTP 200으로 받은 APK는 67,968,402바이트였고, SHA-256은 실기기 검증본과 같은 `b19645b4f7702768c6ade60b24cafcd180a8815528c31b83a8c4285eb52ca877`이었다. Chrome의 360px·1280px 화면에서 설치 안내 바로가기, APK 다운로드 이름, 개인정보처리방침 링크와 가로 넘침 여부를 확인했다.
+
+## 브라우저판에서 인쇄된 본문 쪽 찾기 (2026-11-23)
+
+종이책의 앞표지를 제외한 본문 1~408쪽을 웹에서 같은 번호로 찾도록 했다. `node docs/book/tools/render_book.cjs --html-only`로 현재 본문 PDF의 실제 쪽 시작과 HTML 텍스트·그림 위치를 대조했다. 그림만 먼저 보이는 쪽은 그림 위에서 시작하고, 표 머리글이 인쇄본에 반복된 쪽은 이어지는 행을 가리킨다. 예를 들어 브라우저에서 55를 입력하면 20장 VS Code 도움말의 실행 화면이, 284를 입력하면 PC 브라우저 초점 실습이 열린다.
+
+PC 1230px, 모바일 375px·320px에서 번호 입력과 스크롤 표시, 끝부분 406~408쪽 이동, 직접 쪽 주소와 기존 목차 링크, 브라우저 뒤로 가기를 확인했다. 오프라인 HTML에서도 그림 확대와 전체 코드 복사가 동작했다. 인쇄할 때 웹 탐색기는 숨겨지며 본문 PDF는 같은 파일을 사용한다.

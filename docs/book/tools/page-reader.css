@@ -1,0 +1,68 @@
+@media screen {
+  html { scroll-padding-top: calc(var(--book-page-nav-height, 3rem) + 4px); }
+  body:has(.book-page-nav) { position: relative; padding-top: 0; }
+  body:has(.book-page-nav) h2[id] { scroll-margin-block-start: 0; }
+
+  .book-page-nav {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .45rem;
+    margin: 0 0 1.4rem;
+    padding: .45rem 0;
+    border-bottom: 1px solid var(--rule);
+    background: white;
+    color: var(--ink);
+    font: 500 15px/1.4 "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  }
+  .book-page-position { margin-right: auto; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .book-page-position strong { color: var(--green); }
+  .book-page-input span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .book-page-nav input, .book-page-nav button {
+    box-sizing: border-box;
+    min-height: 2.35rem;
+    border: 1px solid #718b80;
+    border-radius: 4px;
+    background: white;
+    color: inherit;
+    font: inherit;
+  }
+  .book-page-nav input { width: 5.25em; padding: .25em .45em; }
+  .book-page-nav button { padding: .25em .8em; border-color: var(--green); color: white; background: var(--green); cursor: pointer; }
+  .book-page-nav :focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+  .print-page-anchor:empty { display: inline-block; width: 0; height: 0; vertical-align: top; }
+  .print-page-anchor:focus { outline: none; }
+
+  /* 넓은 화면에서는 본문 여백에 쪽 번호를 둬서 문장이나 코드에 숫자가 섞이지 않게 한다. */
+  @media (min-width: 850px) {
+    .print-page-anchor:empty::before {
+      content: attr(data-page) "쪽";
+      position: absolute;
+      inset-inline-start: .35rem;
+      width: 2.55rem;
+      padding: .1em 0;
+      border-top: 1px solid var(--rule);
+      color: #52685c;
+      font: 500 12px/1.4 "Malgun Gothic", sans-serif;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+  }
+}
+@media print {
+  .book-page-nav, .print-page-anchor:empty { display: none !important; }
+}

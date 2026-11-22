@@ -4,10 +4,13 @@ const path = require('node:path');
 const os = require('node:os');
 const { pathToFileURL } = require('node:url');
 const { execFileSync } = require('node:child_process');
+const { markPrintPages } = require('./print-page-map.cjs');
 const book = path.resolve(__dirname, '..');
 const manuscript = path.join(book, 'manuscript');
 const out = path.join(book, 'output');
 const partial = process.argv.includes('--proof');
+const htmlOnly = process.argv.includes('--html-only');
+if (partial && htmlOnly) throw Error('--html-only는 완성된 본문 PDF와 함께 사용하세요.');
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'market-print-'));
 const runtime = path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies');
 const modules = process.env.BOOK_NODE_MODULES || path.join(runtime, 'node/node_modules');
@@ -230,8 +233,9 @@ async function main() {
     fs.mkdirSync(path.dirname(pdfName),{recursive:true});
     const options = {preferCSSPageSize:true,printBackground:true,outline:true,tagged:true,displayHeaderFooter:true,
       headerTemplate:'<span></span>',footerTemplate:'<div style="box-sizing:border-box;width:100%;margin:0 15mm 0 16mm;border-top:1px solid #b7cbc0;padding-top:2mm;display:flex;justify-content:space-between;font:8px Malgun Gothic,sans-serif;color:#4c675a"><span>꼬마 시장 Android 앱 개발 실습서</span><span class="pageNumber"></span></div>'};
-    const probe = path.join(scratch,'first.pdf');
-    await page.pdf({...options,path:probe,timeout:240000});
+    // 웹판만 개정할 때는 독자가 가진 본문 PDF의 실제 쪽을 기준으로 삼는다.
+    const probe = htmlOnly ? pdfName : path.join(scratch,'first.pdf');
+    if (!htmlOnly) await page.pdf({...options,path:probe,timeout:240000});
     const pagesFor = p => JSON.parse(execFileSync(python,[path.join(__dirname,'outline_pages.py'),p],{encoding:'utf8'}));
     const initial = pagesFor(probe);
     const numbers = {};
@@ -251,23 +255,26 @@ async function main() {
         ref.textContent = '(' + nums[id] + '쪽)';
       }
     },numbers);
-    const reader = read(path.join(__dirname,'figure-reader.js'));
-    const html = (await page.content()).replace('</body>', () => '<script>'+reader+'</script></body>');
-    const printed = path.join(scratch,'paged.pdf');
-    await page.pdf({...options,path:printed,timeout:240000});
-    let verified = printed;
-    const attachments = [courseArchive,...licenses,...Object.values(setupCaptures)];
-    if (attachments.length) {
-      // 두 판본의 예제 ZIP, 촬영본, 라이선스 원문을 같은 바이트로 제공한다.
+    let verified = pdfName;
+    if (!htmlOnly) {
+      const printed = path.join(scratch,'paged.pdf');
+      await page.pdf({...options,path:printed,timeout:240000});
+      const attachments = [courseArchive,...licenses,...Object.values(setupCaptures)];
       const manifest = path.join(scratch,'attachments.json');
       fs.writeFileSync(manifest,JSON.stringify(attachments),'utf8');
       verified = path.join(scratch,'with-licenses.pdf');
       execFileSync(python,[path.join(__dirname,'attach_licenses.py'),printed,verified,manifest]);
     }
-    const final=pagesFor(verified);
+    const final = htmlOnly ? initial : pagesFor(verified);
     if (final.count!==initial.count || targets.some(t=>Object.entries(final.pages).find(([name])=>name.replace(/\s+/g,'')===t.title.replace(/\s+/g,''))?.[1]!==numbers[t.id])) throw Error('목차와 실제 쪽이 서로 달라졌습니다.');
+
+    // 인쇄와 목차 검증을 마친 뒤에 웹 전용 쪽 표식과 탐색기를 더한다.
+    await markPrintPages(page, {pdf:verified, python, count:final.count});
+    await page.addStyleTag({content:read(path.join(__dirname,'page-reader.css'))});
+    const scripts = ['figure-reader.js','page-reader.js'].map(name => '<script>'+read(path.join(__dirname,name))+'</script>').join('');
+    const html = (await page.content()).replace('</body>', () => scripts+'</body>');
     fs.writeFileSync(htmlName,html,'utf8');
-    fs.copyFileSync(verified,pdfName);
+    if (!htmlOnly) fs.copyFileSync(verified,pdfName);
     const summary={licenses:licenses.map(f=>f.name),pages:final.count,pdf:pdfName,outline:targets.filter(t=>t.level===1).map(t=>({title:t.title,page:numbers[t.id]})),destinations:targets.length};
     fs.writeFileSync(path.join(scratch,'summary.json'),JSON.stringify(summary,null,2));
     console.log(JSON.stringify(summary)); console.log(scratch);
