@@ -275,3 +275,9 @@ Pages 게시 커밋 `9efc523` 반영 후 [자료실](https://ungjo.github.io/sto
 구판 절차로 이미 첫 커밋을 만든 경우도 확인했다. ZIP에서 꺼낸 17장과 19장의 실습 폴더에서 각각 구판의 첫 커밋을 만들자 `git status --short`에 `.editorconfig`와 `.gitattributes`만 미추적으로 나타났다. `git add -- .editorconfig .gitattributes`로 두 파일만 선택하고 새 커밋을 만든 뒤 작업 폴더가 깨끗해졌고 각 장의 Git 상태 검사를 통과했다.
 
 Pages 게시 커밋 `a5a06fb`을 반영한 공개 자료실에서 정정 안내와 HTML판의 다섯 절 링크를 확인했다. 공개 PDF·HTML·ZIP을 내려받아 `9665e12`의 배포 파일과 바이트 단위로 대조했다.
+
+## 자료실의 Android 검사 앱 다운로드 (2026-11-22)
+
+[Android 앱 설치하기](https://ungjo.github.io/store-price/book/#android)에서 검사 앱 1.0.0(빌드 2)을 로그인 없이 받을 수 있다. Expo 임시 다운로드 주소가 만료된 뒤에도 같은 파일을 제공하도록 `gh-pages`의 `book/downloads/kkoma-market-inspection.apk`에 서명된 APK를 게시했다. 원본은 `inspection-ecb20a267fa3873d` 빌드로, APK 서명 검사와 Android 패키지명 `com.ungjo.storeprice.inspection`, 최소 Android 버전 7.0을 확인했다.
+
+Pages 커밋 `17cc20a` 배포 뒤 자료실 버튼이 가리키는 공개 주소에 인증 없이 GET을 보냈다. HTTP 200으로 받은 APK는 67,968,402바이트였고, SHA-256은 실기기 검증본과 같은 `b19645b4f7702768c6ade60b24cafcd180a8815528c31b83a8c4285eb52ca877`이었다. Chrome의 360px·1280px 화면에서 설치 안내 바로가기, APK 다운로드 이름, 개인정보처리방침 링크와 가로 넘침 여부를 확인했다.
