@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseAndroidPackageMetadata } from './inspection-device.mjs';
 
+import { snapshotProductionNetwork, compareShoppingNetwork } from './production-network.mjs';
+
 const applicationId = 'com.ungjo.storeprice';
 const verifiedSets = new WeakSet();
 const sha256Pattern = /^[a-f0-9]{64}$/u;
@@ -130,6 +132,11 @@ async function verifyInstalledFiles(adb, state, user, phase) {
   requireSame(digests.sort().join(','), state.apks.map((item) => item.sha256).sort().join(','), '기존 설치 파일이 이번 정식 빌드와 다릅니다.');
   const dump = await adbOutput(adb, phase + '-metadata', ['shell', 'dumpsys', 'package', applicationId]);
   const meta = parseAndroidPackageMetadata(dump, user, applicationId);
+  // 열린 권한 목록에서 INTERNET이 빠졌는지 확인합니다. 출력 누락이나 권한 부여는 실패로 처리합니다.
+  const permissions = /^[ \t]*requested permissions:[ \t]*\r?\n((?:[ \t]+[\w.]+\r?\n)+)[ \t]*install permissions:/mu.exec(dump);
+  if (!permissions || /^\s*android\.permission\.INTERNET(?:$|:)/mu.test(dump)) {
+    throw new Error('설치된 정식 앱의 INTERNET 권한 차단을 확인하지 못했습니다.');
+  }
   if (!meta.installed || meta.versionName !== state.versionName || meta.versionCode !== state.versionCode) {
     throw new Error('현재 사용자의 정식 앱 설치 상태 또는 버전이 다릅니다.');
   }
@@ -152,10 +159,13 @@ export async function runProductionInstalled({ adb, state, verifyInstalled }) {
     if (!/^Success$/mu.test(result) || /Failure|Error:/iu.test(result)) throw new Error('정식 앱 설치가 완료되지 않았습니다.');
   }
   await verifyInstalledFiles(adb, state, user, 'before');
+  const snapshot = (phase) => snapshotProductionNetwork({ read: (label, args) => adbOutput(adb, label, args), applicationId, user, phase });
+  const before = await snapshot('before');
   await verifyInstalled();
+  const network = compareShoppingNetwork(before, await snapshot('after'));
   await verifyInstalledFiles(adb, state, user, 'after');
   assertProductionApksUnchanged(state);
   return Object.freeze({ applicationId, versionName: state.versionName, versionCode: state.versionCode, aabSha256: state.aabSha256,
     installationMode: existing ? 'reused-exact' : 'fresh', verifiedApks: state.apks.length, signerCertificateSHA256: state.signerCertificateSHA256,
-    verifyInstalledStatus: 'passed' });
+    network, verifyInstalledStatus: 'passed' });
 }

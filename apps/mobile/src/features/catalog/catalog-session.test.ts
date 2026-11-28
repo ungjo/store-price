@@ -1,12 +1,46 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { CatalogLoader as BundledCatalogLoader } from '../../components/bundled-catalog-loader.ts';
 import { sampleProducts } from '../../data/sample-products.ts';
 import type { CatalogProduct } from './catalog.ts';
+import { createInitialShoppingState, createShoppingReducer } from '../payment/payment.ts';
 import { createCatalogSession, type CatalogState } from './catalog-session.ts';
 
 type Result = readonly CatalogProduct[] | null;
 const remoteProducts: readonly CatalogProduct[] = [{ ...sampleProducts[0], priceKrw: 2200 }];
+
+test('출시용 내장 상품 12개로 장보기부터 44,500원 거스름돈 영수증과 새 놀이까지 서버 호출이 없다', (t) => {
+  const fetch = t.mock.method(globalThis, 'fetch', () => { throw new Error('상품 서버를 호출했습니다.'); });
+  const result = BundledCatalogLoader({
+    settingsButtons: null,
+    children: (products, source, reload) => {
+      assert.equal(products, sampleProducts);
+      assert.equal(products.length, 12);
+      assert.equal(source, 'sample');
+      assert.equal(reload, undefined);
+
+      const shop = createShoppingReducer(products);
+      let state = createInitialShoppingState();
+      state = shop(state, { type: 'add', productId: 'sample-apple' });
+      state = shop(state, { type: 'add', productId: 'sample-apple' });
+      state = shop(state, { type: 'add', productId: 'sample-milk' });
+      state = shop(state, { type: 'select-budget', amountKrw: 50000 });
+      state = shop(state, { type: 'select-payment', amountKrw: 50000 });
+      state = shop(state, { type: 'change-answer', answer: '44500' });
+      state = shop(state, { type: 'check-answer' });
+      state = shop(state, { type: 'complete-checkout' });
+      assert.equal(state.receipt?.totalQuantity, 3);
+      assert.equal(state.receipt.totalPriceKrw, 5500);
+      assert.equal(state.receipt.paidAmountKrw, 50000);
+      assert.equal(state.receipt.changeAmountKrw, 44500);
+      assert.deepEqual(shop(state, { type: 'start-new-round' }), createInitialShoppingState());
+      return '준비됨';
+    },
+  });
+  assert.equal(result, '준비됨');
+  assert.equal(fetch.mock.callCount(), 0);
+});
 
 function deferred() {
   let resolve!: (value: Result) => void;

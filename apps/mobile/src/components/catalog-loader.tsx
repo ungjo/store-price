@@ -16,10 +16,12 @@ const publishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const deviceRunId = process.env.EXPO_PUBLIC_DEVICE_RUN_ID;
 const catalogTestScenario = process.env.EXPO_PUBLIC_CATALOG_TEST_SCENARIO;
 
-export function CatalogLoader({ children, settingsButtons }: {
+export type CatalogLoaderProps = {
   settingsButtons: ReactNode;
-  children: (products: readonly CatalogProduct[], source: CatalogSource, reload: () => void) => ReactNode;
-}) {
+  children: (products: readonly CatalogProduct[], source: CatalogSource, reload?: () => void) => ReactNode;
+};
+
+export function CatalogLoader({ children, settingsButtons }: CatalogLoaderProps) {
   const [catalog, setCatalog] = useState(INITIAL_CATALOG_STATE);
   const [round, setRound] = useState(0);
   const [fixtureState, setFixtureState] = useState(INITIAL_CATALOG_DEVICE_STATE);
@@ -60,7 +62,7 @@ export function CatalogLoader({ children, settingsButtons }: {
       : '예시 상품으로 먼저 시장놀이를 해 볼까요?';
 
   const screen = catalog.status === 'ready' ? (
-    <Fragment key={round}>{children(catalog.products, catalog.source, reload)}</Fragment>
+    <Fragment key={round}>{children(catalog.products, catalog.source, catalog.source === 'supabase' ? reload : undefined)}</Fragment>
   ) : (
     <SafeAreaProvider>
       <SafeAreaView style={styles.screen}>

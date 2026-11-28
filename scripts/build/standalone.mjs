@@ -49,6 +49,7 @@ export function captureBuildInputs(mobileRoot) {
   mobileRoot = checkedPath(mobileRoot);
   if (!fs.statSync(mobileRoot).isDirectory()) throw new Error('앱 입력 폴더를 확인해 주세요.');
   const files = [...baseFiles];
+  if (fs.existsSync(path.join(mobileRoot, 'metro.config.js'))) files.push('metro.config.js');
   const walk = (relative) => {
     const directory = path.join(mobileRoot, relative);
     if (fs.lstatSync(directory).isSymbolicLink()) throw new Error('빌드 폴더의 심볼릭 링크는 허용하지 않습니다.');

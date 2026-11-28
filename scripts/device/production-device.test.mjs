@@ -6,7 +6,12 @@ import path from 'node:path';
 import test from 'node:test';
 import { assertProductionApksUnchanged, captureProductionApks, runProductionInstalled, checkProductionBrandingReview } from './production-device.mjs';
 
+import { readUidBytes, validatedDefaultNetwork } from './production-network.mjs';
+
 const id = 'com.ungjo.storeprice';
+const connectivity = 'Active default network: 101\nCurrent Networks:\n  NetworkAgentInfo{network{101} nc{[ Capabilities: INTERNET&VALIDATED&TRUSTED ]}}\nStatus for known UIDs:';
+const trafficTable = (rows) => ['mAppUidStatsMap:', 'uid rxBytes rxPackets txBytes txPackets', '1000 560 5 80 1', ...rows, 'mStatsMapA:'].join('\n');
+
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 
 function fixture(t) {
@@ -31,7 +36,8 @@ function fixture(t) {
   return { proof, save, capture, write };
 }
 
-function device(state, { existing = false, mismatchAt = '', version = '1.0.0' } = {}) {
+function device(state, { existing = false, mismatchAt = '', version = '1.0.0', internet = false,
+  beforeRows = [], afterRows = [], connectivityAfter = connectivity } = {}) {
   const calls = [];
   const base = '/data/app/~~abc==' + '/' + id + '-id==/';
   const paths = ['base.apk', 'split_config.arm64_v8a.apk'].map((name) => base + name);
@@ -41,6 +47,9 @@ function device(state, { existing = false, mismatchAt = '', version = '1.0.0' } 
     const response = (stdout) => ({ stdout, code: 0 });
     if (args[0] === 'install-multiple') return response('Success');
     if (args.includes('get-current-user')) return response('10');
+    if (args.includes('-U')) return response('package:' + id + ' uid:1012345');
+    if (args.includes('connectivity')) return response(played ? connectivityAfter : connectivity);
+    if (args.at(-1).startsWith('dumpsys netstats |')) return response(trafficTable(played ? afterRows : beforeRows));
     if (args.includes('list')) return response(['package:' + id + '.inspection', ...(existing ? ['package:' + id] : [])].join('\n'));
     if (args.includes('path')) return response(paths.map((file) => 'package:' + file).reverse().join('\n'));
     if (args.includes('sha256sum')) {
@@ -48,7 +57,8 @@ function device(state, { existing = false, mismatchAt = '', version = '1.0.0' } 
         ? hash('unknown') : state.apks[paths.indexOf(args.at(-1))].sha256;
       return response(digest + '  ' + args.at(-1));
     }
-    if (args.includes('dumpsys')) return response('Packages:\n  Package [' + id + '] (abcd):\n    versionCode=1 minSdk=26\n    versionName=' + version + '\n    User 10: installed=true');
+    if (args.includes('dumpsys')) return response('Packages:\n  Package [' + id + '] (abcd):\n    versionCode=1 minSdk=26\n    versionName=' + version + '\n    requested permissions:\n      android.permission.VIBRATE\n'
+      + (internet ? '      android.permission.INTERNET\n' : '') + '    install permissions:\n      android.permission.VIBRATE: granted=true\n    User 10: installed=true');
     throw Error('예상하지 못한 명령 ' + label);
   };
   return { calls, adb, verifyInstalled: async () => { played = true; }, played: () => played };
@@ -62,11 +72,33 @@ for (const existing of [false, true]) {
     assert.equal(result.installationMode, existing ? 'reused-exact' : 'fresh');
     assert.equal(result.verifiedApks, 2);
     assert.equal(result.verifyInstalledStatus, 'passed');
+    assert.equal(result.network.sentBytes, 0);
+    assert.equal(result.network.receivedBytes, 0);
     const installs = target.calls.filter((args) => args[0].startsWith('install'));
     assert.deepEqual(installs, existing ? [] : [['install-multiple', '-R', '--user', '10', ...state.apks.map((apk) => apk.path)]]);
     assert.equal(target.calls.filter((args) => args.includes('sha256sum')).length, 4);
   });
 }
+
+test('온라인 상태·권한·송수신 통계 변화가 있으면 정식 장보기 검사를 통과시키지 않는다', async (t) => {
+  const state = fixture(t).capture();
+  for (const options of [{ internet: true }, { connectivityAfter: connectivity.replace('101\n', '102\n') },
+    { connectivityAfter: connectivity.replace('&VALIDATED', '') }, { afterRows: ['1012345 0 0 32 1'] },
+    { afterRows: ['1012345 30 1 0 0'] }, { beforeRows: ['1012345 20 1 20 1'] }]) {
+    await assert.rejects(runProductionInstalled({ state, ...device(state, { existing: true, ...options }) }));
+  }
+});
+
+test('다른 연결의 검증과 불완전한 UID 통계를 0바이트로 오인하지 않는다', () => {
+  const wrongNetwork = connectivity.replace('Active default network: 101', 'Active default network: 122');
+  assert.throws(() => validatedDefaultNetwork(wrongNetwork), /인터넷/u);
+  assert.throws(() => readUidBytes('mAppUidStatsMap:\nuid rxBytes rxPackets txBytes txPackets\nmStatsMapA:', 12000), /통계 수집/u);
+  assert.throws(() => readUidBytes(trafficTable([]).replace('mStatsMapA:', ''), 12000), /통계 표/u);
+  assert.throws(() => readUidBytes(trafficTable(['12000 0 0 bad 0']), 12000), /형식/u);
+  assert.throws(() => readUidBytes(trafficTable(['12000 1 1 0 0', '12000 0 0 1 1']), 12000), /중복/u);
+  assert.deepEqual(readUidBytes(trafficTable(['13000 422 1 13 1']), 12000), { rx: 0, tx: 0 });
+  assert.deepEqual(readUidBytes(trafficTable(['12000 422 1 13 1']), 12000), { rx: 422, tx: 13 });
+});
 
 test('같은 식별자의 기존 앱이 다르면 설치나 조작 전에 중단한다', async (t) => {
   const state = fixture(t).capture();

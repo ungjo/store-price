@@ -62,7 +62,7 @@ export default function App() {
 function MarketScreen({ products, source, reload, settingsButtons }: {
   products: readonly CatalogProduct[];
   source: CatalogSource;
-  reload: () => void;
+  reload?: () => void;
   settingsButtons: ReactNode;
 }) {
   // 불러온 목록을 한 번의 놀이 동안 고정해 장바구니와 영수증의 가격이 중간에 달라지지 않게 합니다.
@@ -172,7 +172,7 @@ function MarketScreen({ products, source, reload, settingsButtons }: {
     // 내장 예시는 같은 화면을 재사용하므로 새 제목의 배치와 분류를 새 놀이 기준으로 다시 확인합니다.
     setTitleLayoutReady(false);
     setCategory('all');
-    if (source === 'supabase') reload();
+    if (reload) reload();
     else dispatch({ type: 'start-new-round' });
   }
 

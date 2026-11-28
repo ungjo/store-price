@@ -1,5 +1,5 @@
 appId: com.ungjo.storeprice
-name: 정식 앱의 공개 상품·방침·접근성 설정·50,000원권 영수증
+name: 정식 앱의 내장 상품·방침·접근성 설정·50,000원권 영수증
 ---
 # 앱 데이터를 보존하고 새 프로세스로 시작해 사용자가 처음 여는 상품 화면부터 검사합니다.
 - stopApp
@@ -19,7 +19,7 @@ name: 정식 앱의 공개 상품·방침·접근성 설정·50,000원권 영수
 - assertNotVisible: { id: preview-open }
 - assertNotVisible: { id: preview-modal }
 
-# 정식 앱은 사용자용 출처 문구로 서버 응답과 내장 예시 경로를 구분합니다.
+# 정식 앱의 사용자용 출처와 실제 표시 수량이 내장 예시와 일치해야 합니다.
 - scrollUntilVisible:
     element: { text: '^연습용 예시 가격이에요$' }
     direction: DOWN
@@ -29,7 +29,7 @@ name: 정식 앱의 공개 상품·방침·접근성 설정·50,000원권 영수
     direction: DOWN
     timeout: 30000
 - scrollUntilVisible:
-    element: { id: catalog-origin, text: '^가게에서 불러온 상품이에요\.$' }
+    element: { id: catalog-origin, text: '^앱에 준비된 예시 상품으로 놀고 있어요\.$' }
     direction: DOWN
     timeout: 30000
 - scrollUntilVisible:

@@ -352,7 +352,7 @@ async function preflight() {
   const android = (await adb('device-android', ['shell', 'getprop', 'ro.build.version.release'])).stdout.trim();
   const cleanDeviceValue = (value) => value.replace(/[^A-Za-z0-9 ._-]/gu, '').slice(0, 64) || '확인 불가';
   device = { model: cleanDeviceValue(model), android: cleanDeviceValue(android) };
-  if (!standaloneOnly) {
+  if (!standaloneOnly && !productionPath) {
     const expo = await adb('expo-go-installed', ['shell', 'pm', 'path', 'host.exp.exponent']);
     if (!/^package:/mu.test(expo.stdout)) throw new Error('휴대전화에 Expo Go를 먼저 설치해 주세요.');
     requireFile(path.join(repoRoot, 'apps/mobile/.maestro/payment.yaml'), 'Maestro 검사 흐름');
@@ -476,7 +476,6 @@ async function verifyProductionInstalled() {
   say('정식 앱의 기기별 APK와 실제 설치 파일을 대조하고 장보기부터 영수증까지 검사합니다.');
   productionResult = await runProductionInstalled({ adb, state: productionApks, verifyInstalled: async () => {
     assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
-    assertCatalogEnvironmentUnchanged(catalogEnvironment);
     const maestroDir = path.join(runDir, 'maestro');
     const output = path.join(runDir, 'result.xml');
     brandingCapture = await captureProductionBranding({ adb, run, directory: runDir });
@@ -490,13 +489,14 @@ async function verifyProductionInstalled() {
       'apps/mobile/.maestro/production-play.yaml',
     ], { timeout: timeout.flow });
     junit = readJunit(output);
-    const deadline = Date.now() + 12 * 60_000;
-    while (!fs.existsSync(reviewPath)) {
-      if (interrupted || Date.now() >= deadline) throw new Error('이번 정식 앱의 아이콘·시작 화면 검토 기록을 받지 못했습니다.');
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-    }
-    brandingReview = readBrandingReview();
   } });
+  const reviewPath = path.join(runDir, 'branding-review.json');
+  const deadline = Date.now() + 12 * 60_000;
+  while (!fs.existsSync(reviewPath)) {
+    if (interrupted || Date.now() >= deadline) throw new Error('이번 정식 앱의 아이콘·시작 화면 검토 기록을 받지 못했습니다.');
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+  brandingReview = readBrandingReview();
   assertProductionUnchanged();
 }
 
@@ -846,12 +846,12 @@ function productionReport(status, reason, seoul) {
     ...(result.installationMode === 'fresh' ? ['adb -s <기기> ' + (apk.apks.length > 1 ? 'install-multiple' : 'install') + ' -R --user <현재 사용자> <기기별 APK>'] : []),
     'maestro --device <기기> test -e APP_ID=' + aab.applicationId + ' --format junit --output <검사폴더>/result.xml --test-output-dir <검사폴더>/maestro --debug-output <검사폴더>/maestro apps/mobile/.maestro/production-play.yaml',
     '```', '',
-    '- Expo Go에서 상품 로딩 중 예시 선택을 별도로 확인했다. JUnit ' + loadingJunit.testcases + '건 통과.',
+    '- 장보기 전후 Android가 기본 인터넷 연결을 검증했고 정식 앱 설치본에 INTERNET 권한이 없음을 확인했다.',
     '- 정식 앱에서 예시 상품 12개와 “실제 마트 판매 가격이 아니에요.”를 확인하고 개인정보처리방침을 열어 내용을 읽은 뒤 닫았다. TalkBack 설정 버튼으로 Android 접근성 설정에 들어갔다가 장보기 화면으로 돌아왔다.',
     '- 50,000원 예산에서 사과 2개와 우유 1개(5,500원)를 골라 50,000원권으로 지불했다. 거스름돈 44,500원을 맞히고 영수증의 지불액·거스름돈·남은 놀이돈을 확인한 뒤 다시 장보기를 시작했다. JUnit ' + junit.testcases + '건 통과.',
-    '- 검사 전후 공개 예시 상품 지문 `' + catalogAfter.fingerprint + '`',
+    '- 장보기 시작 전 ' + result.network.before.timestamp + '부터 영수증·다시 장보기를 마친 ' + result.network.after.timestamp + '까지 정식 앱 UID의 Android 네트워크 통계 증가량은 수신 ' + result.network.receivedBytes + '바이트, 송신 ' + result.network.sentBytes + '바이트였다. 이 구간의 상품 서버 요청은 0건이었다.',
     '- 충전 중 화면 유지 설정의 최종 처리 `' + (screenAwake.restoreStatus || screenAwake.applyStatus) + '`',
-    ...checks.filter((check) => ['privacy-page', 'production-tests', 'maestro-syntax-production', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'catalog-http-before', 'catalog-http-after', 'maestro-loading-choice', 'production-play'].includes(check.label))
+    ...checks.filter((check) => ['privacy-page', 'production-tests', 'maestro-syntax-production', 'database-tests', 'unit-tests', 'typecheck', 'lint', 'export', 'production-play'].includes(check.label))
       .map((check) => '- `' + check.label + '` 종료 코드 ' + check.exitCode),
     '', 'Google Play에 제출하기 전에 업로드용 AAB를 기기 사양에 맞는 APK로 변환하고 로컬 검사 키로 서명해 설치했다. Play 배포와 Play 앱 서명 검증은 이후 단계다.',
     '', '원본 로그와 JUnit은 `.artifacts/device/' + runId + '/`에 저장한다.', '',
@@ -1141,7 +1141,7 @@ try {
   fs.mkdirSync(runDir);
   say('설치 도구·USB 실기기·Git 상태를 확인합니다.');
   gitState = captureGitState(repoRoot);
-  if (!doctor) catalogEnvironment = captureCatalogEnvironment(mobileRoot);
+  if (!doctor && !productionPath) catalogEnvironment = captureCatalogEnvironment(mobileRoot);
   if (!doctor && previewPath) previewState = capturePrivatePreview(repoRoot, previewPath, catalogProjectRef(catalogEnvironment));
   await preflight();
   if (doctor) {
@@ -1248,11 +1248,13 @@ try {
         checks.push({ label: 'private-preview-release-scan', exitCode: 0, milliseconds: Date.now() - started });
         previewBefore = await verifyPreviewHttp('private-preview-http-before');
       }
-      say('공개 상품과 비공개 읽기 차단을 실제 REST GET으로 확인합니다.');
-      catalogBefore = await verifyCatalogHttp('catalog-http-before');
-      await ensurePortUnused();
-      createdReverse = await prepareReverse();
-      if (!receiptOnly && !readabilityOnly && !talkbackOnly) await verifyLoadingChoice();
+      if (!productionAab) {
+        say('공개 상품과 비공개 읽기 차단을 실제 REST GET으로 확인합니다.');
+        catalogBefore = await verifyCatalogHttp('catalog-http-before');
+        await ensurePortUnused();
+        createdReverse = await prepareReverse();
+        if (!receiptOnly && !readabilityOnly && !talkbackOnly) await verifyLoadingChoice();
+      }
       if (productionAab) {
         await verifyProductionInstalled();
       } else if (inspectionApkState) {
@@ -1292,7 +1294,7 @@ try {
       if (interrupted) throw new Error('사용자가 검사를 중단했습니다.');
       assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
       assertPreviewUnchanged();
-      catalogAfter = await verifyCatalogHttp('catalog-http-after', catalogBefore);
+      if (!productionAab) catalogAfter = await verifyCatalogHttp('catalog-http-after', catalogBefore);
       if (previewSession) {
         previewAfter = await verifyPreviewHttp('private-preview-http-after');
         if (previewAfter.fingerprint !== previewBefore.fingerprint) throw new Error('검사 전후 미리보기 응답이 다릅니다.');
@@ -1312,7 +1314,7 @@ try {
     }
     if (interrupted) throw new Error('사용자가 검사를 중단했습니다.');
     assertGitStateUnchanged(repoRoot, gitState, { ignoreReport: true });
-    assertCatalogEnvironmentUnchanged(catalogEnvironment);
+    if (catalogEnvironment) assertCatalogEnvironmentUnchanged(catalogEnvironment);
     if (apkState) assertStandaloneApkUnchanged(apkState);
     if (inspectionApkState) assertInspectionApkUnchanged(inspectionApkState);
       if (inspectionUpdateState) assertHistoricalInspectionApkUnchanged(inspectionUpdateState);
@@ -1323,7 +1325,7 @@ try {
         throw new Error('정식 AAB에서 생성한 APK와 실제 설치 앱의 놀이 검사를 완료하지 못했습니다.');
       }
       if (inspectionApkState && (!junit || inspectionResult?.verifyInstalledStatus !== 'passed')) throw new Error('설치한 검사 APK의 전체 검사를 완료하지 않아 커밋하지 않습니다.');
-      if (!loadingJunit) throw new Error('예시 선택 실기기 검사를 완료하지 않아 기록과 커밋을 만들지 않습니다.');
+      if (!productionAab && !loadingJunit) throw new Error('예시 선택 실기기 검사를 완료하지 않아 기록과 커밋을 만들지 않습니다.');
       if (apkState && !standaloneJunit) throw new Error('설치형 APK의 오프라인 검사를 완료하지 않아 기록과 커밋을 만들지 않습니다.');
       if (readabilityRequested && (!readabilityResult || !serializeDisplaySettings(displayState).restoration.verified
         || readabilityResult.applicationId !== (apkState?.applicationId ?? 'host.exp.exponent')
@@ -1336,7 +1338,7 @@ try {
       if (inspectionUpdateState) assertHistoricalInspectionApkUnchanged(inspectionUpdateState);
       assertProductionUnchanged();
       writeReport('PASS');
-      assertCatalogEnvironmentUnchanged(catalogEnvironment);
+      if (catalogEnvironment) assertCatalogEnvironmentUnchanged(catalogEnvironment);
       assertPreviewUnchanged();
       if (apkState) assertStandaloneApkUnchanged(apkState);
       if (inspectionApkState) assertInspectionApkUnchanged(inspectionApkState);
@@ -1368,7 +1370,7 @@ try {
     fs.writeFileSync(path.join(runDir, 'summary.json'), JSON.stringify({
       runId, scope: talkbackOnly ? 'talkback-only' : readabilityOnly ? 'readability-only' : standaloneOnly ? 'standalone-only' : receiptOnly ? 'receipt-only' : 'full', status: overallStatus, startedAt: startedAt.toISOString(), finishedAt: new Date().toISOString(),
       device, sourceHash: gitState?.sourceHash, head: gitState?.head, checks, junit, commit, screenAwake,
-      loadingChoice: (standaloneOnly || readabilityOnly || talkbackOnly) ? undefined : { runId: loadingRunId, junit: loadingJunit, scenario: 'pending-choice', networkSettingsChanged: false },
+      loadingChoice: (productionPath || standaloneOnly || readabilityOnly || talkbackOnly) ? undefined : { runId: loadingRunId, junit: loadingJunit, scenario: 'pending-choice', networkSettingsChanged: false },
       catalog: { environmentFingerprint: catalogEnvironment?.fingerprint, before: catalogBefore, after: catalogAfter },
       privatePreview: { sourceFingerprint: previewState?.fingerprint, before: previewBefore, after: previewAfter, releaseScan },
       standalone: standaloneEvidence(),

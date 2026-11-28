@@ -154,5 +154,10 @@
   "apps/mobile/src/features/budget/budget.ts",
   "apps/mobile/.maestro/budget-choice.yaml",
   "docs/book/chapters/09a-production-budget.md",
-  "apps/mobile/.maestro/talkback-settings-roundtrip.yaml"
+  "apps/mobile/.maestro/talkback-settings-roundtrip.yaml",
+  "apps/mobile/metro.config.js",
+  "apps/mobile/src/components/bundled-catalog-loader.ts",
+  "docs/07-play-data-safety.md",
+  "docs/book/chapters/11-offline-play-release.md",
+  "scripts/device/production-network.mjs"
 ]

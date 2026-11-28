@@ -7,6 +7,7 @@
 !apps/mobile/index.ts
 !apps/mobile/app.json
 !apps/mobile/app.config.js
+!apps/mobile/metro.config.js
 !apps/mobile/eas.json
 !apps/mobile/package.json
 !apps/mobile/package-lock.json
@@ -19,6 +20,8 @@
 !apps/mobile/src/**/*.tsx
 !apps/mobile/assets/
 !apps/mobile/assets/*.png
+!apps/mobile/assets/brand/
+!apps/mobile/assets/brand/*.png
 
 # 테스트·환경 변수·비공개 원자료·기기 기록·서명 키는 클라우드 빌드 자료에 넣지 않습니다.
 **/*.test.*

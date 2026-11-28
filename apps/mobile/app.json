@@ -14,7 +14,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.ungjo.storeprice",
-      "versionCode": 2,
+      "versionCode": 3,
       "allowBackup": false
     },
     "web": {

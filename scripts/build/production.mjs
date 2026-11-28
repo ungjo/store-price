@@ -4,7 +4,6 @@ import { execFileSync } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { captureBuildInputs } from './standalone.mjs';
-import { captureCatalogEnvironment, pinnedCatalogEnvironment } from '../device/catalog-http-check.mjs';
 
 const applicationId = 'com.ungjo.storeprice';
 const applicationName = '꼬마 시장';
@@ -35,10 +34,11 @@ function checkDirectory(repoRoot, folder) {
   return checked(path.resolve(repoRoot, folder));
 }
 
-export function productionProfile(eas, catalog) {
+export function productionProfile(eas) {
   const profile = eas.build?.production;
   const switches = {
     STORE_PRICE_APP_VARIANT: 'production', STORE_PRICE_STANDALONE_BUILD: '0',
+    EXPO_PUBLIC_SUPABASE_URL: 'disabled', EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'disabled',
     EXPO_NO_DOTENV: '1', EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW: 'disabled',
     EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW_TOKEN: 'disabled', EXPO_PUBLIC_CATALOG_TEST_SCENARIO: 'disabled',
   };
@@ -50,20 +50,15 @@ export function productionProfile(eas, catalog) {
     || Object.entries(switches).some(([key, value]) => profile.env[key] !== value)) {
     throw new Error('정식 production AAB 프로필과 개발용 설정 비활성화를 확인해 주세요.');
   }
-  // 공개 카탈로그 주소와 publishable 키만 복사합니다. EAS 메시지용 번호를 번들에 넣지 않습니다.
-  const pinned = pinnedCatalogEnvironment(catalog, {});
-  return { cli: eas.cli, build: { production: { ...profile, env: { ...profile.env,
-    EXPO_PUBLIC_SUPABASE_URL: pinned.EXPO_PUBLIC_SUPABASE_URL,
-    EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: pinned.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-  } } } };
+  // 원격 EAS 환경에 조회 설정이 남아 있어도 정식 번들에는 사용할 수 있는 값이 전달되지 않습니다.
+  return { cli: eas.cli, build: { production: profile } };
 }
 
 function source(repoRoot) {
   const mobileRoot = path.resolve(repoRoot, 'apps/mobile');
   const input = captureBuildInputs(mobileRoot);
   const app = readJson(path.join(mobileRoot, 'app.json')).expo;
-  const catalog = captureCatalogEnvironment(mobileRoot);
-  const eas = productionProfile(readJson(path.join(mobileRoot, 'eas.json')), catalog);
+  const eas = productionProfile(readJson(path.join(mobileRoot, 'eas.json')));
   if (app.name !== applicationName || app.android?.package !== applicationId
     || !uuid.test(app.extra?.eas?.projectId) || !/^\d+\.\d+\.\d+$/u.test(app.version)
     || !Number.isSafeInteger(app.android.versionCode) || app.android.versionCode <= 0
@@ -76,7 +71,7 @@ function source(repoRoot) {
   return { mobileRoot, eas, input, expected, fields: {
     kind: 'production', schemaVersion: 1, applicationId, applicationName,
     versionName: app.version, versionCode: String(app.android.versionCode), projectId: app.extra.eas.projectId,
-    sourceFingerprint: input.fingerprint, catalogEnvFingerprint: catalog.fingerprint, snapshotFingerprint,
+    sourceFingerprint: input.fingerprint, catalogMode: 'bundled', snapshotFingerprint,
   } };
 }
 
@@ -193,7 +188,7 @@ function expectedProvenance(manifest, record, buildHash, aabHash) {
   return { schemaVersion: 1, kind: 'production', buildId: record.id, projectId: manifest.projectId,
     buildNonce: manifest.buildNonce, applicationId, versionName: manifest.versionName,
     versionCode: manifest.versionCode, sourceFingerprint: manifest.sourceFingerprint,
-    snapshotFingerprint: manifest.snapshotFingerprint, catalogEnvFingerprint: manifest.catalogEnvFingerprint,
+    snapshotFingerprint: manifest.snapshotFingerprint, catalogMode: manifest.catalogMode,
     buildRecordSha256: buildHash, sha256: aabHash };
 }
 
@@ -252,7 +247,7 @@ function labelLookup(label) {
   throw new Error('정식 AAB의 앱 이름 리소스를 확인해 주세요.');
 }
 
-export function validateProductionEvidence(evidence, manifest, env) {
+export function validateProductionEvidence(evidence, manifest) {
   const root = /<manifest\b[^>]*>/u.exec(evidence.manifestXml)?.[0] ?? '';
   const app = /<application\b[^>]*>/u.exec(evidence.manifestXml)?.[0] ?? '';
   const label = xmlAttribute(app, 'android:label');
@@ -270,8 +265,16 @@ export function validateProductionEvidence(evidence, manifest, env) {
   const bundle = evidence.bundle;
   if (!hasFile('BundleConfig.pb') || !hasFile('base/manifest/AndroidManifest.xml') || !hasFile('base/assets/index.android.bundle')
     || !Buffer.isBuffer(bundle) || !bundle.length || bundle.includes(Buffer.from(manifest.buildNonce))
-    || ['EXPO_PUBLIC_SUPABASE_URL', 'EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY']
-      .some((key) => !env[key] || !bundle.includes(Buffer.from(env[key])))) throw new Error('AAB 실행 번들의 공개 상품 설정 또는 빌드 식별자를 확인해 주세요.');
+    || !['sample-apple', 'sample-milk'].every((id) => bundle.includes(Buffer.from(id)))
+    || /https:\/\/[a-z0-9-]+\.supabase\.co|sb_publishable_[a-zA-Z0-9_-]{20,}|\/rest\/v1\/play_catalog/u.test(bundle.toString('latin1'))) {
+    throw new Error('정식 AAB의 내장 상품 또는 원격 상품 코드 제외 여부를 확인해 주세요.');
+  }
+  // 최종 병합 결과에서 권한이 되살아나면 앱의 무통신 검증을 통과시키지 않습니다.
+  const permissions = evidence.manifestXml.match(/<uses-permission\b[^>]*>/gu) ?? [];
+  if (permissions.some((tag) => xmlAttribute(tag, 'android:name') === 'android.permission.INTERNET')
+    || xmlAttribute(root, 'android:sharedUserId') !== undefined) {
+    throw new Error('정식 앱에는 인터넷 권한 또는 공유 UID가 없어야 합니다.');
+  }
   // 자체 서명된 업로드 인증서도 유효합니다. 서명 누락·미서명 파일·복수 서명자는 별도로 거부합니다.
   if (!/^jar verified\.\s*$/mu.test(evidence.verification) || /\bunsigned entries\b/iu.test(evidence.verification)
     || !/^Signer #1:\s*$/mu.test(evidence.certificate) || /^Signer #(?!1:)\d+:/mu.test(evidence.certificate)) {
@@ -316,8 +319,7 @@ export async function captureProductionAab({ repoRoot, provenancePath, tools, ru
   const tar = process.platform === 'win32' ? path.join(process.env.SystemRoot, 'System32/tar.exe') : 'tar';
   const bundle = execFileSync(tar, ['-xOf', provenance.aabPath, 'base/assets/index.android.bundle'],
     { windowsHide: true, timeout: 120_000, maxBuffer: 100 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] });
-  const env = readJson(path.join(buildRoot, 'project/eas.json')).build.production.env;
-  const evidence = validateProductionEvidence({ manifestXml, labelResource, bundle, files: listing, verification, certificate }, provenance, env);
+  const evidence = validateProductionEvidence({ manifestXml, labelResource, bundle, files: listing, verification, certificate }, provenance);
   const state = Object.freeze({ ...provenance, applicationName, ...evidence });
   states.set(state, { repoRoot, buildRoot, fingerprints });
   assertProductionAabUnchanged(state);

@@ -59,6 +59,10 @@ module.exports = ({ config }) => {
     slug: 'store-price',
     android: {
       ...config.android,
+      // 정식 앱은 상품을 내장하므로 네이티브 라이브러리가 추가하는 인터넷 권한도 제거합니다.
+      ...(variant === 'production' ? {
+        blockedPermissions: [...new Set([...(config.android.blockedPermissions ?? []), 'android.permission.INTERNET'])],
+      } : {}),
       // 템플릿 배경 이미지를 함께 남기면 단색 브랜드 배경이 가려지므로 레이어를 교체합니다.
       adaptiveIcon: {
         backgroundColor, foregroundImage,

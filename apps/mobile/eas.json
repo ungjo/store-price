@@ -44,6 +44,8 @@
       "autoIncrement": false,
       "env": {
         "EXPO_NO_DOTENV": "1",
+        "EXPO_PUBLIC_SUPABASE_URL": "disabled",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "disabled",
         "EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW": "disabled",
         "EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW_TOKEN": "disabled",
         "EXPO_PUBLIC_CATALOG_TEST_SCENARIO": "disabled",

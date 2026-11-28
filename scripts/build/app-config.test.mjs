@@ -50,7 +50,7 @@ function identity(config) {
   };
 }
 
-const commonIdentity = { version: '1.0.0', versionCode: 2, allowBackup: false, platforms: ['android', 'web'] };
+const commonIdentity = { version: '1.0.0', versionCode: 3, allowBackup: false, platforms: ['android', 'web'] };
 
 
 function assertBranding(config, brand) {
@@ -69,14 +69,17 @@ function assertBranding(config, brand) {
 }
 
 test('production artwork is isolated from both inspection package modes', () => {
-  assertBranding(evaluate({ STORE_PRICE_APP_VARIANT: 'production' }), 'market');
+  const production = evaluate({ STORE_PRICE_APP_VARIANT: 'production' });
+  assertBranding(production, 'market');
+  assert.ok(production.android.blockedPermissions.includes('android.permission.INTERNET'));
+  assert.ok(!evaluate().android.blockedPermissions?.includes('android.permission.INTERNET'));
   assertBranding(evaluate(), 'inspection');
   assertBranding(evaluate(standaloneEnv), 'inspection');
 });
 
 test('static config is production artwork while dynamic defaults stay inspection', () => {
   assertBranding(baseConfig, 'market');
-  assert.equal(baseConfig.android.versionCode, 2);
+  assert.equal(baseConfig.android.versionCode, 3);
   assertBranding(evaluate(), 'inspection');
 });
 
@@ -283,7 +286,7 @@ for (const [profileName, expectedName, expectedPackage] of [
     catch { assert.fail('Expo CLI did not return public config JSON.'); }
     assert.deepEqual(identity(config), {
       name: expectedName, package: expectedPackage, ...commonIdentity,
-      versionCode: profileName === 'preview' ? 1 : 2,
+      versionCode: profileName === 'preview' ? 1 : 3,
     });
     assertBranding(config, profileName === 'production' ? 'market' : 'inspection');
     assert.deepEqual(config.extra.eas, baseConfig.extra.eas);

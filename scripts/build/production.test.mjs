@@ -70,19 +70,20 @@ function setFetch(t, respond) {
   t.after(() => { globalThis.fetch = previous; });
 }
 
-test('production snapshot contains only app inputs and the two public catalog values', (t) => {
+test('production snapshot contains only app inputs without usable remote catalog credentials', (t) => {
   const { root } = fixture(t);
   const { projectRoot, buildRoot, buildNonce } = prepareProductionSnapshot(root);
   const eas = readJson(path.join(projectRoot, 'eas.json'));
   assert.deepEqual(Object.keys(eas.build), ['production']);
   const vars = eas.build.production.env;
-  for (const [key, value] of Object.entries(env)) assert.equal(vars[key], value);
+  for (const key of Object.keys(env)) assert.equal(vars[key], 'disabled');
   assert.equal(vars.EXPO_PUBLIC_PRIVATE_PRICE_PREVIEW_TOKEN, 'disabled');
   for (const key of ['PRIVATE_FIXTURE', 'PRIVATE_TEST_FIELD', 'EXPO_PUBLIC_DEVICE_RUN_ID', 'STORE_PRICE_BUILD_NONCE']) assert.equal(vars[key], undefined);
   assert.ok(!JSON.stringify(eas).includes(buildNonce));
   for (const file of ['src/market.test.ts', '.env.local', '.git']) assert.ok(!fs.existsSync(path.join(projectRoot, file)));
   const inputs = readJson(path.join(buildRoot, 'inputs.json'));
-  for (const field of ['sourceFingerprint', 'snapshotFingerprint', 'catalogEnvFingerprint']) assert.match(inputs[field], /^[a-f0-9]{64}$/u);
+  assert.equal(inputs.catalogMode, 'bundled');
+  for (const field of ['sourceFingerprint', 'snapshotFingerprint']) assert.match(inputs[field], /^[a-f0-9]{64}$/u);
   assert.deepEqual([inputs.applicationName, inputs.applicationId, inputs.versionName, inputs.versionCode], [name, applicationId, '1.0.0', '2']);
 });
 
@@ -165,21 +166,21 @@ test('untrusted redirect is stopped before the second request and leaves no AAB'
   assert.equal(fs.existsSync(path.join(buildRoot, 'app.aab')), false);
 });
 
-test('bundle evidence checks release manifest, offline payload, public catalog and complete upload signature', () => {
+test('bundle evidence checks release manifest, offline payload, disabled networking and complete upload signature', () => {
   const evidence = {
     manifestXml: '<manifest package="' + applicationId + '" android:versionCode="2" android:versionName="1.0.0"><application android:allowBackup="false" android:label="@string/app_name"></application></manifest>',
     labelResource: "Package 'com.ungjo.storeprice':\n0x7f120001 - string/app_name\n  (default) - [STR] \"" + name + '\"',
     files: 'BundleConfig.pb\nbase/manifest/AndroidManifest.xml\nbase/assets/index.android.bundle\n',
-    bundle: Buffer.from(Object.values(env).join(' ')), verification: 'jar verified.\n',
+    bundle: Buffer.from('sample-apple sample-milk'), verification: 'jar verified.\n',
     certificate: 'Signer #1:\n\nCertificate #1:\n  SHA256: ' + Array(32).fill('AB').join(':') + '\n',
   };
-  const actual = validateProductionEvidence(evidence, manifest, env);
+  const actual = validateProductionEvidence(evidence, manifest);
   assert.equal(actual.signerCertificateSHA256, 'ab'.repeat(32));
   assert.equal(actual.debuggable, false);
   // 이름이 제거된 참조·패키지 이름이 붙은 참조·리터럴을 실제 bundletool 인쇄 형식으로 확인합니다.
   for (const label of ['0x7f120001', '@0x7f120001', '2131886081', '@com.ungjo.storeprice:string/app_name', name]) {
     const manifestXml = evidence.manifestXml.replace('@string/app_name', label).replace('versionCode="2"', 'versionCode="0x00000002"');
-    assert.equal(validateProductionEvidence({ ...evidence, manifestXml }, manifest, env).signerCertificateSHA256, 'ab'.repeat(32));
+    assert.equal(validateProductionEvidence({ ...evidence, manifestXml }, manifest).signerCertificateSHA256, 'ab'.repeat(32));
   }
   for (const changed of [
     { manifestXml: evidence.manifestXml.replace(applicationId, applicationId + '.inspection') },
@@ -190,9 +191,12 @@ test('bundle evidence checks release manifest, offline payload, public catalog a
     { manifestXml: evidence.manifestXml.replace('<application ', '<application android:debuggable="true" ') },
     { labelResource: '(default) - [STR] "꼬마 시장 검사"' }, { labelResource: '(default) - [STR] "꼬마 시장 2"' }, { files: '' }, { bundle: Buffer.from(env.EXPO_PUBLIC_SUPABASE_URL) },
     { bundle: Buffer.concat([evidence.bundle, Buffer.from(manifest.buildNonce)]) },
+    ...[...Object.values(env), '/rest/v1/play_catalog'].map((marker) => ({ bundle: Buffer.concat([evidence.bundle, Buffer.from(marker)]) })),
+    { manifestXml: evidence.manifestXml.replace('<application ', '<uses-permission android:name="android.permission.INTERNET"/><application ') },
+    { manifestXml: evidence.manifestXml.replace('<application ', '<uses-permission-sdk-23 android:name="android.permission.INTERNET"/><application ') },
     { verification: 'jar is unsigned.' }, { verification: 'jar verified.\nThis jar contains unsigned entries.' },
     { certificate: evidence.certificate + '\nSigner #2:\n' }, { certificate: 'Signer #1:\nNo certificate\n' },
-  ]) assert.throws(() => validateProductionEvidence({ ...evidence, ...changed }, manifest, env));
+  ]) assert.throws(() => validateProductionEvidence({ ...evidence, ...changed }, manifest));
   assert.throws(() => assertProductionAabUnchanged({ ...actual }));
 });
 
